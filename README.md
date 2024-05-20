@@ -1,7 +1,7 @@
 
 # trader-goods-profiles-data-store
 
-The service will be responsible for creating , retrieving, updating and deactivating new records / profile as opposed to getting it from B&T database.
+The service will be responsible for creating, retrieving, updating and deactivating new records / profile as opposed to getting it from B&T database.
 
 ### License
 
