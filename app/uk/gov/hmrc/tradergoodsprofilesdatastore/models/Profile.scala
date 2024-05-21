@@ -34,7 +34,7 @@ object Profile {
     import play.api.libs.functional.syntax._
 
     (
-      (__ \ "_id").read[String] and
+      (__ \ "eori").read[String] and
         (__ \ "actorId").read[String] and
         (__ \ "ukimsNumber").read[String] and
         (__ \ "nirmsNumber").readNullable[String] and
