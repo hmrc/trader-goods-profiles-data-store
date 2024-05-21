@@ -47,7 +47,7 @@ object Profile {
     import play.api.libs.functional.syntax._
 
     (
-      (__ \ "_id").write[String] and
+      (__ \ "eori").write[String] and
         (__ \ "actorId").write[String] and
         (__ \ "ukimsNumber").write[String] and
         (__ \ "nirmsNumber").writeNullable[String] and

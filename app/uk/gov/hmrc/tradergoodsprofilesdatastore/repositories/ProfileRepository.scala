@@ -35,13 +35,13 @@ class ProfileRepository @Inject() (
     domainFormat = Profile.format,
     indexes = Seq(
       IndexModel(
-        Indexes.ascending("_id"),
-        IndexOptions().name("_id")
+        Indexes.ascending("eori"),
+        IndexOptions().name("eori")
       )
     )
   ) {
 
-  private def byEori(eori: String): Bson = Filters.equal("_id", eori)
+  private def byEori(eori: String): Bson = Filters.equal("eori", eori)
 
   def get(eori: String): Future[Option[Profile]] =
       collection

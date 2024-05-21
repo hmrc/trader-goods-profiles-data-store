@@ -47,7 +47,7 @@ class SessionRepositorySpec
   protected override val repository = new ProfileRepository(mongoComponent = mongoComponent)
 
   private def byEori = {
-    Filters.equal("_id", profile.eori)
+    Filters.equal("eori", profile.eori)
   }
 
   ".set" - {
