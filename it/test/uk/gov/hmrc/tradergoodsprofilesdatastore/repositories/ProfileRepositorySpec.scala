@@ -42,7 +42,7 @@ class SessionRepositorySpec
     prepareDatabase()
   }
 
-  private val profile = Profile("test-eori", "test-actor-id", Some("test-ukims"), Some("test-nirms"), Some("test-niphl"))
+  private val profile = Profile("test-eori", "test-actor-id", "test-ukims", Some("test-nirms"), Some("test-niphl"))
 
   protected override val repository = new ProfileRepository(mongoComponent = mongoComponent)
 
@@ -62,7 +62,7 @@ class SessionRepositorySpec
 
     "must update a record when there is one" in {
       insert(profile).futureValue
-      val expectedProfile = profile.copy(ukimsNumber = Some("new-ukims"))
+      val expectedProfile = profile.copy(ukimsNumber = "new-ukims")
       val setResult = repository.set(expectedProfile).futureValue
       val updatedRecord = find(byEori).futureValue.headOption.value
 

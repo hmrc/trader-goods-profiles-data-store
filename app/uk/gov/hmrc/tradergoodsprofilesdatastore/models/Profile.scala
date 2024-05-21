@@ -22,7 +22,7 @@ import play.api.libs.json.{OFormat, OWrites, Reads, __}
 case class Profile (
                      eori: String,
                      actorId: String,
-                     ukimsNumber: Option[String],
+                     ukimsNumber: String,
                      nirmsNumber: Option[String],
                      niphlNumber: Option[String]
                    )
@@ -36,7 +36,7 @@ object Profile {
     (
       (__ \ "_id").read[String] and
         (__ \ "actorId").read[String] and
-        (__ \ "ukimsNumber").readNullable[String] and
+        (__ \ "ukimsNumber").read[String] and
         (__ \ "nirmsNumber").readNullable[String] and
         (__ \ "niphlNumber").readNullable[String]
       )(Profile.apply _)
@@ -49,7 +49,7 @@ object Profile {
     (
       (__ \ "_id").write[String] and
         (__ \ "actorId").write[String] and
-        (__ \ "ukimsNumber").writeNullable[String] and
+        (__ \ "ukimsNumber").write[String] and
         (__ \ "nirmsNumber").writeNullable[String] and
         (__ \ "niphlNumber").writeNullable[String]
       )(unlift(Profile.unapply))
