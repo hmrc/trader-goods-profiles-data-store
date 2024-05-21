@@ -35,8 +35,8 @@ class ProfileRepository @Inject() (
     domainFormat = Profile.format,
     indexes = Seq(
       IndexModel(
-        Indexes.ascending("eori"),
-        IndexOptions().name("eori")
+        Indexes.ascending("_id"),
+        IndexOptions().name("_id")
       )
     )
   ) {
