@@ -42,15 +42,19 @@ class SessionRepositorySpec
     prepareDatabase()
   }
 
-  private val profile = Profile("test-eori", "test-ukims", Some("test-nirms"), Some("test-niphl"))
+  private val profile = Profile("test-eori", "test-actor-id", Some("test-ukims"), Some("test-nirms"), Some("test-niphl"))
 
   protected override val repository = new ProfileRepository(mongoComponent = mongoComponent)
+
+  private def byEori = {
+    Filters.equal("_id", profile.eori)
+  }
 
   ".set" - {
 
     "must create a record when there is none" in {
       val setResult     = repository.set(profile).futureValue
-      val updatedRecord = find(Filters.equal("eori", profile.eori)).futureValue.headOption.value
+      val updatedRecord = find(byEori).futureValue.headOption.value
 
       setResult mustEqual true
       updatedRecord mustEqual profile
@@ -58,9 +62,9 @@ class SessionRepositorySpec
 
     "must update a record when there is one" in {
       insert(profile).futureValue
-      val expectedProfile = profile.copy(ukims = "new-ukims")
+      val expectedProfile = profile.copy(ukimsNumber = Some("new-ukims"))
       val setResult = repository.set(expectedProfile).futureValue
-      val updatedRecord = find(Filters.equal("eori", profile.eori)).futureValue.headOption.value
+      val updatedRecord = find(byEori).futureValue.headOption.value
 
       setResult mustEqual true
       updatedRecord mustEqual expectedProfile

@@ -41,11 +41,11 @@ class ProfileRepository @Inject() (
     )
   ) {
 
-  private def byEori(eori: String): Bson = Filters.equal("eori", eori)
+  private def byEori(eori: String): Bson = Filters.equal("_id", eori)
 
   def get(eori: String): Future[Option[Profile]] =
       collection
-        .find(byEori(eori))
+        .find[Profile](byEori(eori))
         .headOption()
 
   def set(profile: Profile): Future[Boolean] =

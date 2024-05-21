@@ -18,14 +18,21 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.mockito.MockitoSugar.mock
 import play.api.http.Status
 import play.api.test.Helpers._
 import play.api.test.{FakeRequest, Helpers}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.ProfileRepository
+
+import scala.concurrent.ExecutionContext
 
 class MicroserviceHelloWorldControllerSpec extends AnyWordSpec with Matchers {
 
+  implicit val ec = ExecutionContext.global
+  val mockRepository = mock[ProfileRepository]
+
   private val fakeRequest = FakeRequest("GET", "/")
-  private val controller = new MicroserviceHelloWorldController(Helpers.stubControllerComponents())
+  private val controller = new MicroserviceHelloWorldController(mockRepository, Helpers.stubControllerComponents())
 
   "GET /" should {
     "return 200" in {
