@@ -10,7 +10,7 @@ The service will be responsible for creating, retrieving, updating and deactivat
 POST request to the following endpoint
 
 ```
-https://<host>/trader-goods-profiles-data-store/tgp/set-profile  
+https://<host>/trader-goods-profiles-data-store/profiles  
 ```
 
 ```json
@@ -36,7 +36,7 @@ https://<host>/trader-goods-profiles-data-store/tgp/set-profile
 GET request to the following endpoint
 
 ```
-https://<host>/trader-goods-profiles-data-store/tgp/get-profile/:eori  
+https://<host>/trader-goods-profiles-data-store/customs/traders/goods-profiles/:eori  
 ```
 ### Example response
 ```json
@@ -63,7 +63,7 @@ https://<host>/trader-goods-profiles-data-store/tgp/get-profile/:eori
 GET request to the following endpoint
 
 ```
-https://<host>/trader-goods-profiles-data-store/tgp/does-profile-exist/:eori 
+https://<host>/trader-goods-profiles-data-store/profiles/:eori 
 ```
 
 ### Setup

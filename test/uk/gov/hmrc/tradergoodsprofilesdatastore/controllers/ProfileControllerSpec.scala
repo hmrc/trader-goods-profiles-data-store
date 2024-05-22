@@ -47,9 +47,10 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
     )
   )
 
-  private val setUrl                 = "/trader-goods-profiles-data-store/tgp/set-profile"
-  private val getUrl                 = "/trader-goods-profiles-data-store/tgp/get-profile/1234567890"
-  private val doesExistUrl           = "/trader-goods-profiles-data-store/tgp/does-profile-exist/1234567890"
+  private val baseUrl                = "/trader-goods-profiles-data-store"
+  private val setUrl                 = baseUrl + routes.ProfileController.setProfile.url
+  private val getUrl                 = baseUrl + routes.ProfileController.getProfile("1234567890").url
+  private val doesExistUrl           = baseUrl + routes.ProfileController.doesProfileExist("1234567890").url
   private val validFakePostRequest   = FakeRequest("POST", setUrl, FakeHeaders(Seq()), requestBody)
   private val invalidFakePostRequest = FakeRequest("POST", setUrl, FakeHeaders(Seq()), "{}")
   private val validFakeGetRequest    = FakeRequest("GET", getUrl)
@@ -181,7 +182,7 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
   s"GET $doesExistUrl" should {
 
-    "return 200 when profile exist" in {
+    "return 204 when profile exist" in {
 
       val mockProfileRepository = mock[ProfileRepository]
 
@@ -195,7 +196,7 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
       running(application) {
         val result = route(application, validDoesExistRequest).value
-        status(result) shouldBe Status.OK
+        status(result) shouldBe Status.NO_CONTENT
       }
     }
 
