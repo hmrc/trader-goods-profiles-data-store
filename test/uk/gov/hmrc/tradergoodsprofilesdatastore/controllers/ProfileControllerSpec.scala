@@ -25,9 +25,9 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.mockito.MockitoSugar.mock
 import play.api.http.Status
 import play.api.inject
-import play.api.libs.json.{JsBoolean, JsObject, JsString, Json}
+import play.api.libs.json.{JsObject, JsString, Json}
 import play.api.test.Helpers._
-import play.api.test.{FakeHeaders, FakeRequest, Helpers, ResultExtractors}
+import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.Profile
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.ProfileRepository
 
