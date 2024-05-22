@@ -45,13 +45,7 @@ class ProfileController @Inject()(
 
   def getProfile(eori: String): Action[AnyContent] = Action.async {
     profileRepository.get(eori).map {
-      case Some(profile) => {
-
-        val test = Json.toJson(profile)
-
-        Ok(Json.toJson(profile))
-      }
-
+      case Some(profile) => Ok(Json.toJson(profile))
       case None => NotFound
     }
   }
