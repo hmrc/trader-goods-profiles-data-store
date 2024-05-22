@@ -39,21 +39,21 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
   val requestBody = JsObject(
     Map(
-      "eori" -> JsString("GB123456789099"),
-      "actorId" -> JsString("GB123456789099"),
+      "eori"        -> JsString("GB123456789099"),
+      "actorId"     -> JsString("GB123456789099"),
       "ukimsNumber" -> JsString("XIUKIM47699357400020231115081800"),
       "nirmsNumber" -> JsString("RMS-GB-123456"),
       "niphlNumber" -> JsString("6 S12345")
     )
   )
 
-  private val setUrl = "/trader-goods-profiles-data-store/tgp/set-profile"
-  private val getUrl= "/trader-goods-profiles-data-store/tgp/get-profile/1234567890"
-  private val doesExistUrl = "/trader-goods-profiles-data-store/tgp/does-profile-exist/1234567890"
-  private val validFakePostRequest = FakeRequest("POST", setUrl, FakeHeaders(Seq()), requestBody)
+  private val setUrl                 = "/trader-goods-profiles-data-store/tgp/set-profile"
+  private val getUrl                 = "/trader-goods-profiles-data-store/tgp/get-profile/1234567890"
+  private val doesExistUrl           = "/trader-goods-profiles-data-store/tgp/does-profile-exist/1234567890"
+  private val validFakePostRequest   = FakeRequest("POST", setUrl, FakeHeaders(Seq()), requestBody)
   private val invalidFakePostRequest = FakeRequest("POST", setUrl, FakeHeaders(Seq()), "{}")
-  private val validFakeGetRequest = FakeRequest("GET", getUrl)
-  private val validDoesExistRequest = FakeRequest("GET", doesExistUrl)
+  private val validFakeGetRequest    = FakeRequest("GET", getUrl)
+  private val validDoesExistRequest  = FakeRequest("GET", doesExistUrl)
 
   private val profile = Profile(
     eori = "1234567890",
@@ -71,9 +71,11 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
       when(mockProfileRepository.set(any())) thenReturn Future.successful(true)
 
-      val application = baseApplicationBuilder.overrides(
-        inject.bind[ProfileRepository].toInstance(mockProfileRepository)
-      ).build()
+      val application = baseApplicationBuilder
+        .overrides(
+          inject.bind[ProfileRepository].toInstance(mockProfileRepository)
+        )
+        .build()
 
       running(application) {
         val result = route(application, validFakePostRequest).value
@@ -83,14 +85,15 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
     "return 400 when invalid data is posted" in {
 
-
       val mockProfileRepository = mock[ProfileRepository]
 
       when(mockProfileRepository.set(any())) thenReturn Future.successful(true)
 
-      val application = baseApplicationBuilder.overrides(
-        inject.bind[ProfileRepository].toInstance(mockProfileRepository)
-      ).build()
+      val application = baseApplicationBuilder
+        .overrides(
+          inject.bind[ProfileRepository].toInstance(mockProfileRepository)
+        )
+        .build()
 
       running(application) {
         val result = route(application, invalidFakePostRequest).value
@@ -100,14 +103,15 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
     "return 500 when repository failed" in {
 
-
       val mockProfileRepository = mock[ProfileRepository]
 
       when(mockProfileRepository.set(any())) thenReturn Future.failed(exception = new Exception("Session is failed"))
 
-      val application = baseApplicationBuilder.overrides(
-        inject.bind[ProfileRepository].toInstance(mockProfileRepository)
-      ).build()
+      val application = baseApplicationBuilder
+        .overrides(
+          inject.bind[ProfileRepository].toInstance(mockProfileRepository)
+        )
+        .build()
 
       running(application) {
         val result = route(application, validFakePostRequest).value
@@ -124,9 +128,11 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
       when(mockProfileRepository.get(any())) thenReturn Future.successful(Some(profile))
 
-      val application = baseApplicationBuilder.overrides(
-        inject.bind[ProfileRepository].toInstance(mockProfileRepository)
-      ).build()
+      val application = baseApplicationBuilder
+        .overrides(
+          inject.bind[ProfileRepository].toInstance(mockProfileRepository)
+        )
+        .build()
 
       running(application) {
         val result = route(application, validFakeGetRequest).value
@@ -142,9 +148,11 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
       when(mockProfileRepository.get(any())) thenReturn Future.successful(None)
 
-      val application = baseApplicationBuilder.overrides(
-        inject.bind[ProfileRepository].toInstance(mockProfileRepository)
-      ).build()
+      val application = baseApplicationBuilder
+        .overrides(
+          inject.bind[ProfileRepository].toInstance(mockProfileRepository)
+        )
+        .build()
 
       running(application) {
         val result = route(application, validFakeGetRequest).value
@@ -158,9 +166,11 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
       when(mockProfileRepository.get(any())) thenReturn Future.failed(exception = new Exception("Session is failed"))
 
-      val application = baseApplicationBuilder.overrides(
-        inject.bind[ProfileRepository].toInstance(mockProfileRepository)
-      ).build()
+      val application = baseApplicationBuilder
+        .overrides(
+          inject.bind[ProfileRepository].toInstance(mockProfileRepository)
+        )
+        .build()
 
       running(application) {
         val result = route(application, validFakeGetRequest).value
@@ -177,9 +187,11 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
       when(mockProfileRepository.get(any())) thenReturn Future.successful(Some(profile))
 
-      val application = baseApplicationBuilder.overrides(
-        inject.bind[ProfileRepository].toInstance(mockProfileRepository)
-      ).build()
+      val application = baseApplicationBuilder
+        .overrides(
+          inject.bind[ProfileRepository].toInstance(mockProfileRepository)
+        )
+        .build()
 
       running(application) {
         val result = route(application, validDoesExistRequest).value
@@ -193,9 +205,11 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
       when(mockProfileRepository.get(any())) thenReturn Future.successful(None)
 
-      val application = baseApplicationBuilder.overrides(
-        inject.bind[ProfileRepository].toInstance(mockProfileRepository)
-      ).build()
+      val application = baseApplicationBuilder
+        .overrides(
+          inject.bind[ProfileRepository].toInstance(mockProfileRepository)
+        )
+        .build()
 
       running(application) {
         val result = route(application, validDoesExistRequest).value
@@ -209,9 +223,11 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
       when(mockProfileRepository.get(any())) thenReturn Future.failed(exception = new Exception("Session is failed"))
 
-      val application = baseApplicationBuilder.overrides(
-        inject.bind[ProfileRepository].toInstance(mockProfileRepository)
-      ).build()
+      val application = baseApplicationBuilder
+        .overrides(
+          inject.bind[ProfileRepository].toInstance(mockProfileRepository)
+        )
+        .build()
 
       running(application) {
         val result = route(application, validDoesExistRequest).value
