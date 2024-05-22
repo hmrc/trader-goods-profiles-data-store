@@ -19,14 +19,16 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.OptionValues.convertOptionToValuable
+import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.mockito.MockitoSugar.mock
 import play.api.http.Status
 import play.api.inject
-import play.api.libs.json.{JsBoolean, JsObject, JsString}
+import play.api.libs.json.{JsBoolean, JsObject, JsString, Json}
 import play.api.test.Helpers._
 import play.api.test.{FakeHeaders, FakeRequest, Helpers, ResultExtractors}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.Profile
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.ProfileRepository
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -46,13 +48,24 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
   )
 
   private val setUrl = "/trader-goods-profiles-data-store/tgp/set-profile"
-  private val fakePostRequest = FakeRequest("POST", setUrl, FakeHeaders(Seq()), requestBody)
+  private val getUrl= "/trader-goods-profiles-data-store/tgp/get-profile/1234567890"
+  private val doesExistUrl = "/trader-goods-profiles-data-store/tgp/does-profile-exist/1234567890"
+  private val validFakePostRequest = FakeRequest("POST", setUrl, FakeHeaders(Seq()), requestBody)
   private val invalidFakePostRequest = FakeRequest("POST", setUrl, FakeHeaders(Seq()), "{}")
+  private val validFakeGetRequest = FakeRequest("GET", getUrl)
+  private val validDoesExistRequest = FakeRequest("GET", doesExistUrl)
 
-  "POST /" should {
+  private val profile = Profile(
+    eori = "1234567890",
+    actorId = "1234567890",
+    ukimsNumber = "XIUKIM47699357400020231115081800",
+    nirmsNumber = Option("123456"),
+    niphlNumber = Option("123456")
+  )
+
+  s"POST $setUrl" should {
 
     "return 200 when valid data is posted" in {
-
 
       val mockProfileRepository = mock[ProfileRepository]
 
@@ -63,7 +76,7 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
       ).build()
 
       running(application) {
-        val result = route(application, fakePostRequest).value
+        val result = route(application, validFakePostRequest).value
         status(result) shouldBe Status.OK
       }
     }
@@ -97,7 +110,111 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
       ).build()
 
       running(application) {
-        val result = route(application, fakePostRequest).value
+        val result = route(application, validFakePostRequest).value
+        status(result) shouldBe Status.INTERNAL_SERVER_ERROR
+      }
+    }
+  }
+
+  s"GET $getUrl" should {
+
+    "return 200 when data is found" in {
+
+      val mockProfileRepository = mock[ProfileRepository]
+
+      when(mockProfileRepository.get(any())) thenReturn Future.successful(Some(profile))
+
+      val application = baseApplicationBuilder.overrides(
+        inject.bind[ProfileRepository].toInstance(mockProfileRepository)
+      ).build()
+
+      running(application) {
+        val result = route(application, validFakeGetRequest).value
+        status(result) shouldBe Status.OK
+
+        contentAsString(result) mustBe Json.toJson(profile).toString
+      }
+    }
+
+    "return 404 when data is not found" in {
+
+      val mockProfileRepository = mock[ProfileRepository]
+
+      when(mockProfileRepository.get(any())) thenReturn Future.successful(None)
+
+      val application = baseApplicationBuilder.overrides(
+        inject.bind[ProfileRepository].toInstance(mockProfileRepository)
+      ).build()
+
+      running(application) {
+        val result = route(application, validFakeGetRequest).value
+        status(result) shouldBe Status.NOT_FOUND
+      }
+    }
+
+    "return 500 when repository failed" in {
+
+      val mockProfileRepository = mock[ProfileRepository]
+
+      when(mockProfileRepository.get(any())) thenReturn Future.failed(exception = new Exception("Session is failed"))
+
+      val application = baseApplicationBuilder.overrides(
+        inject.bind[ProfileRepository].toInstance(mockProfileRepository)
+      ).build()
+
+      running(application) {
+        val result = route(application, validFakeGetRequest).value
+        status(result) shouldBe Status.INTERNAL_SERVER_ERROR
+      }
+    }
+  }
+
+  s"GET $doesExistUrl" should {
+
+    "return 200 when profile exist" in {
+
+      val mockProfileRepository = mock[ProfileRepository]
+
+      when(mockProfileRepository.get(any())) thenReturn Future.successful(Some(profile))
+
+      val application = baseApplicationBuilder.overrides(
+        inject.bind[ProfileRepository].toInstance(mockProfileRepository)
+      ).build()
+
+      running(application) {
+        val result = route(application, validDoesExistRequest).value
+        status(result) shouldBe Status.OK
+      }
+    }
+
+    "return 404 when profile does not exist" in {
+
+      val mockProfileRepository = mock[ProfileRepository]
+
+      when(mockProfileRepository.get(any())) thenReturn Future.successful(None)
+
+      val application = baseApplicationBuilder.overrides(
+        inject.bind[ProfileRepository].toInstance(mockProfileRepository)
+      ).build()
+
+      running(application) {
+        val result = route(application, validDoesExistRequest).value
+        status(result) shouldBe Status.NOT_FOUND
+      }
+    }
+
+    "return 500 when repository failed" in {
+
+      val mockProfileRepository = mock[ProfileRepository]
+
+      when(mockProfileRepository.get(any())) thenReturn Future.failed(exception = new Exception("Session is failed"))
+
+      val application = baseApplicationBuilder.overrides(
+        inject.bind[ProfileRepository].toInstance(mockProfileRepository)
+      ).build()
+
+      running(application) {
+        val result = route(application, validDoesExistRequest).value
         status(result) shouldBe Status.INTERNAL_SERVER_ERROR
       }
     }

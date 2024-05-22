@@ -47,14 +47,14 @@ class ProfileController @Inject()(
     profileRepository.get(eori).map {
       case Some(profile) => Ok(Json.toJson(profile))
       case None => NotFound
-    }
+    }.recover { case _ => InternalServerError }
   }
 
   def doesProfileExist(eori: String): Action[AnyContent] = Action.async {
     profileRepository.get(eori).map {
       case Some(profile) => Ok
       case None => NotFound
-    }
+    }.recover { case _ => InternalServerError }
   }
 
 }
