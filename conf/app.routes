@@ -1,4 +1,4 @@
 # microservice specific routes
 POST       /tgp/set-profile                 uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.setProfile
 GET        /tgp/get-profile/:eori           uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.getProfile(eori: String)
-GET        /tgp/does-profile-exist/:eori     uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.doesProfileExist(eori: String)
+GET        /tgp/does-profile-exist/:eori    uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.doesProfileExist(eori: String)
