@@ -27,26 +27,26 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ProfileRepository @Inject() (
-                                    mongoComponent: MongoComponent,
-                                  )(implicit ec: ExecutionContext)
-  extends PlayMongoRepository[Profile](
-    collectionName = "profiles",
-    mongoComponent = mongoComponent,
-    domainFormat = Profile.format,
-    indexes = Seq(
-      IndexModel(
-        Indexes.ascending("eori"),
-        IndexOptions().name("eori")
+  mongoComponent: MongoComponent
+)(implicit ec: ExecutionContext)
+    extends PlayMongoRepository[Profile](
+      collectionName = "profiles",
+      mongoComponent = mongoComponent,
+      domainFormat = Profile.format,
+      indexes = Seq(
+        IndexModel(
+          Indexes.ascending("eori"),
+          IndexOptions().name("eori")
+        )
       )
-    )
-  ) {
+    ) {
 
   private def byEori(eori: String): Bson = Filters.equal("eori", eori)
 
   def get(eori: String): Future[Option[Profile]] =
-      collection
-        .find[Profile](byEori(eori))
-        .headOption()
+    collection
+      .find[Profile](byEori(eori))
+      .headOption()
 
   def set(profile: Profile): Future[Boolean] =
     collection

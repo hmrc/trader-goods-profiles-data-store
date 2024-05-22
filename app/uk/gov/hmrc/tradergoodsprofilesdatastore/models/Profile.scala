@@ -18,14 +18,13 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.models
 
 import play.api.libs.json.{OFormat, OWrites, Reads, __}
 
-
-case class Profile (
-                     eori: String,
-                     actorId: String,
-                     ukimsNumber: String,
-                     nirmsNumber: Option[String],
-                     niphlNumber: Option[String]
-                   )
+case class Profile(
+  eori: String,
+  actorId: String,
+  ukimsNumber: String,
+  nirmsNumber: Option[String],
+  niphlNumber: Option[String]
+)
 
 object Profile {
 
@@ -39,7 +38,7 @@ object Profile {
         (__ \ "ukimsNumber").read[String] and
         (__ \ "nirmsNumber").readNullable[String] and
         (__ \ "niphlNumber").readNullable[String]
-      )(Profile.apply _)
+    )(Profile.apply _)
   }
 
   val writes: OWrites[Profile] = {
@@ -52,7 +51,7 @@ object Profile {
         (__ \ "ukimsNumber").write[String] and
         (__ \ "nirmsNumber").writeNullable[String] and
         (__ \ "niphlNumber").writeNullable[String]
-      )(unlift(Profile.unapply))
+    )(unlift(Profile.unapply))
   }
 
   implicit val format: OFormat[Profile] = OFormat(reads, writes)

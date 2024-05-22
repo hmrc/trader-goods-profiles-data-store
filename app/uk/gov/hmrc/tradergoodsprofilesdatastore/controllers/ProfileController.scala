@@ -26,35 +26,42 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton()
-class ProfileController @Inject()(
-    profileRepository: ProfileRepository,
-    cc: ControllerComponents
-)(implicit ec: ExecutionContext) extends BackendController(cc) {
+class ProfileController @Inject() (
+  profileRepository: ProfileRepository,
+  cc: ControllerComponents
+)(implicit ec: ExecutionContext)
+    extends BackendController(cc) {
 
   def setProfile(): Action[AnyContent] = Action.async { implicit request =>
-    val jsonOpt = request.body.asJson
+    val jsonOpt    = request.body.asJson
     val validation = jsonOpt.map(_.validate[Profile])
 
     validation match {
       case Some(JsSuccess(profile, _)) =>
         profileRepository.set(profile).map(_ => Ok).recover { case _ => InternalServerError }
-      case _ =>
+      case _                           =>
         Future.successful(BadRequest("Invalid JSON format for Profile"))
     }
   }
 
   def getProfile(eori: String): Action[AnyContent] = Action.async {
-    profileRepository.get(eori).map {
-      case Some(profile) => Ok(Json.toJson(profile))
-      case None => NotFound
-    }.recover { case _ => InternalServerError }
+    profileRepository
+      .get(eori)
+      .map {
+        case Some(profile) => Ok(Json.toJson(profile))
+        case None          => NotFound
+      }
+      .recover { case _ => InternalServerError }
   }
 
   def doesProfileExist(eori: String): Action[AnyContent] = Action.async {
-    profileRepository.get(eori).map {
-      case Some(profile) => Ok
-      case None => NotFound
-    }.recover { case _ => InternalServerError }
+    profileRepository
+      .get(eori)
+      .map {
+        case Some(profile) => Ok
+        case None          => NotFound
+      }
+      .recover { case _ => InternalServerError }
   }
 
 }
