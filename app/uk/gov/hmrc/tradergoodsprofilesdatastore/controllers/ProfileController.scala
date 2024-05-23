@@ -19,7 +19,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 import play.api.libs.json.{JsObject, JsString, JsSuccess, JsValue, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{Profile, ProfileRequest, ProfileResponse}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.ProfileRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.ProfileRepository
 
 import javax.inject.{Inject, Singleton}

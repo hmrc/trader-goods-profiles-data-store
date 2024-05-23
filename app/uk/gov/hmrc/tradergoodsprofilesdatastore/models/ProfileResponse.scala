@@ -29,7 +29,7 @@ case class ProfileResponse(
 object ProfileResponse {
   implicit val format: OFormat[ProfileResponse] = Json.format[ProfileResponse]
 
-  def fromRequest(profileRequest: ProfileRequest, eori: String): ProfileResponse = {
+  def fromRequest(eori: String, profileRequest: ProfileRequest): ProfileResponse =
     ProfileResponse(
       eori = eori,
       actorId = profileRequest.actorId,
@@ -37,7 +37,4 @@ object ProfileResponse {
       nirmsNumber = profileRequest.nirmsNumber,
       niphlNumber = profileRequest.niphlNumber
     )
-  }
 }
-
-

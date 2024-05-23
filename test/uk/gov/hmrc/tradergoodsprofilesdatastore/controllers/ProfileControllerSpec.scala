@@ -25,10 +25,10 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.mockito.MockitoSugar.mock
 import play.api.http.Status
 import play.api.inject
-import play.api.libs.json.{JsObject, JsString, Json}
+import play.api.libs.json.Json
 import play.api.test.Helpers._
 import play.api.test.{FakeHeaders, FakeRequest}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.Profile
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{ProfileRequest, ProfileResponse}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.ProfileRepository
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -37,26 +37,25 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
   implicit val ec = ExecutionContext.global
 
-  val requestBody = JsObject(
-    Map(
-      "eori"        -> JsString("GB123456789099"),
-      "actorId"     -> JsString("GB123456789099"),
-      "ukimsNumber" -> JsString("XIUKIM47699357400020231115081800"),
-      "nirmsNumber" -> JsString("RMS-GB-123456"),
-      "niphlNumber" -> JsString("6 S12345")
-    )
+  val requestEori = "GB123456789099"
+
+  val profileRequest = ProfileRequest(
+    actorId = "GB123456789099",
+    ukimsNumber = "XIUKIM47699357400020231115081800",
+    nirmsNumber = Some("RMS-GB-123456"),
+    niphlNumber = Some("6 S12345")
   )
 
   private val baseUrl                = "/trader-goods-profiles-data-store"
-  private val setUrl                 = baseUrl + routes.ProfileController.setProfile.url
-  private val getUrl                 = baseUrl + routes.ProfileController.getProfile("1234567890").url
-  private val doesExistUrl           = baseUrl + routes.ProfileController.doesProfileExist("1234567890").url
-  private val validFakePostRequest   = FakeRequest("POST", setUrl, FakeHeaders(Seq(CONTENT_TYPE -> JSON)), requestBody)
+  private val setUrl                 = baseUrl + routes.ProfileController.setProfile(requestEori).url
+  private val getUrl                 = baseUrl + routes.ProfileController.getProfile(requestEori).url
+  private val doesExistUrl           = baseUrl + routes.ProfileController.doesProfileExist(requestEori).url
+  private val validFakePostRequest   = FakeRequest("POST", setUrl, FakeHeaders(Seq(CONTENT_TYPE -> JSON)), Json.toJson(profileRequest))
   private val invalidFakePostRequest = FakeRequest("POST", setUrl, FakeHeaders(Seq(CONTENT_TYPE -> JSON)), "{}")
   private val validFakeGetRequest    = FakeRequest("GET", getUrl)
   private val validDoesExistRequest  = FakeRequest("GET", doesExistUrl)
 
-  private val profile = Profile(
+  private val expectedProfileResponse = ProfileResponse(
     eori = "1234567890",
     actorId = "1234567890",
     ukimsNumber = "XIUKIM47699357400020231115081800",
@@ -70,7 +69,7 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
       val mockProfileRepository = mock[ProfileRepository]
 
-      when(mockProfileRepository.set(any())) thenReturn Future.successful(true)
+      when(mockProfileRepository.set(any(), any())) thenReturn Future.successful(true)
 
       val application = baseApplicationBuilder
         .overrides(
@@ -88,7 +87,7 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
       val mockProfileRepository = mock[ProfileRepository]
 
-      when(mockProfileRepository.set(any())) thenReturn Future.successful(true)
+      when(mockProfileRepository.set(any(), any())) thenReturn Future.successful(true)
 
       val application = baseApplicationBuilder
         .overrides(
@@ -106,7 +105,7 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
       val mockProfileRepository = mock[ProfileRepository]
 
-      when(mockProfileRepository.set(any())) thenReturn Future.failed(exception = new Exception("Session is failed"))
+      when(mockProfileRepository.set(any(), any())) thenReturn Future.failed(exception = new Exception("Session is failed"))
 
       val application = baseApplicationBuilder
         .overrides(
@@ -127,7 +126,7 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
       val mockProfileRepository = mock[ProfileRepository]
 
-      when(mockProfileRepository.get(any())) thenReturn Future.successful(Some(profile))
+      when(mockProfileRepository.get(any())) thenReturn Future.successful(Some(expectedProfileResponse))
 
       val application = baseApplicationBuilder
         .overrides(
@@ -139,7 +138,7 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
         val result = route(application, validFakeGetRequest).value
         status(result) shouldBe Status.OK
 
-        contentAsString(result) mustBe Json.toJson(profile).toString
+        contentAsString(result) mustBe Json.toJson(expectedProfileResponse).toString
       }
     }
 
@@ -186,7 +185,7 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
       val mockProfileRepository = mock[ProfileRepository]
 
-      when(mockProfileRepository.get(any())) thenReturn Future.successful(Some(profile))
+      when(mockProfileRepository.get(any())) thenReturn Future.successful(Some(expectedProfileResponse))
 
       val application = baseApplicationBuilder
         .overrides(
