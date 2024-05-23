@@ -55,7 +55,7 @@ class ProfileController @Inject() (
     profileRepository
       .get(eori)
       .map {
-        case Some(profile) => NoContent
+        case Some(profile) => Ok
         case None          => NotFound
       }
       .recover { case _ => InternalServerError }

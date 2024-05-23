@@ -50,10 +50,11 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
   private val setUrl                 = baseUrl + routes.ProfileController.setProfile(requestEori).url
   private val getUrl                 = baseUrl + routes.ProfileController.getProfile(requestEori).url
   private val doesExistUrl           = baseUrl + routes.ProfileController.doesProfileExist(requestEori).url
-  private val validFakePostRequest   = FakeRequest("POST", setUrl, FakeHeaders(Seq(CONTENT_TYPE -> JSON)), Json.toJson(profileRequest))
+  private val validFakePostRequest   =
+    FakeRequest("POST", setUrl, FakeHeaders(Seq(CONTENT_TYPE -> JSON)), Json.toJson(profileRequest))
   private val invalidFakePostRequest = FakeRequest("POST", setUrl, FakeHeaders(Seq(CONTENT_TYPE -> JSON)), "{}")
   private val validFakeGetRequest    = FakeRequest("GET", getUrl)
-  private val validDoesExistRequest  = FakeRequest("GET", doesExistUrl)
+  private val validDoesExistRequest  = FakeRequest("HEAD", doesExistUrl)
 
   private val expectedProfileResponse = ProfileResponse(
     eori = "1234567890",
@@ -105,7 +106,9 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
       val mockProfileRepository = mock[ProfileRepository]
 
-      when(mockProfileRepository.set(any(), any())) thenReturn Future.failed(exception = new Exception("Session is failed"))
+      when(mockProfileRepository.set(any(), any())) thenReturn Future.failed(exception =
+        new Exception("Session is failed")
+      )
 
       val application = baseApplicationBuilder
         .overrides(
@@ -179,9 +182,9 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
     }
   }
 
-  s"GET $doesExistUrl" should {
+  s"HEAD $doesExistUrl" should {
 
-    "return 204 when profile exist" in {
+    "return 200 when profile exist" in {
 
       val mockProfileRepository = mock[ProfileRepository]
 
@@ -195,7 +198,7 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
       running(application) {
         val result = route(application, validDoesExistRequest).value
-        status(result) shouldBe Status.NO_CONTENT
+        status(result) shouldBe Status.OK
       }
     }
 
