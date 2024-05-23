@@ -32,7 +32,7 @@ class ProfileController @Inject() (
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
-  def setProfile(): Action[JsValue] = Action.async(parse.json) { implicit request =>
+  def setProfile(eori: String): Action[JsValue] = Action.async(parse.json) { implicit request =>
     request.body.validate[Profile] match {
       case JsSuccess(profile, _) =>
         profileRepository.set(profile).map(_ => Ok).recover { case _ => InternalServerError }
