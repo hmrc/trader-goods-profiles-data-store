@@ -10,12 +10,12 @@ The service will be responsible for creating, retrieving, updating and deactivat
 POST request to the following endpoint
 
 ```
-https://<host>/trader-goods-profiles-data-store/profiles  
+https://<host>/trader-goods-profiles-data-store/traders/:eori/profile
 ```
 
+`ProfileRequest`:
 ```json
 {
-  "eori": "GB123456789010",
   "actorId": "GB123456789010",
   "ukimsNumber": "XIUKIM47699357400020231115081800",
   "nirmsNumber": "RMS-GB-123456",
@@ -38,7 +38,8 @@ GET request to the following endpoint
 ```
 https://<host>/trader-goods-profiles-data-store/customs/traders/goods-profiles/:eori  
 ```
-### Example response
+### Example response:
+`ProfileResponse`:
 ```json
 {
   "eori": "GB123456789010",
@@ -60,10 +61,10 @@ https://<host>/trader-goods-profiles-data-store/customs/traders/goods-profiles/:
 
 ### Example request
 
-GET request to the following endpoint
+HEAD request to the following endpoint
 
 ```
-https://<host>/trader-goods-profiles-data-store/profiles/:eori 
+https://<host>/trader-goods-profiles-data-store/traders/:eori/profile
 ```
 
 ### Setup
