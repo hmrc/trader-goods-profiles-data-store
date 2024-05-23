@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
-import play.api.libs.json.{JsSuccess, JsValue, Json}
+import play.api.libs.json.{JsObject, JsString, JsSuccess, JsValue, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.Profile
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{Profile, ProfileRequest, ProfileResponse}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.ProfileRepository
 
 import javax.inject.{Inject, Singleton}
@@ -33,9 +33,9 @@ class ProfileController @Inject() (
     extends BackendController(cc) {
 
   def setProfile(eori: String): Action[JsValue] = Action.async(parse.json) { implicit request =>
-    request.body.validate[Profile] match {
+    request.body.validate[ProfileRequest] match {
       case JsSuccess(profile, _) =>
-        profileRepository.set(profile).map(_ => Ok).recover { case _ => InternalServerError }
+        profileRepository.set(eori, profile).map(_ => Ok).recover { case _ => InternalServerError }
       case _                     =>
         Future.successful(BadRequest("Invalid JSON format for Profile"))
     }

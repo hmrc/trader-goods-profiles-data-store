@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.Profile
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{Profile, ProfileRequest, ProfileResponse}
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo.MongoComponent
@@ -29,7 +29,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class ProfileRepository @Inject() (
   mongoComponent: MongoComponent
 )(implicit ec: ExecutionContext)
-    extends PlayMongoRepository[Profile](
+    extends PlayMongoRepository[ProfileResponse](
       collectionName = "profiles",
       mongoComponent = mongoComponent,
       domainFormat = Profile.format,
@@ -43,19 +43,21 @@ class ProfileRepository @Inject() (
 
   private def byEori(eori: String): Bson = Filters.equal("eori", eori)
 
-  def get(eori: String): Future[Option[Profile]] =
+  def get(eori: String): Future[Option[ProfileResponse]] =
     collection
-      .find[Profile](byEori(eori))
+      .find[ProfileResponse](byEori(eori))
       .headOption()
 
-  def set(profile: Profile): Future[Boolean] =
+  def set(eori: String, profile: ProfileRequest): Future[Boolean] = {
+    val profileToSet = ProfileResponse.fromRequest(profile)
     collection
       .replaceOne(
-        filter = byEori(profile.eori),
-        replacement = profile,
+        filter = byEori(profileToSet.eori),
+        replacement = profileToSet,
         options = ReplaceOptions().upsert(true)
       )
       .toFuture()
       .map(_ => true)
+  }
 
 }
