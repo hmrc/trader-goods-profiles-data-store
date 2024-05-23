@@ -59,8 +59,8 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
     eori = "1234567890",
     actorId = "1234567890",
     ukimsNumber = "XIUKIM47699357400020231115081800",
-    nirmsNumber = Option("123456"),
-    niphlNumber = Option("123456")
+    nirmsNumber = Some("123456"),
+    niphlNumber = Some("123456")
   )
 
   s"POST $setUrl" should {
