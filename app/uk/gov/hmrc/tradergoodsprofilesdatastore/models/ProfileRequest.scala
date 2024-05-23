@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.tradergoodsprofilesdatastore.config
+package uk.gov.hmrc.tradergoodsprofilesdatastore.models
 
-import com.google.inject.AbstractModule
+import play.api.libs.json.{Json, OFormat}
 
-class Module extends AbstractModule {
+case class ProfileRequest(
+  actorId: String,
+  ukimsNumber: String,
+  nirmsNumber: Option[String],
+  niphlNumber: Option[String]
+)
 
-  override def configure(): Unit =
-    bind(classOf[AppConfig]).asEagerSingleton()
+object ProfileRequest {
+  implicit val format: OFormat[ProfileRequest] = Json.format[ProfileRequest]
 }
