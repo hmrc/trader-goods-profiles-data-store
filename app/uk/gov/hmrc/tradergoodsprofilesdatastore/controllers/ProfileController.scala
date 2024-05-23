@@ -32,13 +32,8 @@ class ProfileController @Inject() (
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
-  def setProfile(eori: String): Action[JsValue] = Action.async(parse.json) { implicit request =>
-    request.body.validate[ProfileRequest] match {
-      case JsSuccess(profile, _) =>
-        profileRepository.set(eori, profile).map(_ => Ok).recover { case _ => InternalServerError }
-      case _                     =>
-        Future.successful(BadRequest("Invalid JSON format for Profile"))
-    }
+  def setProfile(eori: String): Action[ProfileRequest] = Action.async(parse.json[ProfileRequest]) { implicit request =>
+    profileRepository.set(eori, request.body).map(_ => Ok)
   }
 
   def getProfile(eori: String): Action[AnyContent] = Action.async {
@@ -48,7 +43,6 @@ class ProfileController @Inject() (
         case Some(profile) => Ok(Json.toJson(profile))
         case None          => NotFound
       }
-      .recover { case _ => InternalServerError }
   }
 
   def doesProfileExist(eori: String): Action[AnyContent] = Action.async {
@@ -58,7 +52,6 @@ class ProfileController @Inject() (
         case Some(profile) => Ok
         case None          => NotFound
       }
-      .recover { case _ => InternalServerError }
   }
 
 }

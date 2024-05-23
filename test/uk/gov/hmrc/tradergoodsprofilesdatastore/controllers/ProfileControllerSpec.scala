@@ -102,25 +102,6 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
       }
     }
 
-    "return 500 when repository failed" in {
-
-      val mockProfileRepository = mock[ProfileRepository]
-
-      when(mockProfileRepository.set(any(), any())) thenReturn Future.failed(exception =
-        new Exception("Session is failed")
-      )
-
-      val application = baseApplicationBuilder
-        .overrides(
-          inject.bind[ProfileRepository].toInstance(mockProfileRepository)
-        )
-        .build()
-
-      running(application) {
-        val result = route(application, validFakePostRequest).value
-        status(result) shouldBe Status.INTERNAL_SERVER_ERROR
-      }
-    }
   }
 
   s"GET $getUrl" should {
@@ -163,23 +144,6 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
       }
     }
 
-    "return 500 when repository failed" in {
-
-      val mockProfileRepository = mock[ProfileRepository]
-
-      when(mockProfileRepository.get(any())) thenReturn Future.failed(exception = new Exception("Session is failed"))
-
-      val application = baseApplicationBuilder
-        .overrides(
-          inject.bind[ProfileRepository].toInstance(mockProfileRepository)
-        )
-        .build()
-
-      running(application) {
-        val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.INTERNAL_SERVER_ERROR
-      }
-    }
   }
 
   s"HEAD $doesExistUrl" should {
@@ -220,22 +184,5 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
       }
     }
 
-    "return 500 when repository failed" in {
-
-      val mockProfileRepository = mock[ProfileRepository]
-
-      when(mockProfileRepository.get(any())) thenReturn Future.failed(exception = new Exception("Session is failed"))
-
-      val application = baseApplicationBuilder
-        .overrides(
-          inject.bind[ProfileRepository].toInstance(mockProfileRepository)
-        )
-        .build()
-
-      running(application) {
-        val result = route(application, validDoesExistRequest).value
-        status(result) shouldBe Status.INTERNAL_SERVER_ERROR
-      }
-    }
   }
 }
