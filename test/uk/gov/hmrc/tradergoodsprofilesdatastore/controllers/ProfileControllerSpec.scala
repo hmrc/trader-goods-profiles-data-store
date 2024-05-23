@@ -51,8 +51,8 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
   private val setUrl                 = baseUrl + routes.ProfileController.setProfile.url
   private val getUrl                 = baseUrl + routes.ProfileController.getProfile("1234567890").url
   private val doesExistUrl           = baseUrl + routes.ProfileController.doesProfileExist("1234567890").url
-  private val validFakePostRequest   = FakeRequest("POST", setUrl, FakeHeaders(Seq()), requestBody)
-  private val invalidFakePostRequest = FakeRequest("POST", setUrl, FakeHeaders(Seq()), "{}")
+  private val validFakePostRequest   = FakeRequest("POST", setUrl, FakeHeaders(Seq(CONTENT_TYPE -> JSON)), requestBody)
+  private val invalidFakePostRequest = FakeRequest("POST", setUrl, FakeHeaders(Seq(CONTENT_TYPE -> JSON)), "{}")
   private val validFakeGetRequest    = FakeRequest("GET", getUrl)
   private val validDoesExistRequest  = FakeRequest("GET", doesExistUrl)
 
