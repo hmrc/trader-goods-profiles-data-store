@@ -22,7 +22,7 @@ import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.Profile
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{ProfileRequest, ProfileResponse}
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -30,7 +30,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class SessionRepositorySpec
   extends AnyFreeSpec
     with Matchers
-    with PlayMongoRepositorySupport[Profile]
+    with PlayMongoRepositorySupport[ProfileResponse]
     with ScalaFutures
     with IntegrationPatience
     with OptionValues
@@ -42,49 +42,49 @@ class SessionRepositorySpec
     prepareDatabase()
   }
 
-  private val profile = Profile("test-eori", "test-actor-id", "test-ukims", Some("test-nirms"), Some("test-niphl"))
+  private val profileEori = "test-eori"
+  private val profileRequest = ProfileRequest("test-actor-id", "test-ukims", Some("test-nirms"), Some("test-niphl"))
+  private val profileResponse = ProfileResponse(profileEori, "test-actor-id", "test-ukims", Some("test-nirms"), Some("test-niphl"))
 
   protected override val repository = new ProfileRepository(mongoComponent = mongoComponent)
 
   private def byEori = {
-    Filters.equal("eori", profile.eori)
+    Filters.equal("eori", profileResponse.eori)
   }
 
   ".set" - {
 
     "must create a record when there is none" in {
-      val setResult     = repository.set(profile).futureValue
+      val setResult     = repository.set(profileEori, profileRequest).futureValue
       val updatedRecord = find(byEori).futureValue.headOption.value
 
       setResult mustEqual true
-      updatedRecord mustEqual profile
+      updatedRecord mustEqual profileResponse
     }
 
     "must update a record when there is one" in {
-      insert(profile).futureValue
-      val expectedProfile = profile.copy(ukimsNumber = "new-ukims")
-      val setResult = repository.set(expectedProfile).futureValue
+      insert(profileResponse).futureValue
+      val modifiedProfileRequest = profileRequest.copy(ukimsNumber = "new-ukims")
+      val expectedProfileResponse = profileResponse.copy(ukimsNumber = "new-ukims")
+
+      val setResult = repository.set(profileEori, modifiedProfileRequest).futureValue
       val updatedRecord = find(byEori).futureValue.headOption.value
 
       setResult mustEqual true
-      updatedRecord mustEqual expectedProfile
+      updatedRecord mustEqual expectedProfileResponse
     }
   }
 
   ".get" - {
 
-    "when there is a record for this eori" - {
-      "must get the record" in {
-        insert(profile).futureValue
-        val result         = repository.get(profile.eori).futureValue
-        result.value mustEqual profile
-      }
+    "when there is a record for this eori it must get the record" in {
+      insert(profileResponse).futureValue
+      val result         = repository.get(profileEori).futureValue
+      result.value mustEqual profileResponse
     }
 
-    "when there is no record for this ieorid" - {
-      "must return None" in {
-        repository.get("eori that does not exist").futureValue must not be defined
-      }
+    "when there is no record for this eori it must return None" in {
+      repository.get("eori that does not exist").futureValue must not be defined
     }
 
   }
