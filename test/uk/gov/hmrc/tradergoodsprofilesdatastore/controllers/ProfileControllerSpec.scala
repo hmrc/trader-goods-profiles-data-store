@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
+import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.OptionValues.convertOptionToValuable
@@ -28,6 +29,8 @@ import play.api.inject
 import play.api.libs.json.Json
 import play.api.test.Helpers._
 import play.api.test.{FakeHeaders, FakeRequest}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{ProfileRequest, ProfileResponse}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.ProfileRepository
 
@@ -35,7 +38,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
-  implicit val ec = ExecutionContext.global
+  implicit val ec: ExecutionContext = ExecutionContext.global
 
   val requestEori = "GB123456789099"
 
@@ -69,12 +72,15 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
     "return 200 when valid data is posted" in {
 
       val mockProfileRepository = mock[ProfileRepository]
-
       when(mockProfileRepository.set(any(), any())) thenReturn Future.successful(true)
+
+      val mockRouterConnector = mock[RouterConnector]
+      when(mockRouterConnector.submitTraderProfile(any(), any())(any())) thenReturn Future.successful(Done)
 
       val application = baseApplicationBuilder
         .overrides(
-          inject.bind[ProfileRepository].toInstance(mockProfileRepository)
+          inject.bind[ProfileRepository].toInstance(mockProfileRepository),
+          inject.bind[RouterConnector].toInstance(mockRouterConnector)
         )
         .build()
 
@@ -87,8 +93,10 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
     "return 400 when invalid data is posted" in {
 
       val mockProfileRepository = mock[ProfileRepository]
-
       when(mockProfileRepository.set(any(), any())) thenReturn Future.successful(true)
+
+      val mockRouterConnector = mock[RouterConnector]
+      when(mockRouterConnector.submitTraderProfile(any(), any())(any())) thenReturn Future.successful(Done)
 
       val application = baseApplicationBuilder
         .overrides(
