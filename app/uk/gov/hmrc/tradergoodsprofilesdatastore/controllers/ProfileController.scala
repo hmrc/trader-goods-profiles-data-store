@@ -16,9 +16,11 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
+import org.apache.pekko.Done
 import play.api.libs.json.{JsObject, JsString, JsSuccess, JsValue, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.ProfileRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.ProfileRepository
 
@@ -28,12 +30,15 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton()
 class ProfileController @Inject() (
   profileRepository: ProfileRepository,
-  cc: ControllerComponents
+  cc: ControllerComponents,
+  routerConnector: RouterConnector
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
   def setProfile(eori: String): Action[ProfileRequest] = Action.async(parse.json[ProfileRequest]) { implicit request =>
-    profileRepository.set(eori, request.body).map(_ => Ok)
+    routerConnector.submitTraderProfile(request.body, eori).flatMap { case Done =>
+      profileRepository.set(eori, request.body).map(_ => Ok)
+    }
   }
 
   def getProfile(eori: String): Action[AnyContent] = Action.async {
