@@ -31,7 +31,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
 
   private val baseUrl: Service               = config.get[Service]("microservice.services.trader-goods-profiles-router")
   private def traderProfileUrl(eori: String) =
-    url"$baseUrl/trader-goods-profiles-router/customs/traders/goods-profiles/$eori"
+    url"$baseUrl/trader-goods-profiles-router/customs/traders/good-profiles/$eori"
 
   def submitTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
