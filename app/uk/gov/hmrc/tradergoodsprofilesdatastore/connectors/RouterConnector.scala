@@ -1,7 +1,7 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 
-import config.Service
-import models.TraderProfile
+import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.ProfileRequest
 import org.apache.pekko.Done
 import play.api.Configuration
 import play.api.libs.json.Json
@@ -17,7 +17,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   private def traderProfileUrl(eori: String) =
     url"$baseUrl/trader-goods-profiles-router/customs/traders/good-profiles/$eori"
 
-  def submitTraderProfile(traderProfile: TraderProfile, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
+  def submitTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
       .put(traderProfileUrl(eori))
       .withBody(Json.toJson(traderProfile))
