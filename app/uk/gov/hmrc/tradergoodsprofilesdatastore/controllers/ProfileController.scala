@@ -36,9 +36,8 @@ class ProfileController @Inject() (
     extends BackendController(cc) {
 
   def setProfile(eori: String): Action[ProfileRequest] = Action.async(parse.json[ProfileRequest]) { implicit request =>
-    routerConnector.submitTraderProfile(request.body, eori).flatMap {
-      case Done =>
-        profileRepository.set(eori, request.body).map(_ => Ok)
+    routerConnector.submitTraderProfile(request.body, eori).flatMap { case Done =>
+      profileRepository.set(eori, request.body).map(_ => Ok)
     }
   }
 
