@@ -51,7 +51,7 @@ class RouterConnectorSpec
       val traderProfile = ProfileRequest(testEori, "1", Some("2"), None)
 
       wireMockServer.stubFor(
-        put(urlEqualTo(s"/trader-goods-profiles-router/customs/traders/good-profiles/$testEori"))
+        put(urlEqualTo(s"/trader-goods-profiles-router/customs/traders/goods-profiles/$testEori"))
           .willReturn(ok())
       )
 
@@ -63,7 +63,7 @@ class RouterConnectorSpec
       val traderProfile = ProfileRequest(testEori, "1", Some("2"), None)
 
       wireMockServer.stubFor(
-        put(urlEqualTo(s"/trader-goods-profiles-router/customs/traders/good-profiles/$testEori"))
+        put(urlEqualTo(s"/trader-goods-profiles-router/customs/traders/goods-profiles/$testEori"))
           .willReturn(serverError())
       )
 
