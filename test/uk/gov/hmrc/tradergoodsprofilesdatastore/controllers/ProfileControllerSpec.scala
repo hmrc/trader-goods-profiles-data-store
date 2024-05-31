@@ -48,7 +48,6 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
     niphlNumber = Some("6 S12345")
   )
 
-  private val baseUrl                = "/trader-goods-profiles-data-store"
   private val setUrl                 = routes.ProfileController.setProfile(requestEori).url
   private val getUrl                 = routes.ProfileController.getProfile(requestEori).url
   private val doesExistUrl           = routes.ProfileController.doesProfileExist(requestEori).url
