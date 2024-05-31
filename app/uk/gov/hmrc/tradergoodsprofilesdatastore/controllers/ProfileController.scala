@@ -17,31 +17,34 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.apache.pekko.Done
-import play.api.libs.json.{JsObject, JsString, JsSuccess, JsValue, Json}
+import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.ProfileRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.ProfileRepository
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 @Singleton()
 class ProfileController @Inject() (
   profileRepository: ProfileRepository,
   cc: ControllerComponents,
-  routerConnector: RouterConnector
+  routerConnector: RouterConnector,
+  identify: IdentifierAction
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
-  def setProfile(eori: String): Action[ProfileRequest] = Action.async(parse.json[ProfileRequest]) { implicit request =>
-    routerConnector.submitTraderProfile(request.body, eori).flatMap { case Done =>
-      profileRepository.set(eori, request.body).map(_ => Ok)
-    }
+  def setProfile(eori: String): Action[ProfileRequest] = identify.async(parse.json[ProfileRequest]) {
+    implicit request =>
+      routerConnector.submitTraderProfile(request.body, eori).flatMap { case Done =>
+        profileRepository.set(eori, request.body).map(_ => Ok)
+      }
   }
 
-  def getProfile(eori: String): Action[AnyContent] = Action.async {
+  def getProfile(eori: String): Action[AnyContent] = identify.async {
     profileRepository
       .get(eori)
       .map {
@@ -50,7 +53,7 @@ class ProfileController @Inject() (
       }
   }
 
-  def doesProfileExist(eori: String): Action[AnyContent] = Action.async {
+  def doesProfileExist(eori: String): Action[AnyContent] = identify.async {
     profileRepository
       .get(eori)
       .map {

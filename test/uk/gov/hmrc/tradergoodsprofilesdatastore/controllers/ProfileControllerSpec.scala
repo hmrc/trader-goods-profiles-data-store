@@ -19,24 +19,23 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
-import org.scalatest.OptionValues.convertOptionToValuable
-import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpec
-import org.scalatestplus.mockito.MockitoSugar.mock
+import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
 import play.api.inject
 import play.api.libs.json.Json
 import play.api.test.Helpers._
 import play.api.test.{FakeHeaders, FakeRequest}
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeIdentifierAction
+import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{ProfileRequest, ProfileResponse}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.ProfileRepository
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class ProfileControllerSpec extends AnyWordSpec with Matchers {
+class ProfileControllerSpec extends SpecBase with MockitoSugar {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
 
@@ -67,7 +66,7 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
     niphlNumber = Some("123456")
   )
 
-  s"POST $setUrl" should {
+  s"POST $setUrl" - {
 
     "return 200 when valid data is posted" in {
 
@@ -77,7 +76,7 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
       val mockRouterConnector = mock[RouterConnector]
       when(mockRouterConnector.submitTraderProfile(any(), any())(any())) thenReturn Future.successful(Done)
 
-      val application = baseApplicationBuilder
+      val application = applicationBuilder()
         .overrides(
           inject.bind[ProfileRepository].toInstance(mockProfileRepository),
           inject.bind[RouterConnector].toInstance(mockRouterConnector)
@@ -98,9 +97,10 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
       val mockRouterConnector = mock[RouterConnector]
       when(mockRouterConnector.submitTraderProfile(any(), any())(any())) thenReturn Future.successful(Done)
 
-      val application = baseApplicationBuilder
+      val application = applicationBuilder()
         .overrides(
-          inject.bind[ProfileRepository].toInstance(mockProfileRepository)
+          inject.bind[ProfileRepository].toInstance(mockProfileRepository),
+          inject.bind[IdentifierAction].to[FakeIdentifierAction]
         )
         .build()
 
@@ -112,7 +112,7 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
   }
 
-  s"GET $getUrl" should {
+  s"GET $getUrl" - {
 
     "return 200 when data is found" in {
 
@@ -120,7 +120,7 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
       when(mockProfileRepository.get(any())) thenReturn Future.successful(Some(expectedProfileResponse))
 
-      val application = baseApplicationBuilder
+      val application = applicationBuilder()
         .overrides(
           inject.bind[ProfileRepository].toInstance(mockProfileRepository)
         )
@@ -140,7 +140,7 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
       when(mockProfileRepository.get(any())) thenReturn Future.successful(None)
 
-      val application = baseApplicationBuilder
+      val application = applicationBuilder()
         .overrides(
           inject.bind[ProfileRepository].toInstance(mockProfileRepository)
         )
@@ -154,7 +154,7 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
   }
 
-  s"HEAD $doesExistUrl" should {
+  s"HEAD $doesExistUrl" - {
 
     "return 200 when profile exist" in {
 
@@ -162,7 +162,7 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
       when(mockProfileRepository.get(any())) thenReturn Future.successful(Some(expectedProfileResponse))
 
-      val application = baseApplicationBuilder
+      val application = applicationBuilder()
         .overrides(
           inject.bind[ProfileRepository].toInstance(mockProfileRepository)
         )
@@ -180,7 +180,7 @@ class ProfileControllerSpec extends AnyWordSpec with Matchers {
 
       when(mockProfileRepository.get(any())) thenReturn Future.successful(None)
 
-      val application = baseApplicationBuilder
+      val application = applicationBuilder()
         .overrides(
           inject.bind[ProfileRepository].toInstance(mockProfileRepository)
         )

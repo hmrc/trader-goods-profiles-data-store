@@ -16,11 +16,14 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.config
 
-import com.google.inject.AbstractModule
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{AuthenticatedIdentifierAction, IdentifierAction}
+import com.google.inject.{Inject, Singleton}
+import play.api.Configuration
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.EnrolmentConfig
+@Singleton
+class DataStoreAppConfig @Inject() (configuration: Configuration) {
 
-class Module extends AbstractModule {
+  val host: String = configuration.get[String]("host")
 
-  override def configure(): Unit =
-    bind(classOf[IdentifierAction]).to(classOf[AuthenticatedIdentifierAction]).asEagerSingleton()
+  val tgpEnrolmentIdentifier: EnrolmentConfig = configuration.get[EnrolmentConfig]("enrolment-config")
+
 }
