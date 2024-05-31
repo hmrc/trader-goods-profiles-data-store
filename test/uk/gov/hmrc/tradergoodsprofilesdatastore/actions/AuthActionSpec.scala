@@ -100,6 +100,107 @@ class AuthActionSpec extends SpecBase {
         status(result) mustBe UNAUTHORIZED
       }
     }
+
+    "must return unauthorized when the API request has insufficient confidence level" in {
+
+      val application = applicationBuilder().build()
+
+      running(application) {
+        val bodyParsers = application.injector.instanceOf[BodyParsers.Default]
+        val appConfig   = application.injector.instanceOf[DataStoreAppConfig]
+
+        val authAction = new AuthenticatedIdentifierAction(
+          new FakeFailingAuthConnector(new InsufficientConfidenceLevel),
+          appConfig,
+          bodyParsers
+        )
+        val controller = new Harness(authAction)
+        val result     = controller.onPageLoad()(FakeRequest())
+
+        status(result) mustBe UNAUTHORIZED
+      }
+    }
+
+    "must return unauthorized when the API request has unsupported auth provider" in {
+
+      val application = applicationBuilder().build()
+
+      running(application) {
+        val bodyParsers = application.injector.instanceOf[BodyParsers.Default]
+        val appConfig   = application.injector.instanceOf[DataStoreAppConfig]
+
+        val authAction = new AuthenticatedIdentifierAction(
+          new FakeFailingAuthConnector(new UnsupportedAuthProvider),
+          appConfig,
+          bodyParsers
+        )
+        val controller = new Harness(authAction)
+        val result     = controller.onPageLoad()(FakeRequest())
+
+        status(result) mustBe UNAUTHORIZED
+      }
+    }
+
+    "must return unauthorized when the API request has unsupported affinity group" in {
+
+      val application = applicationBuilder().build()
+
+      running(application) {
+        val bodyParsers = application.injector.instanceOf[BodyParsers.Default]
+        val appConfig   = application.injector.instanceOf[DataStoreAppConfig]
+
+        val authAction = new AuthenticatedIdentifierAction(
+          new FakeFailingAuthConnector(new UnsupportedAffinityGroup),
+          appConfig,
+          bodyParsers
+        )
+        val controller = new Harness(authAction)
+        val result     = controller.onPageLoad()(FakeRequest())
+
+        status(result) mustBe UNAUTHORIZED
+      }
+    }
+
+    "must return unauthorized when the API request has unsupported credential role" in {
+
+      val application = applicationBuilder().build()
+
+      running(application) {
+        val bodyParsers = application.injector.instanceOf[BodyParsers.Default]
+        val appConfig   = application.injector.instanceOf[DataStoreAppConfig]
+
+        val authAction = new AuthenticatedIdentifierAction(
+          new FakeFailingAuthConnector(new UnsupportedCredentialRole),
+          appConfig,
+          bodyParsers
+        )
+        val controller = new Harness(authAction)
+        val result     = controller.onPageLoad()(FakeRequest())
+
+        status(result) mustBe UNAUTHORIZED
+      }
+    }
+
+    "must return unauthorized when the API request has empty auth" in {
+
+      val application = applicationBuilder().build()
+
+      running(application) {
+        val bodyParsers = application.injector.instanceOf[BodyParsers.Default]
+        val appConfig   = application.injector.instanceOf[DataStoreAppConfig]
+
+        val authAction = new AuthenticatedIdentifierAction(
+          new FakeSuccessfulAuthConnector(""),
+          appConfig,
+          bodyParsers
+        )
+        val controller = new Harness(authAction)
+        val result     = controller.onPageLoad()(FakeRequest())
+
+        status(result) mustBe UNAUTHORIZED
+      }
+    }
+
   }
 
 }

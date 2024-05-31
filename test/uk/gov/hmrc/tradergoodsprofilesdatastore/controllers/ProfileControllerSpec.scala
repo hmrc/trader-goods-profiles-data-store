@@ -49,9 +49,9 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
   )
 
   private val baseUrl                = "/trader-goods-profiles-data-store"
-  private val setUrl                 = baseUrl + routes.ProfileController.setProfile(requestEori).url
-  private val getUrl                 = baseUrl + routes.ProfileController.getProfile(requestEori).url
-  private val doesExistUrl           = baseUrl + routes.ProfileController.doesProfileExist(requestEori).url
+  private val setUrl                 = routes.ProfileController.setProfile(requestEori).url
+  private val getUrl                 = routes.ProfileController.getProfile(requestEori).url
+  private val doesExistUrl           = routes.ProfileController.doesProfileExist(requestEori).url
   private val validFakePostRequest   =
     FakeRequest("POST", setUrl, FakeHeaders(Seq(CONTENT_TYPE -> JSON)), Json.toJson(profileRequest))
   private val invalidFakePostRequest = FakeRequest("POST", setUrl, FakeHeaders(Seq(CONTENT_TYPE -> JSON)), "{}")
