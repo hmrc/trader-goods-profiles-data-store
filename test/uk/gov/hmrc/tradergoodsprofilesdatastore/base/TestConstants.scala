@@ -14,13 +14,9 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.tradergoodsprofilesdatastore.config
+package uk.gov.hmrc.tradergoodsprofilesdatastore.base
 
-import com.google.inject.AbstractModule
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{AuthenticatedIdentifierAction, IdentifierAction}
-
-class Module extends AbstractModule {
-
-  override def configure(): Unit =
-    bind(classOf[IdentifierAction]).to(classOf[AuthenticatedIdentifierAction]).asEagerSingleton()
+object TestConstants {
+  val testEori: String      = "eori"
+  val userAnswersId: String = "id"
 }

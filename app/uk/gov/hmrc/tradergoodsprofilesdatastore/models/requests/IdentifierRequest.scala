@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.tradergoodsprofilesdatastore.config
+package uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests
 
-import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+import play.api.mvc.{Request, WrappedRequest}
+import uk.gov.hmrc.auth.core.AffinityGroup
 
-@Singleton
-class AppConfig @Inject() (config: Configuration) {
-
-  val appName: String = config.get[String]("appName")
-}
+case class IdentifierRequest[A](request: Request[A], userId: String, eori: String, affinityGroup: AffinityGroup)
+    extends WrappedRequest[A](request)

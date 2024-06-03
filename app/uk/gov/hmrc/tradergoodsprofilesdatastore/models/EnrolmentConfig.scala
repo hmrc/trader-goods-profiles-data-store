@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.tradergoodsprofilesdatastore.config
+package uk.gov.hmrc.tradergoodsprofilesdatastore.models
 
-import com.google.inject.AbstractModule
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{AuthenticatedIdentifierAction, IdentifierAction}
+import play.api.{ConfigLoader, Configuration}
 
-class Module extends AbstractModule {
+case class EnrolmentConfig(key: String, identifier: String)
 
-  override def configure(): Unit =
-    bind(classOf[IdentifierAction]).to(classOf[AuthenticatedIdentifierAction]).asEagerSingleton()
+object EnrolmentConfig {
+
+  implicit lazy val configLoader: ConfigLoader[EnrolmentConfig] = ConfigLoader { config => prefix =>
+    val enrolmentConfig = Configuration(config).get[Configuration](prefix)
+    val key             = enrolmentConfig.get[String]("enrolment-key")
+    val id              = enrolmentConfig.get[String]("enrolment-identifier")
+
+    EnrolmentConfig(key, id)
+  }
 }

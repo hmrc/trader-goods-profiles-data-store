@@ -1,3 +1,4 @@
+import scoverage.ScoverageKeys
 import uk.gov.hmrc.DefaultBuildSettings
 
 ThisBuild / majorVersion := 0
@@ -14,6 +15,10 @@ lazy val microservice = Project("trader-goods-profiles-data-store", file("."))
   )
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(CodeCoverageSettings.settings: _*)
+
+ScoverageKeys.coverageMinimumStmtTotal := 90
+ScoverageKeys.coverageFailOnMinimum := true
+ScoverageKeys.coverageHighlighting := true
 
 lazy val it = project
   .enablePlugins(PlayScala)
