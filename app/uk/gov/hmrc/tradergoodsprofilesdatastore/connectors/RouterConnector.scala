@@ -29,7 +29,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2)(implicit ec: ExecutionContext) {
 
-  private val baseUrl: Service               = config.get[Service]("microservice.services.trader-goods-profiles-router")
+  private val baseUrl: Service               = config.get[Service]("microservice.services.trader-goods-profiles-stubs")
   private def traderProfileUrl(eori: String) =
     url"$baseUrl/trader-goods-profiles-router/customs/traders/goods-profiles/$eori"
 
