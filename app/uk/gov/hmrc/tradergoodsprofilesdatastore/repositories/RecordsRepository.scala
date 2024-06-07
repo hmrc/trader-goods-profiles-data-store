@@ -35,8 +35,8 @@ class RecordsRepository @Inject() (
       domainFormat = GoodsItemRecords.goodsItemRecordsFormat,
       indexes = Seq(
         IndexModel(
-          Indexes.ascending("eori"),
-          IndexOptions().name("eori")
+          Indexes.ascending("recordId"),
+          IndexOptions().name("recordId")
         )
       )
     ) {
