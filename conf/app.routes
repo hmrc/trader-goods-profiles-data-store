@@ -2,3 +2,4 @@
 POST       /traders/:eori/profile                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.setProfile(eori: String)
 GET        /customs/traders/goods-profiles/:eori    uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.getProfile(eori: String)
 HEAD       /traders/:eori/profile                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.doesProfileExist(eori: String)
+GET        /traders/:eori/records                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.GetRecordsController.getRecords(eori: String, lastUpdatedDate:Option[String], page: Option[Int], size: Option[Int])

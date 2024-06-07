@@ -29,9 +29,18 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2)(implicit ec: ExecutionContext) {
 
-  private val baseUrl: Service               = config.get[Service]("microservice.services.trader-goods-profiles-stubs")
+  private val baseUrlStubs: Service          = config.get[Service]("microservice.services.trader-goods-profiles-stubs")
+  private val baseUrlRouter: Service         = config.get[Service]("microservice.services.trader-goods-profiles-router")
   private def traderProfileUrl(eori: String) =
-    url"$baseUrl/trader-goods-profiles-router/customs/traders/goods-profiles/$eori"
+    url"$baseUrlStubs/trader-goods-profiles-router/customs/traders/goods-profiles/$eori"
+
+  private def tgpRecordsUrl(
+    eori: String,
+    lastUpdatedDate: Option[String] = None,
+    page: Option[Int] = None,
+    size: Option[Int] = None
+  ) =
+    url"$baseUrlRouter/trader-goods-profiles-router/$eori?lastUpdatedDate=$lastUpdatedDate&page=$page&size=$size"
 
   def submitTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
@@ -39,4 +48,14 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
       .withBody(Json.toJson(traderProfile))
       .execute[HttpResponse]
       .map(_ => Done)
+
+  def getRecords(
+    eori: String,
+    lastUpdatedDate: Option[String] = None,
+    page: Option[Int] = None,
+    size: Option[Int] = None
+  )(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    httpClient
+      .get(tgpRecordsUrl(eori, lastUpdatedDate, page, size))
+      .execute[HttpResponse]
 }

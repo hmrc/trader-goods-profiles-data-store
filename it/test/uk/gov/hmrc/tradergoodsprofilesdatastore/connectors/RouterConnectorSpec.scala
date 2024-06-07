@@ -26,8 +26,10 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
 
+import java.time.Instant
+
 class RouterConnectorSpec
-  extends AnyFreeSpec
+    extends AnyFreeSpec
     with Matchers
     with WireMockSupport
     with ScalaFutures
@@ -35,6 +37,7 @@ class RouterConnectorSpec
 
   private lazy val app: Application =
     new GuiceApplicationBuilder()
+      .configure("microservice.services.trader-goods-profiles-stubs.port" -> wireMockPort)
       .configure("microservice.services.trader-goods-profiles-router.port" -> wireMockPort)
       .build()
 
@@ -42,7 +45,11 @@ class RouterConnectorSpec
 
   implicit private lazy val hc: HeaderCarrier = HeaderCarrier()
 
-  private val testEori = "1122334455"
+  private val testEori        = "1122334455"
+  private val lastUpdatedDate = Instant.now().toString
+  private val eori            = "GB123456789001"
+  private val pagesize        = 1
+  private val page            = 1
 
   ".submitTraderProfile" - {
 
@@ -68,6 +75,35 @@ class RouterConnectorSpec
       )
 
       connector.submitTraderProfile(traderProfile, testEori).failed.futureValue
+    }
+  }
+
+  ".getTGPRecords" - {
+
+    "must get records from router" in {
+
+      wireMockServer.stubFor(
+        get(
+          urlEqualTo(
+            s"/trader-goods-profiles-router/$eori?lastUpdatedDate=$lastUpdatedDate&page=$page&size=$pagesize"
+          )
+        )
+          .willReturn(ok())
+      )
+
+      connector.getRecords(eori, Some(lastUpdatedDate), Some(page), Some(pagesize)).futureValue
+    }
+
+    "must return a failed future when the server returns an error" in {
+
+      wireMockServer.stubFor(
+        get(
+          urlEqualTo(s"/trader-goods-profiles-router/$eori?lastUpdatedDate=$lastUpdatedDate&page=$page&size=$pagesize")
+        )
+          .willReturn(serverError())
+      )
+
+      connector.getRecords(eori, Some(lastUpdatedDate), Some(page), Some(pagesize)).failed.futureValue
     }
   }
 }
