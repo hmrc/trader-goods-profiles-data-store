@@ -24,7 +24,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GoodsRecord}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GoodsItemRecords}
 
 import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -32,7 +32,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class RecordsRepositorySpec
     extends AnyFreeSpec
     with Matchers
-    with PlayMongoRepositorySupport[GoodsRecord]
+    with PlayMongoRepositorySupport[GoodsItemRecords]
     with ScalaFutures
     with IntegrationPatience
     with OptionValues
@@ -56,7 +56,7 @@ class RecordsRepositorySpec
     primaryCategory = Some(1),
     condition = Some(sampleCondition)
   )
-  val sampleGoodsItemRecords: GoodsRecord = GoodsRecord(
+  val sampleGoodsItemRecords: GoodsItemRecords = GoodsItemRecords(
     eori = "GB123456789001",
     actorId = "GB098765432112",
     recordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f",
