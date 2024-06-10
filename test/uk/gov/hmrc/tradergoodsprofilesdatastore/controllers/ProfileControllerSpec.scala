@@ -30,7 +30,8 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeIdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{ProfileRequest, ProfileResponse}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.ProfileResponse
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.ProfileRepository
 
 import scala.concurrent.{ExecutionContext, Future}

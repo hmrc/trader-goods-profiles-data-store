@@ -14,27 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.tradergoodsprofilesdatastore.models
+package uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests
 
-import play.api.libs.json.{Json, OFormat, OWrites, Reads, __}
+import play.api.libs.json.{Json, OFormat}
 
-case class ProfileResponse(
-  eori: String,
+case class ProfileRequest(
   actorId: String,
   ukimsNumber: String,
   nirmsNumber: Option[String],
   niphlNumber: Option[String]
 )
 
-object ProfileResponse {
-  implicit val format: OFormat[ProfileResponse] = Json.format[ProfileResponse]
-
-  def fromRequest(eori: String, profileRequest: ProfileRequest): ProfileResponse =
-    ProfileResponse(
-      eori = eori,
-      actorId = profileRequest.actorId,
-      ukimsNumber = profileRequest.ukimsNumber,
-      nirmsNumber = profileRequest.nirmsNumber,
-      niphlNumber = profileRequest.niphlNumber
-    )
+object ProfileRequest {
+  implicit val format: OFormat[ProfileRequest] = Json.format[ProfileRequest]
 }

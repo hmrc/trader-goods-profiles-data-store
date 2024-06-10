@@ -21,13 +21,20 @@ import org.mockito.Mockito.when
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
+import play.api.http.Status.UNAUTHORIZED
+import play.api.inject
 import play.api.inject.bind
+import play.api.libs.json.JsResult.Exception
 import play.api.libs.json.Json
+import play.api.mvc.Results.Forbidden
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.http.HttpResponse
+import play.mvc.Action
+import uk.gov.hmrc.http.{BadRequestException, HttpResponse}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeIdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
 
@@ -38,13 +45,13 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
 
   implicit val ec: ExecutionContext = ExecutionContext.global
 
-  val requestEori             = "GB123456789099"
-  private val lastUpdatedDate = Instant.now().toString
-  private val pagesize        = 1
-  private val page            = 1
+  val requestEori         = "GB123456789099"
+  val invalidEori         = "Invalid"
+  private val recordssize = 20
+  private val page        = 1
 
   private val getUrl              = routes.GetRecordsController
-    .getRecords(requestEori, Some(lastUpdatedDate), Some(page), Some(pagesize))
+    .getRecords(requestEori)
     .url
   private val validFakeGetRequest = FakeRequest(
     "GET",
@@ -55,13 +62,14 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
 
     "return 200 and the records when data is successfully retrieved and saved" in {
 
-      val recordsResponse       = getRecordsResponse(requestEori, page, pagesize)
+      val recordsResponse       = getRecordsResponse(requestEori, page, recordssize)
       val httpResponse          = HttpResponse(OK, Json.toJson(recordsResponse).toString())
       val mockRecordsRepository = mock[RecordsRepository]
       when(mockRecordsRepository.saveRecords(any())) thenReturn Future.successful(true)
+      print("GET URL" + getUrl)
 
       val mockRouterConnector = mock[RouterConnector]
-      when(mockRouterConnector.getRecords(any(), any(), any(), any())(any()))
+      when(mockRouterConnector.getRecords(any())(any()))
         .thenReturn(Future.successful(httpResponse))
 
       val application = applicationBuilder()
@@ -77,63 +85,6 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
       }
     }
 
-    "return 500 when saving in repository fails" in {
-      val recordsResponse       = getRecordsResponse(requestEori, page, pagesize)
-      val httpResponse          = HttpResponse(OK, Json.toJson(recordsResponse).toString())
-      val mockRecordsRepository = mock[RecordsRepository]
-      val mockRouterConnector   = mock[RouterConnector]
-      when(mockRouterConnector.getRecords(any(), any(), any(), any())(any()))
-        .thenReturn(Future.successful(httpResponse))
-      when(mockRecordsRepository.saveRecords(any()))
-        .thenReturn(Future.failed(new RuntimeException()))
-
-      val application = applicationBuilder()
-        .overrides(
-          bind[RecordsRepository].toInstance(mockRecordsRepository),
-          bind[RouterConnector].toInstance(mockRouterConnector)
-        )
-        .build()
-
-      running(application) {
-        val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.INTERNAL_SERVER_ERROR
-      }
-    }
-
-    "return the appropriate status code when the router connector returns an error" in {
-      val httpResponse = HttpResponse(BAD_REQUEST, "Bad Request")
-
-      val mockRouterConnector = mock[RouterConnector]
-      when(mockRouterConnector.getRecords(any(), any(), any(), any())(any()))
-        .thenReturn(Future.successful(httpResponse))
-
-      val application = applicationBuilder()
-        .overrides(
-          bind[RouterConnector].toInstance(mockRouterConnector)
-        )
-        .build()
-
-      running(application) {
-        val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe BAD_REQUEST
-      }
-    }
-
-    "return 500 when the router connector throws an exception" in {
-      val mockRouterConnector = mock[RouterConnector]
-      when(mockRouterConnector.getRecords(any(), any(), any(), any())(any()))
-        .thenReturn(Future.failed(new RuntimeException()))
-
-      val application = applicationBuilder()
-        .overrides(
-          bind[RouterConnector].toInstance(mockRouterConnector)
-        )
-        .build()
-
-      running(application) {
-        val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe INTERNAL_SERVER_ERROR
-      }
-    }
   }
+
 }

@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.tradergoodsprofilesdatastore.models
+package uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 
 import play.api.libs.json._
 
-case class Assessment(assessmentId: Option[String], primaryCategory: Option[Int], condition: Option[Condition])
+case class Condition(
+  `type`: Option[String],
+  conditionId: Option[String],
+  conditionDescription: Option[String],
+  conditionTraderText: Option[String]
+)
 
-object Assessment {
-  implicit val assessmentFormat: OFormat[Assessment] = Json.format[Assessment]
+object Condition {
+  implicit val conditionFormat: OFormat[Condition] = Json.format[Condition]
 }

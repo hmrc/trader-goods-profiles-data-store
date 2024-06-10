@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.tradergoodsprofilesdatastore.models
+package uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json._
 
-case class Pagination(
-  totalRecords: Int,
-  currentPage: Int,
-  totalPages: Int,
-  nextPage: Option[Int],
-  prevPage: Option[Int]
-)
+case class Assessment(assessmentId: Option[String], primaryCategory: Option[Int], condition: Option[Condition])
 
-object Pagination {
-  implicit val format: OFormat[Pagination] = Json.format[Pagination]
+object Assessment {
+  implicit val assessmentFormat: OFormat[Assessment] = Json.format[Assessment]
 }

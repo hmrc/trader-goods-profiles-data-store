@@ -17,7 +17,6 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.ProfileRequest
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -25,6 +24,7 @@ import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
 
 import java.time.Instant
 
@@ -46,9 +46,9 @@ class RouterConnectorSpec
   implicit private lazy val hc: HeaderCarrier = HeaderCarrier()
 
   private val testEori        = "1122334455"
-  private val lastUpdatedDate = Instant.now().toString
+  private val lastUpdatedDate = "2021-12-17T09:30:47.456Z"
   private val eori            = "GB123456789001"
-  private val pagesize        = 1
+  private val pagesize        = 20
   private val page            = 1
 
   ".submitTraderProfile" - {
@@ -91,7 +91,7 @@ class RouterConnectorSpec
           .willReturn(ok())
       )
 
-      connector.getRecords(eori, Some(lastUpdatedDate), Some(page), Some(pagesize)).futureValue
+      connector.getRecords(eori).futureValue
     }
 
     "must return a failed future when the server returns an error" in {
@@ -103,7 +103,7 @@ class RouterConnectorSpec
           .willReturn(serverError())
       )
 
-      connector.getRecords(eori, Some(lastUpdatedDate), Some(page), Some(pagesize)).failed.futureValue
+      connector.getRecords(eori).failed.futureValue
     }
   }
 }

@@ -22,8 +22,9 @@ import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{ProfileRequest, ProfileResponse}
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.ProfileResponse
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

@@ -16,7 +16,9 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.utils
 
+import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models._
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GetRecordsResponse, GoodsRecord, Pagination}
 
 import java.time.Instant
 import scala.language.postfixOps
@@ -35,14 +37,14 @@ trait GetRecordsResponseUtil {
     val records = if (effectiveSize > 0) {
       (1 to totalRecords).map(_ => getGoodsItemRecords(eori))
     } else {
-      Seq.empty[GoodsItemRecords]
+      Seq.empty[GoodsRecord]
     }
 
     val paginatedRecords = records.slice((page - 1) * size, (page - 1) * size + effectiveSize)
 
-    GetRecordsResponse(paginatedRecords, Pagination(totalRecords, page, 2, Some(0), Some(0)))
+    response.GetRecordsResponse(paginatedRecords, Pagination(totalRecords, page, 2, Some(0), Some(0)))
   }
-  def getGoodsItemRecords(eori: String) = GoodsItemRecords(
+  def getGoodsItemRecords(eori: String) = GoodsRecord(
     eori,
     "GB098765432112",
     "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f",

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.tradergoodsprofilesdatastore.models
+package uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 
 import play.api.libs.json._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.ResponseModelSupport.removeNulls
 
 import java.time.Instant
-case class GoodsItemRecords(
+case class GoodsRecord(
   eori: String,
   actorId: String,
   recordId: String,
@@ -48,9 +48,9 @@ case class GoodsItemRecords(
   updatedDateTime: Instant
 )
 
-object GoodsItemRecords {
+object GoodsRecord {
 
-  implicit val goodsItemRecordsWrites: Writes[GoodsItemRecords] = (goodsItemRecords: GoodsItemRecords) =>
+  implicit val goodsItemRecordsWrites: Writes[GoodsRecord] = (goodsItemRecords: GoodsRecord) =>
     removeNulls(
       Json.obj(
         "eori"                     -> goodsItemRecords.eori,
@@ -81,9 +81,9 @@ object GoodsItemRecords {
       )
     )
 
-  implicit val goodsItemRecordsReads: Reads[GoodsItemRecords] = (json: JsValue) =>
+  implicit val goodsItemRecordsReads: Reads[GoodsRecord] = (json: JsValue) =>
     JsSuccess(
-      GoodsItemRecords(
+      GoodsRecord(
         (json \ "eori").as[String],
         (json \ "actorId").as[String],
         (json \ "recordId").as[String],
@@ -112,7 +112,7 @@ object GoodsItemRecords {
       )
     )
 
-  implicit val goodsItemRecordsFormat: Format[GoodsItemRecords] =
+  implicit val goodsItemRecordsFormat: Format[GoodsRecord] =
     Format(goodsItemRecordsReads, goodsItemRecordsWrites)
 
 }

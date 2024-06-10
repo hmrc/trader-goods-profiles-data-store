@@ -16,18 +16,17 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
-import play.api.libs.Files.logger
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.GetRecordsResponse
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 class GetRecordsController @Inject() (
   recordsRepository: RecordsRepository,
@@ -38,34 +37,19 @@ class GetRecordsController @Inject() (
     extends BackendController(cc) {
 
   def getRecords(
-    eori: String,
-    lastUpdatedDate: Option[String],
-    page: Option[Int],
-    size: Option[Int]
+    eori: String
   ): Action[AnyContent] = identify.async { implicit request =>
     implicit val hc: HeaderCarrier = HeaderCarrier().withExtraHeaders("X-Client-ID" -> "TGP-Frontend")
 
-    routerConnector
-      .getRecords(eori, lastUpdatedDate, page, size)(hc)
-      .flatMap {
-        case httpResponse if httpResponse.status == OK =>
-          val recordsResponse = httpResponse.json.as[GetRecordsResponse]
-          recordsRepository
-            .saveRecords(recordsResponse.goodsItemRecords)
-            .map { _ =>
-              Ok(Json.toJson(recordsResponse))
-            }
-            .recover { case ex: Throwable =>
-              InternalServerError(s"Error saving records: ${ex.getMessage}")
-            }
+    val result = for {
+      httpResponse   <- routerConnector.getRecords(eori)(hc)
+      recordsResponse = httpResponse.json.as[GetRecordsResponse]
+      _              <- recordsRepository.saveRecords(recordsResponse.goodsItemRecords)
+    } yield Ok(Json.toJson(recordsResponse))
 
-        case httpResponse =>
-          Future.successful(Status(httpResponse.status)(httpResponse.body))
-      }
-      .recover { case exception =>
-        logger.error(s"Error fetching records: ${exception.getMessage}")
-        InternalServerError(s"Error fetching records: ${exception.getMessage}")
-      }
+    result.recover { case exception =>
+      throw exception
+    }
   }
 
 }

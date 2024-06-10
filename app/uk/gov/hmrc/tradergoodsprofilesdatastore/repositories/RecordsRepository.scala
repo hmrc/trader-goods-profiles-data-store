@@ -20,7 +20,7 @@ import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.GoodsItemRecords
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GoodsRecord
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -29,10 +29,10 @@ import scala.concurrent.{ExecutionContext, Future}
 class RecordsRepository @Inject() (
   mongoComponent: MongoComponent
 )(implicit ec: ExecutionContext)
-    extends PlayMongoRepository[GoodsItemRecords](
+    extends PlayMongoRepository[GoodsRecord](
       collectionName = "goodsItemRecords",
       mongoComponent = mongoComponent,
-      domainFormat = GoodsItemRecords.goodsItemRecordsFormat,
+      domainFormat = GoodsRecord.goodsItemRecordsFormat,
       indexes = Seq(
         IndexModel(
           Indexes.ascending("recordId"),
@@ -43,7 +43,7 @@ class RecordsRepository @Inject() (
 
   private def byRecordId(recordId: String): Bson = Filters.equal("recordId", recordId)
 
-  def saveRecords(records: Seq[GoodsItemRecords]): Future[Boolean] =
+  def saveRecords(records: Seq[GoodsRecord]): Future[Boolean] =
     Future
       .sequence(records.map { record =>
         collection

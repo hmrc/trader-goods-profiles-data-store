@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.tradergoodsprofilesdatastore.models
+package uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 
 import play.api.libs.json._
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 
 case class GetRecordsResponse(
-  goodsItemRecords: Seq[GoodsItemRecords],
+  goodsItemRecords: Seq[GoodsRecord],
   pagination: Pagination
 )
 
 object GetRecordsResponse {
   implicit val recordsReads: Reads[GetRecordsResponse] = (json: JsValue) =>
     JsSuccess(
-      GetRecordsResponse(
-        (json \ "goodsItemRecords").as[Seq[GoodsItemRecords]],
+      response.GetRecordsResponse(
+        (json \ "goodsItemRecords").as[Seq[GoodsRecord]],
         (json \ "pagination").as[Pagination]
       )
     )
