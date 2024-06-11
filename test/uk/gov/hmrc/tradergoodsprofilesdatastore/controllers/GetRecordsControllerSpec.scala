@@ -21,20 +21,13 @@ import org.mockito.Mockito.when
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
-import play.api.http.Status.UNAUTHORIZED
-import play.api.inject
 import play.api.inject.bind
-import play.api.libs.json.JsResult.Exception
 import play.api.libs.json.Json
-import play.api.mvc.Results.Forbidden
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import play.mvc.Action
-import uk.gov.hmrc.http.{BadRequestException, HttpResponse}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeIdentifierAction
+import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
 
@@ -45,13 +38,13 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
 
   implicit val ec: ExecutionContext = ExecutionContext.global
 
-  val requestEori         = "GB123456789099"
-  val invalidEori         = "Invalid"
-  private val recordssize = 20
-  private val page        = 1
+  val requestEori             = "GB123456789099"
+  private val lastUpdatedDate = Instant.now().toString
+  private val recordssize     = 20
+  private val page            = 1
 
   private val getUrl              = routes.GetRecordsController
-    .getRecords(requestEori)
+    .getRecords(requestEori, Some(lastUpdatedDate), Some(page), Some(recordssize))
     .url
   private val validFakeGetRequest = FakeRequest(
     "GET",
@@ -69,7 +62,7 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
       print("GET URL" + getUrl)
 
       val mockRouterConnector = mock[RouterConnector]
-      when(mockRouterConnector.getRecords(any())(any()))
+      when(mockRouterConnector.getRecords(any(), any(), any(), any())(any()))
         .thenReturn(Future.successful(httpResponse))
 
       val application = applicationBuilder()

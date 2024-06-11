@@ -29,10 +29,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2)(implicit ec: ExecutionContext) {
 
-  private val page: Int               = 1
-  private val size: Int               = 20
-  private val lastUpdatedDate: String = "2021-12-17T09:30:47.456Z"
-
   private val baseUrlStubs: Service          = config.get[Service]("microservice.services.trader-goods-profiles-stubs")
   private val baseUrlRouter: Service         = config.get[Service]("microservice.services.trader-goods-profiles-router")
   private def traderProfileUrl(eori: String) =
@@ -54,9 +50,12 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
       .map(_ => Done)
 
   def getRecords(
-    eori: String
+    eori: String,
+    lastUpdatedDate: Option[String] = None,
+    page: Option[Int] = None,
+    size: Option[Int] = None
   )(implicit hc: HeaderCarrier): Future[HttpResponse] =
     httpClient
-      .get(tgpRecordsUrl(eori, Some(lastUpdatedDate), Some(page), Some(size)))
+      .get(tgpRecordsUrl(eori, lastUpdatedDate, page, size))
       .execute[HttpResponse]
 }

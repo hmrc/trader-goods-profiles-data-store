@@ -20,8 +20,8 @@ import play.api.libs.json._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 
 case class GetRecordsResponse(
-                               goodsItemRecords: Seq[GoodsItemRecords],
-                               pagination: Pagination
+  goodsItemRecords: Seq[GoodsItemRecords],
+  pagination: Pagination
 )
 
 object GetRecordsResponse {

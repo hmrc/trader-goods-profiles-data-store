@@ -46,9 +46,9 @@ class RouterConnectorSpec
   implicit private lazy val hc: HeaderCarrier = HeaderCarrier()
 
   private val testEori        = "1122334455"
-  private val lastUpdatedDate = "2021-12-17T09:30:47.456Z"
+  private val lastUpdatedDate = Instant.now().toString
   private val eori            = "GB123456789001"
-  private val pagesize        = 20
+  private val recordsize      = 20
   private val page            = 1
 
   ".submitTraderProfile" - {
@@ -85,25 +85,27 @@ class RouterConnectorSpec
       wireMockServer.stubFor(
         get(
           urlEqualTo(
-            s"/trader-goods-profiles-router/$eori?lastUpdatedDate=$lastUpdatedDate&page=$page&size=$pagesize"
+            s"/trader-goods-profiles-router/$eori?lastUpdatedDate=$lastUpdatedDate&page=$page&size=$recordsize"
           )
         )
           .willReturn(ok())
       )
 
-      connector.getRecords(eori).futureValue
+      connector.getRecords(eori, Some(lastUpdatedDate), Some(page), Some(recordsize)).futureValue
     }
 
     "must return a failed future when the server returns an error" in {
 
       wireMockServer.stubFor(
         get(
-          urlEqualTo(s"/trader-goods-profiles-router/$eori?lastUpdatedDate=$lastUpdatedDate&page=$page&size=$pagesize")
+          urlEqualTo(
+            s"/trader-goods-profiles-router/$eori?lastUpdatedDate=$lastUpdatedDate&page=$page&size=$recordsize"
+          )
         )
           .willReturn(serverError())
       )
 
-      connector.getRecords(eori).failed.futureValue
+      connector.getRecords(eori, Some(lastUpdatedDate), Some(page), Some(recordsize)).failed.futureValue
     }
   }
 }

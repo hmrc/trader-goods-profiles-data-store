@@ -37,19 +37,19 @@ class GetRecordsController @Inject() (
     extends BackendController(cc) {
 
   def getRecords(
-    eori: String
+    eori: String,
+    lastUpdatedDate: Option[String],
+    page: Option[Int],
+    size: Option[Int]
   ): Action[AnyContent] = identify.async { implicit request =>
     implicit val hc: HeaderCarrier = HeaderCarrier().withExtraHeaders("X-Client-ID" -> "TGP-Frontend")
 
-    val result = for {
-      httpResponse   <- routerConnector.getRecords(eori)(hc)
+    for {
+      httpResponse   <- routerConnector.getRecords(eori, lastUpdatedDate, page, size)(hc)
       recordsResponse = httpResponse.json.as[GetRecordsResponse]
       _              <- recordsRepository.saveRecords(recordsResponse.goodsItemRecords)
     } yield Ok(Json.toJson(recordsResponse))
 
-    result.recover { case exception =>
-      throw exception
-    }
   }
 
 }
