@@ -16,50 +16,40 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
-import org.apache.pekko.Done
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.ProfileRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
-@Singleton()
-class ProfileController @Inject() (
-  profileRepository: ProfileRepository,
+class GetRecordsController @Inject() (
+  recordsRepository: RecordsRepository,
   cc: ControllerComponents,
   routerConnector: RouterConnector,
   identify: IdentifierAction
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
-  def setProfile(eori: String): Action[ProfileRequest] = identify.async(parse.json[ProfileRequest]) {
-    implicit request =>
-      routerConnector.submitTraderProfile(request.body, eori).flatMap { case Done =>
-        profileRepository.set(eori, request.body).map(_ => Ok)
-      }
-  }
+  def getRecords(
+    eori: String,
+    lastUpdatedDate: Option[String],
+    page: Option[Int],
+    size: Option[Int]
+  ): Action[AnyContent] = identify.async { implicit request =>
+    implicit val hc: HeaderCarrier = HeaderCarrier().withExtraHeaders("X-Client-ID" -> "TGP-Frontend")
 
-  def getProfile(eori: String): Action[AnyContent] = identify.async {
-    profileRepository
-      .get(eori)
-      .map {
-        case Some(profile) => Ok(Json.toJson(profile))
-        case None          => NotFound
-      }
-  }
+    for {
+      httpResponse   <- routerConnector.getRecords(eori, lastUpdatedDate, page, size)(hc)
+      recordsResponse = httpResponse.json.as[GetRecordsResponse]
+      _              <- recordsRepository.saveRecords(recordsResponse.goodsItemRecords)
+    } yield Ok(Json.toJson(recordsResponse))
 
-  def doesProfileExist(eori: String): Action[AnyContent] = identify.async {
-    profileRepository
-      .get(eori)
-      .map {
-        case Some(profile) => Ok
-        case None          => NotFound
-      }
   }
 
 }

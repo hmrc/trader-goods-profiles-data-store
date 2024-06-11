@@ -20,45 +20,40 @@ import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.ProfileResponse
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GoodsItemRecords
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class ProfileRepository @Inject() (
+class RecordsRepository @Inject() (
   mongoComponent: MongoComponent
 )(implicit ec: ExecutionContext)
-    extends PlayMongoRepository[ProfileResponse](
-      collectionName = "profiles",
+    extends PlayMongoRepository[GoodsItemRecords](
+      collectionName = "goodsItemRecords",
       mongoComponent = mongoComponent,
-      domainFormat = ProfileResponse.format,
+      domainFormat = GoodsItemRecords.goodsItemRecordsFormat,
       indexes = Seq(
         IndexModel(
-          Indexes.ascending("eori"),
-          IndexOptions().name("eori")
+          Indexes.ascending("recordId"),
+          IndexOptions().name("recordId")
         )
       )
     ) {
 
-  private def byEori(eori: String): Bson = Filters.equal("eori", eori)
+  private def byRecordId(recordId: String): Bson = Filters.equal("recordId", recordId)
 
-  def get(eori: String): Future[Option[ProfileResponse]] =
-    collection
-      .find[ProfileResponse](byEori(eori))
-      .headOption()
-
-  def set(eori: String, profile: ProfileRequest): Future[Boolean] = {
-    val profileToSet = ProfileResponse.fromRequest(eori, profile)
-    collection
-      .replaceOne(
-        filter = byEori(profileToSet.eori),
-        replacement = profileToSet,
-        options = ReplaceOptions().upsert(true)
-      )
-      .toFuture()
+  def saveRecords(records: Seq[GoodsItemRecords]): Future[Boolean] =
+    Future
+      .sequence(records.map { record =>
+        collection
+          .replaceOne(
+            filter = byRecordId(record.recordId),
+            replacement = record,
+            options = ReplaceOptions().upsert(true)
+          )
+          .toFuture()
+      })
       .map(_ => true)
-  }
 
 }
