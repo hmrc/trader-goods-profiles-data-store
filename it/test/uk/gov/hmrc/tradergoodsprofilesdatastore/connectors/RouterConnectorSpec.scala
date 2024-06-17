@@ -85,7 +85,7 @@ class RouterConnectorSpec
       wireMockServer.stubFor(
         get(
           urlEqualTo(
-            s"/trader-goods-profiles-router/$eori?lastUpdatedDate=$lastUpdatedDate&page=$page&size=$recordsize"
+            s"/trader-goods-profiles-router/traders/$eori?lastUpdatedDate=$lastUpdatedDate&page=$page&size=$recordsize"
           )
         )
           .willReturn(ok())
@@ -99,7 +99,7 @@ class RouterConnectorSpec
       wireMockServer.stubFor(
         get(
           urlEqualTo(
-            s"/trader-goods-profiles-router/$eori?lastUpdatedDate=$lastUpdatedDate&page=$page&size=$recordsize"
+            s"/trader-goods-profiles-router/traders/$eori?lastUpdatedDate=$lastUpdatedDate&page=$page&size=$recordsize"
           )
         )
           .willReturn(serverError())
