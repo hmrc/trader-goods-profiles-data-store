@@ -42,7 +42,6 @@ class GetRecordsController @Inject() (
     page: Option[Int],
     size: Option[Int]
   ): Action[AnyContent] = identify.async { implicit request =>
-
     for {
       httpResponse   <- routerConnector.getRecords(eori, lastUpdatedDate, page, size)
       recordsResponse = httpResponse.json.as[GetRecordsResponse]
