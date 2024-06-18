@@ -40,7 +40,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
     page: Option[Int] = None,
     size: Option[Int] = None
   ) =
-    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori?lastUpdatedDate=$lastUpdatedDate&page=$page&size=$size"
+    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records?lastUpdatedDate=$lastUpdatedDate&page=$page&size=$size"
 
   def submitTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
@@ -57,5 +57,6 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   )(implicit hc: HeaderCarrier): Future[HttpResponse] =
     httpClient
       .get(tgpRecordsUrl(eori, lastUpdatedDate, page, size))
+      .setHeader(header = ("X-Client-ID", "TGP-Frontend"))
       .execute[HttpResponse]
 }
