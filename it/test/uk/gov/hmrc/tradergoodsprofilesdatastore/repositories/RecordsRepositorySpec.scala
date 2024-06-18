@@ -62,7 +62,7 @@ class RecordsRepositorySpec
     recordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f",
     traderRef = "BAN001001",
     comcode = "10410100",
-    accreditationStatus = "Not requested",
+    adviceStatus = "Not requested",
     goodsDescription = "Organic bananas",
     countryOfOrigin = "EC",
     category = 3,

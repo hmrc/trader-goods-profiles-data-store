@@ -42,10 +42,8 @@ class GetRecordsController @Inject() (
     page: Option[Int],
     size: Option[Int]
   ): Action[AnyContent] = identify.async { implicit request =>
-    implicit val hc: HeaderCarrier = HeaderCarrier().withExtraHeaders("X-Client-ID" -> "TGP-Frontend")
-
     for {
-      httpResponse   <- routerConnector.getRecords(eori, lastUpdatedDate, page, size)(hc)
+      httpResponse   <- routerConnector.getRecords(eori, lastUpdatedDate, page, size)
       recordsResponse = httpResponse.json.as[GetRecordsResponse]
       _              <- recordsRepository.saveRecords(recordsResponse.goodsItemRecords)
     } yield Ok(Json.toJson(recordsResponse))

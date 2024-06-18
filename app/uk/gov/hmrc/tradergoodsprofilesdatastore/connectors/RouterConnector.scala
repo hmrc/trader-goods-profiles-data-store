@@ -31,6 +31,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
 
   private val baseUrlStubs: Service          = config.get[Service]("microservice.services.trader-goods-profiles-stubs")
   private val baseUrlRouter: Service         = config.get[Service]("microservice.services.trader-goods-profiles-router")
+  private val clientIdHeader                 = ("X-Client-ID", "tgp-frontend")
   private def traderProfileUrl(eori: String) =
     url"$baseUrlStubs/trader-goods-profiles-router/customs/traders/goods-profiles/$eori"
 
@@ -40,7 +41,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
     page: Option[Int] = None,
     size: Option[Int] = None
   ) =
-    url"$baseUrlRouter/trader-goods-profiles-router/$eori?lastUpdatedDate=$lastUpdatedDate&page=$page&size=$size"
+    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records?lastUpdatedDate=$lastUpdatedDate&page=$page&size=$size"
 
   def submitTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
@@ -57,5 +58,6 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   )(implicit hc: HeaderCarrier): Future[HttpResponse] =
     httpClient
       .get(tgpRecordsUrl(eori, lastUpdatedDate, page, size))
+      .setHeader(clientIdHeader)
       .execute[HttpResponse]
 }
