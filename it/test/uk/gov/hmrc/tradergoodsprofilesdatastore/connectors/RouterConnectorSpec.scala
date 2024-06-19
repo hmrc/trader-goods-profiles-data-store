@@ -58,6 +58,7 @@ class RouterConnectorSpec
 
       wireMockServer.stubFor(
         put(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
           .willReturn(ok())
       )
 
@@ -70,6 +71,7 @@ class RouterConnectorSpec
 
       wireMockServer.stubFor(
         put(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
           .willReturn(serverError())
       )
 
@@ -87,6 +89,7 @@ class RouterConnectorSpec
             s"/trader-goods-profiles-router/traders/$eori/records?lastUpdatedDate=$lastUpdatedDate&page=$page&size=$recordsize"
           )
         )
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
           .willReturn(ok())
       )
 
@@ -101,6 +104,7 @@ class RouterConnectorSpec
             s"/trader-goods-profiles-router/traders/$eori/records?lastUpdatedDate=$lastUpdatedDate&page=$page&size=$recordsize"
           )
         )
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
           .willReturn(serverError())
       )
 

@@ -45,6 +45,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   def submitTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
       .put(traderProfileUrl(eori))
+      .setHeader(clientIdHeader)
       .withBody(Json.toJson(traderProfile))
       .execute[HttpResponse]
       .map(_ => Done)
