@@ -37,7 +37,6 @@ class RouterConnectorSpec
 
   private lazy val app: Application =
     new GuiceApplicationBuilder()
-      .configure("microservice.services.trader-goods-profiles-stubs.port" -> wireMockPort)
       .configure("microservice.services.trader-goods-profiles-router.port" -> wireMockPort)
       .build()
 
@@ -58,7 +57,7 @@ class RouterConnectorSpec
       val traderProfile = ProfileRequest(testEori, "1", Some("2"), None)
 
       wireMockServer.stubFor(
-        put(urlEqualTo(s"/trader-goods-profiles-router/customs/traders/goods-profiles/$testEori"))
+        put(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori"))
           .willReturn(ok())
       )
 
@@ -70,7 +69,7 @@ class RouterConnectorSpec
       val traderProfile = ProfileRequest(testEori, "1", Some("2"), None)
 
       wireMockServer.stubFor(
-        put(urlEqualTo(s"/trader-goods-profiles-router/customs/traders/goods-profiles/$testEori"))
+        put(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori"))
           .willReturn(serverError())
       )
 
