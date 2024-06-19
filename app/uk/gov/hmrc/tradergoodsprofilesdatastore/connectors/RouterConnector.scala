@@ -29,11 +29,10 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2)(implicit ec: ExecutionContext) {
 
-  private val baseUrlStubs: Service          = config.get[Service]("microservice.services.trader-goods-profiles-stubs")
   private val baseUrlRouter: Service         = config.get[Service]("microservice.services.trader-goods-profiles-router")
   private val clientIdHeader                 = ("X-Client-ID", "tgp-frontend")
   private def traderProfileUrl(eori: String) =
-    url"$baseUrlStubs/trader-goods-profiles-router/customs/traders/goods-profiles/$eori"
+    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori"
 
   private def tgpRecordsUrl(
     eori: String,
@@ -46,6 +45,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   def submitTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
       .put(traderProfileUrl(eori))
+      .setHeader(clientIdHeader)
       .withBody(Json.toJson(traderProfile))
       .execute[HttpResponse]
       .map(_ => Done)
