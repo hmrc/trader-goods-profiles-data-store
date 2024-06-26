@@ -44,6 +44,7 @@ class RouterConnectorSpec
 
   implicit private lazy val hc: HeaderCarrier = HeaderCarrier()
 
+  private val recordId        = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f"
   private val testEori        = "1122334455"
   private val lastUpdatedDate = Instant.now().toString
   private val eori            = "GB123456789001"
@@ -111,4 +112,38 @@ class RouterConnectorSpec
       connector.getRecords(eori, Some(lastUpdatedDate), Some(page), Some(recordsize)).failed.futureValue
     }
   }
+
+  ".deleteRecord" - {
+
+    "must delete record from from B&T database" in {
+
+      wireMockServer.stubFor(
+        delete(
+          urlEqualTo(
+            s"/trader-goods-profiles-router/traders/$eori/records/$recordId"
+          )
+        )
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .willReturn(noContent())
+      )
+
+      connector.deleteRecord(eori, recordId).futureValue
+    }
+
+    "must return a failed future when the server returns an error" in {
+
+      wireMockServer.stubFor(
+        delete(
+          urlEqualTo(
+            s"/trader-goods-profiles-router/traders/invalid-eori/records/invalid-recordId"
+          )
+        )
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .willReturn(badRequest())
+      )
+
+      connector.deleteRecord(eori, recordId).failed.futureValue
+    }
+  }
+
 }

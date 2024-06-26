@@ -42,6 +42,12 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   ) =
     url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records?lastUpdatedDate=$lastUpdatedDate&page=$page&size=$size"
 
+  private def tgpDeleteRecordUrl(
+    eori: String,
+    recordId: String
+  ) =
+    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records/$recordId"
+
   def submitTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
       .put(traderProfileUrl(eori))
@@ -58,6 +64,15 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   )(implicit hc: HeaderCarrier): Future[HttpResponse] =
     httpClient
       .get(tgpRecordsUrl(eori, lastUpdatedDate, page, size))
+      .setHeader(clientIdHeader)
+      .execute[HttpResponse]
+
+  def deleteRecord(
+    eori: String,
+    recordId: String
+  )(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    httpClient
+      .delete(tgpDeleteRecordUrl(eori, recordId))
       .setHeader(clientIdHeader)
       .execute[HttpResponse]
 }
