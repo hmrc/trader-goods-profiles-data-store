@@ -89,7 +89,7 @@ class RecordsRepositorySpec
 
   protected override val repository = new RecordsRepository(mongoComponent = mongoComponent)
 
-  private def byRecordId(recordId: String): Bson = Filters.equal("recordId", sampleGoodsItemRecords.recordId)
+  private def byRecordId(recordId: String): Bson = Filters.equal("recordId", recordId)
 
   ".set" - {
 
