@@ -19,9 +19,11 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
 import org.apache.pekko.Done
 import play.api.Configuration
+import play.api.http.Status.{BAD_REQUEST, METHOD_NOT_ALLOWED, NOT_FOUND, NO_CONTENT, OK}
 import play.api.libs.json.Json
+import play.api.mvc.Results.{InternalServerError, NotFound}
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, HttpResponse, MethodNotAllowedException, NotFoundException, StringContextOps}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
 
 import javax.inject.Inject
@@ -44,9 +46,10 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
 
   private def tgpDeleteRecordUrl(
     eori: String,
-    recordId: String
+    recordId: String,
+    actorId: String
   ) =
-    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records/$recordId"
+    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records/$recordId?actorId=$actorId"
 
   def submitTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
@@ -69,10 +72,12 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
 
   def deleteRecord(
     eori: String,
-    recordId: String
-  )(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    recordId: String,
+    actorId: String
+  )(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
-      .delete(tgpDeleteRecordUrl(eori, recordId))
+      .delete(tgpDeleteRecordUrl(eori, recordId, actorId))
       .setHeader(clientIdHeader)
       .execute[HttpResponse]
+      .map(_ => Done)
 }

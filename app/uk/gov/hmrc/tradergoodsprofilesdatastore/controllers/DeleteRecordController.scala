@@ -16,16 +16,15 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
-import play.api.libs.json.Json
+import org.apache.pekko.Done
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class DeleteRecordController @Inject() (
   recordsRepository: RecordsRepository,
@@ -35,10 +34,17 @@ class DeleteRecordController @Inject() (
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
-  def deleteRecord(
-    eori: String,
-    recordId: String
-  ): Action[AnyContent] = identify { implicit request =>
-    NoContent
+  def deleteRecord(eori: String, recordId: String): Action[AnyContent] = identify.async { implicit request =>
+    recordsRepository.get(recordId).flatMap {
+      case Some(goodsItemRecords) =>
+        routerConnector.deleteRecord(eori, recordId, goodsItemRecords.actorId).flatMap { case Done =>
+          recordsRepository.delete(recordId).map {
+            case true  => NoContent
+            case false => InternalServerError("Failed to delete the record from db")
+          }
+        }
+      case None                   =>
+        Future.successful(NotFound)
+    }
   }
 }
