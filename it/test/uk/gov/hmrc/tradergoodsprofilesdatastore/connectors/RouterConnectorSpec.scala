@@ -140,7 +140,7 @@ class RouterConnectorSpec
           )
         )
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
-          .willReturn(badRequest())
+          .willReturn(serverError())
       )
 
       connector.deleteRecord(eori, recordId, actorId).failed.futureValue
