@@ -18,7 +18,6 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
-import org.mongodb.scala.result.DeleteResult
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GoodsItemRecords
@@ -43,6 +42,8 @@ class RecordsRepository @Inject() (
     ) {
 
   private def byRecordId(recordId: String): Bson = Filters.equal("recordId", recordId)
+  private def byEori(eori: String): Bson         = Filters.equal("eori", eori)
+  private def byLatest: Bson                     = Sorts.descending("updatedDateTime")
 
   def saveRecords(records: Seq[GoodsItemRecords]): Future[Boolean] =
     Future
@@ -60,6 +61,13 @@ class RecordsRepository @Inject() (
   def get(recordId: String): Future[Option[GoodsItemRecords]] =
     collection
       .find[GoodsItemRecords](byRecordId(recordId))
+      .headOption()
+
+  def getLatest(eori: String): Future[Option[GoodsItemRecords]] =
+    collection
+      .find[GoodsItemRecords](byEori(eori))
+      .limit(1)
+      .sort(byLatest)
       .headOption()
 
   def delete(recordId: String): Future[Boolean] =

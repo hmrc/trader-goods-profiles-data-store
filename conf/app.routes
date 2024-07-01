@@ -2,5 +2,10 @@
 POST       /traders/:eori/profile                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.setProfile(eori: String)
 GET        /customs/traders/goods-profiles/:eori    uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.getProfile(eori: String)
 HEAD       /traders/:eori/profile                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.doesProfileExist(eori: String)
-GET        /traders/:eori/records                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.GetRecordsController.getRecords(eori: String, lastUpdatedDate:Option[String], page: Option[Int], size: Option[Int])
 DELETE     /traders/:eori/records/:recordId         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DeleteRecordController.deleteRecord(eori: String, recordId: String)
+
+GET        /traders/:eori/records                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.GetRecordsController.getRecords(eori: String, page: Option[Int], size: Option[Int])
+GET        /traders/:eori/records/check             uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.GetRecordsController.checkRecords(eori: String)
+HEAD       /traders/:eori/records/latest            uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.StoreRecordsController.storeLatestRecords(eori: String)
+HEAD       /traders/:eori/records                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.StoreRecordsController.storeAllRecords(eori: String)
+
