@@ -51,15 +51,18 @@ class RecordsRepositorySpec
     conditionTraderText = Some("Excluded product")
   )
 
-  val sampleAssessment: Assessment             = Assessment(
+  val sampleAssessment: Assessment = Assessment(
     assessmentId = Some("abc123"),
     primaryCategory = Some(1),
     condition = Some(sampleCondition)
   )
+
+  private val recordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f"
+
   val sampleGoodsItemRecords: GoodsItemRecords = GoodsItemRecords(
     eori = "GB123456789001",
     actorId = "GB098765432112",
-    recordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f",
+    recordId = recordId,
     traderRef = "BAN001001",
     comcode = "10410100",
     adviceStatus = "Not requested",
@@ -86,7 +89,7 @@ class RecordsRepositorySpec
 
   protected override val repository = new RecordsRepository(mongoComponent = mongoComponent)
 
-  private def byRecordId(recordId: String): Bson = Filters.equal("recordId", sampleGoodsItemRecords.recordId)
+  private def byRecordId(recordId: String): Bson = Filters.equal("recordId", recordId)
 
   ".set" - {
 
@@ -108,6 +111,41 @@ class RecordsRepositorySpec
 
       saveResult mustEqual true
       updatedRecord mustEqual expectedGoodsItemRecords
+    }
+  }
+
+  ".get" - {
+
+    "when there is a record for this recordId it must get the record" in {
+      insert(sampleGoodsItemRecords).futureValue
+      val result = repository.get(recordId).futureValue
+      result.value mustEqual sampleGoodsItemRecords
+    }
+
+    "when there is no record for this recordId it must return None" in {
+      repository.get("recordId that does not exist").futureValue must not be defined
+    }
+  }
+
+  ".delete" - {
+
+    "when there is a record for this recordId it must delete the record and return true" in {
+
+      insert(sampleGoodsItemRecords).futureValue
+
+      val result = repository.delete(recordId).futureValue
+      result mustEqual true
+
+      // Making sure record is deleted
+      repository.get(recordId).futureValue must not be defined
+    }
+
+    "when there is no record for this recordId it must return false" in {
+
+      // Making sure record does not exist
+      repository.get("recordId that does not exist").futureValue must not be defined
+
+      repository.delete("recordId that does not exist").futureValue mustEqual false
     }
   }
 

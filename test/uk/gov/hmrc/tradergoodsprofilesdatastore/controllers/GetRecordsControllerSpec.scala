@@ -59,7 +59,6 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
       val httpResponse          = HttpResponse(OK, Json.toJson(recordsResponse).toString())
       val mockRecordsRepository = mock[RecordsRepository]
       when(mockRecordsRepository.saveRecords(any())) thenReturn Future.successful(true)
-      print("GET URL" + getUrl)
 
       val mockRouterConnector = mock[RouterConnector]
       when(mockRouterConnector.getRecords(any(), any(), any(), any())(any()))
