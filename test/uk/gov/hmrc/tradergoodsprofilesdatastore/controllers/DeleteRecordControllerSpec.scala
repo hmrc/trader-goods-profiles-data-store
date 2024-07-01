@@ -112,7 +112,7 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
         val result = route(application, validFakeGetRequest).value
         status(result) shouldBe NO_CONTENT
 
-        withClue("must call the relevant service with the correct details") {
+        withClue("must call the relevant services with the correct details") {
           verify(mockRecordsRepository, times(1)).get(eqTo(testRecordId))
           verify(mockRecordsRepository, times(1)).delete(eqTo(testRecordId))
           verify(mockRouterConnector, times(1))
@@ -144,7 +144,7 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
         val result = route(application, validFakeGetRequest).value
         status(result) mustBe INTERNAL_SERVER_ERROR
 
-        withClue("must call the relevant service with the correct details") {
+        withClue("must call the relevant services with the correct details") {
           verify(mockRecordsRepository, times(1)).get(eqTo(testRecordId))
           verify(mockRecordsRepository, times(1)).delete(eqTo(testRecordId))
           verify(mockRouterConnector, times(1))
@@ -169,7 +169,7 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
         val result = route(application, validFakeGetRequest).value
         status(result) shouldBe NOT_FOUND
 
-        withClue("must call the relevant service with the correct details") {
+        withClue("must call the repository with the correct details") {
           verify(mockRecordsRepository, times(1)).get(eqTo(testRecordId))
         }
       }
