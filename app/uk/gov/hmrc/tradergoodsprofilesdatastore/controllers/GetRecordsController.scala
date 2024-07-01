@@ -18,18 +18,17 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.CheckRecordsRepository
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class GetRecordsController @Inject() (
-  recordsRepository: RecordsRepository,
+  checkRecordsRepository: CheckRecordsRepository,
   cc: ControllerComponents,
   routerConnector: RouterConnector,
   identify: IdentifierAction
@@ -38,16 +37,21 @@ class GetRecordsController @Inject() (
 
   def getRecords(
     eori: String,
-    lastUpdatedDate: Option[String],
     page: Option[Int],
     size: Option[Int]
   ): Action[AnyContent] = identify.async { implicit request =>
     for {
-      httpResponse   <- routerConnector.getRecords(eori, lastUpdatedDate, page, size)
+      httpResponse   <- routerConnector.getRecords(eori, page = page, size = size)
       recordsResponse = httpResponse.json.as[GetRecordsResponse]
-      _              <- recordsRepository.saveRecords(recordsResponse.goodsItemRecords)
     } yield Ok(Json.toJson(recordsResponse))
-
   }
 
+  def checkRecords(eori: String): Action[AnyContent] = identify.async { implicit request =>
+    checkRecordsRepository
+      .get(eori)
+      .map {
+        case Some(_) => Ok
+        case None    => NotFound
+      }
+  }
 }

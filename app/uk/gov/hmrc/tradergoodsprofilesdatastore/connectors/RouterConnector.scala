@@ -19,11 +19,11 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
 import org.apache.pekko.Done
 import play.api.Configuration
-import play.api.http.Status.{BAD_REQUEST, METHOD_NOT_ALLOWED, NOT_FOUND, NO_CONTENT, OK}
 import play.api.libs.json.Json
-import play.api.mvc.Results.{InternalServerError, NotFound}
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, HttpResponse, MethodNotAllowedException, NotFoundException, StringContextOps}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
+
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
 
 import javax.inject.Inject
@@ -38,11 +38,12 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
 
   private def tgpRecordsUrl(
     eori: String,
-    lastUpdatedDate: Option[String] = None,
-    page: Option[Int] = None,
-    size: Option[Int] = None
-  ) =
-    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records?lastUpdatedDate=$lastUpdatedDate&page=$page&size=$size"
+    queryParams: Map[String, String]
+  ) = if (queryParams == Map.empty) {
+    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records"
+  } else {
+    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records?$queryParams"
+  }
 
   private def tgpDeleteRecordUrl(
     eori: String,
@@ -64,11 +65,27 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
     lastUpdatedDate: Option[String] = None,
     page: Option[Int] = None,
     size: Option[Int] = None
-  )(implicit hc: HeaderCarrier): Future[HttpResponse] =
+  )(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+
+    var queryParams: Map[String, String] = Map.empty
+
+    if (lastUpdatedDate.isDefined) {
+      queryParams = queryParams updated ("lastUpdatedDate", lastUpdatedDate.get)
+    }
+
+    if (page.isDefined) {
+      queryParams = queryParams updated ("page", page.get.toString)
+    }
+
+    if (size.isDefined) {
+      queryParams = queryParams updated ("size", size.get.toString)
+    }
+
     httpClient
-      .get(tgpRecordsUrl(eori, lastUpdatedDate, page, size))
+      .get(tgpRecordsUrl(eori, queryParams))
       .setHeader(clientIdHeader)
       .execute[HttpResponse]
+  }
 
   def deleteRecord(
     eori: String,
