@@ -112,10 +112,12 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
         val result = route(application, validFakeGetRequest).value
         status(result) shouldBe NO_CONTENT
 
-        verify(mockRecordsRepository, times(1)).get(eqTo(testRecordId))
-        verify(mockRecordsRepository, times(1)).delete(eqTo(testRecordId))
-        verify(mockRouterConnector, times(1))
-          .deleteRecord(eqTo(testEori), eqTo(testRecordId), eqTo(sampleGoodsItemRecord.actorId))(any())
+        withClue("must call the audit service with the correct details") {
+          verify(mockRecordsRepository, times(1)).get(eqTo(testRecordId))
+          verify(mockRecordsRepository, times(1)).delete(eqTo(testRecordId))
+          verify(mockRouterConnector, times(1))
+            .deleteRecord(eqTo(testEori), eqTo(testRecordId), eqTo(sampleGoodsItemRecord.actorId))(any())
+        }
       }
     }
 
@@ -142,10 +144,12 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
         val result = route(application, validFakeGetRequest).value
         status(result) mustBe INTERNAL_SERVER_ERROR
 
-        verify(mockRecordsRepository, times(1)).get(eqTo(testRecordId))
-        verify(mockRecordsRepository, times(1)).delete(eqTo(testRecordId))
-        verify(mockRouterConnector, times(1))
-          .deleteRecord(eqTo(testEori), eqTo(testRecordId), eqTo(sampleGoodsItemRecord.actorId))(any())
+        withClue("must call the audit service with the correct details") {
+          verify(mockRecordsRepository, times(1)).get(eqTo(testRecordId))
+          verify(mockRecordsRepository, times(1)).delete(eqTo(testRecordId))
+          verify(mockRouterConnector, times(1))
+            .deleteRecord(eqTo(testEori), eqTo(testRecordId), eqTo(sampleGoodsItemRecord.actorId))(any())
+        }
       }
     }
 
@@ -165,7 +169,9 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
         val result = route(application, validFakeGetRequest).value
         status(result) shouldBe NOT_FOUND
 
-        verify(mockRecordsRepository, times(1)).get(eqTo(testRecordId))
+        withClue("must call the audit service with the correct details") {
+          verify(mockRecordsRepository, times(1)).get(eqTo(testRecordId))
+        }
       }
     }
 
