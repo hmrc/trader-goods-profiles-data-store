@@ -42,7 +42,7 @@ class StoreRecordsController @Inject() (
   ): Action[AnyContent] = identify.async { implicit request =>
     recordsRepository.getLatest(eori).flatMap {
       case Some(record) =>
-        storeRecordsRecursively(eori, 1, None, Some(record.updatedDateTime.plusMillis(1).toString), 0)
+        storeRecordsRecursively(eori, 1, Some(record.updatedDateTime.plusSeconds(1).toString), 0)
           .map(_ => Ok)
       case _            => Future.successful(NotFound)
     }
@@ -53,24 +53,23 @@ class StoreRecordsController @Inject() (
   ): Action[AnyContent] = identify.async { implicit request =>
     checkRecordsRepository
       .set(eori)
-      .flatMap(_ => storeRecordsRecursively(eori, 1, None, None, 0).map(_ => Ok))
+      .flatMap(_ => storeRecordsRecursively(eori, 1, None, 0).map(_ => Ok))
   }
 
   def storeRecordsRecursively(
     eori: String,
     page: Int,
-    size: Option[Int],
     lastUpdatedDate: Option[String],
     numRecordsSaved: Int
   )(implicit request: Request[_]): Future[Done] =
-    routerConnector.getRecords(eori, lastUpdatedDate, Some(page), size).flatMap { httpResponse =>
+    routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(10)).flatMap { httpResponse =>
       val recordsResponse = httpResponse.json.as[GetRecordsResponse]
       recordsRepository.saveRecords(recordsResponse.goodsItemRecords).flatMap { _ =>
         val newNumRecordsSaved = recordsResponse.goodsItemRecords.size + numRecordsSaved
         if (newNumRecordsSaved >= recordsResponse.pagination.totalRecords) {
           Future.successful(Done)
         } else {
-          storeRecordsRecursively(eori, page + 1, size, lastUpdatedDate, newNumRecordsSaved)
+          storeRecordsRecursively(eori, page + 1, lastUpdatedDate, newNumRecordsSaved)
         }
       }
     }
