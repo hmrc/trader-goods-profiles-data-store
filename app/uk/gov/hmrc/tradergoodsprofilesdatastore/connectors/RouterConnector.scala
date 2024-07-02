@@ -66,7 +66,6 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
     page: Option[Int] = None,
     size: Option[Int] = None
   )(implicit hc: HeaderCarrier): Future[HttpResponse] = {
-
     var queryParams: Map[String, String] = Map.empty
 
     if (lastUpdatedDate.isDefined) {

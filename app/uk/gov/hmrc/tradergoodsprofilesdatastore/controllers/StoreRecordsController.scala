@@ -21,14 +21,16 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{CheckRecordsRepository, RecordsRepository}
 import org.apache.pekko.Done
+
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.mvc.Request
 
 class StoreRecordsController @Inject() (
   recordsRepository: RecordsRepository,
+  checkRecordsRepository: CheckRecordsRepository,
   cc: ControllerComponents,
   routerConnector: RouterConnector,
   identify: IdentifierAction
@@ -40,7 +42,7 @@ class StoreRecordsController @Inject() (
   ): Action[AnyContent] = identify.async { implicit request =>
     recordsRepository.getLatest(eori).flatMap {
       case Some(record) =>
-        storeRecordsRecursively(eori, 1, None, Some(record.updatedDateTime.toString), 0)
+        storeRecordsRecursively(eori, 1, None, Some(record.updatedDateTime.plusMillis(1).toString), 0)
           .map(_ => Ok)
       case _            => Future.successful(NotFound)
     }
@@ -49,7 +51,9 @@ class StoreRecordsController @Inject() (
   def storeAllRecords(
     eori: String
   ): Action[AnyContent] = identify.async { implicit request =>
-    storeRecordsRecursively(eori, 1, None, None, 0).map(_ => Ok)
+    checkRecordsRepository
+      .set(eori)
+      .flatMap(_ => storeRecordsRecursively(eori, 1, None, None, 0).map(_ => Ok))
   }
 
   def storeRecordsRecursively(
