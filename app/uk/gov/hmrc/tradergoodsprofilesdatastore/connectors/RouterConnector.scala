@@ -19,7 +19,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
 import org.apache.pekko.Done
 import play.api.Configuration
-import play.api.http.Status.OK
+import play.api.http.Status.{NO_CONTENT, OK}
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
@@ -59,7 +59,11 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
       .setHeader(clientIdHeader)
       .withBody(Json.toJson(traderProfile))
       .execute[HttpResponse]
-      .map(_ => Done)
+      .map { response =>
+        response.status match {
+          case OK => Done
+        }
+      }
 
   def getRecords(
     eori: String,
@@ -85,7 +89,11 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
       .get(tgpRecordsUrl(eori, queryParams))
       .setHeader(clientIdHeader)
       .execute[HttpResponse]
-      .map(response => response.json.as[GetRecordsResponse])
+      .map { response =>
+        response.status match {
+          case OK => response.json.as[GetRecordsResponse]
+        }
+      }
   }
 
   def deleteRecord(
@@ -97,5 +105,9 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
       .delete(tgpDeleteRecordUrl(eori, recordId, actorId))
       .setHeader(clientIdHeader)
       .execute[HttpResponse]
-      .map(_ => Done)
+      .map { response =>
+        response.status match {
+          case NO_CONTENT => Done
+        }
+      }
 }

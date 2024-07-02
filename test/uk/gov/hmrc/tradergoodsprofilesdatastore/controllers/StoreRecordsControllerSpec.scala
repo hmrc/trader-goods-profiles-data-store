@@ -72,7 +72,7 @@ class StoreRecordsControllerSpec extends SpecBase with MockitoSugar with GetReco
         ),
         Future.successful(
           GetRecordsResponse(
-            goodsItemRecords = getTestRecords(requestEori, recordsPerPage),
+            goodsItemRecords = getTestRecords(requestEori, 9),
             Pagination(totalRecordsNum, 3, 3, None, Some(2))
           )
         )
@@ -88,10 +88,10 @@ class StoreRecordsControllerSpec extends SpecBase with MockitoSugar with GetReco
       running(application) {
         val result = route(application, validFakeHeadRequest).value
         status(result) shouldBe Status.OK
-        verify(mockRecordsRepository, times(3)).saveRecords(any())
-        verify(mockRouterConnector, times(3)).getRecords(any(), any(), any(), any())(any())
-        verify(mockRecordsRepository, times(1)).deleteInactive(any())
         verify(mockCheckRecordsRepository, times(1)).set(any())
+        verify(mockRouterConnector, times(3)).getRecords(any(), any(), any(), any())(any())
+        verify(mockRecordsRepository, times(3)).saveRecords(any())
+        verify(mockRecordsRepository, times(1)).deleteInactive(any())
       }
     }
   }
@@ -128,7 +128,7 @@ class StoreRecordsControllerSpec extends SpecBase with MockitoSugar with GetReco
         ),
         Future.successful(
           GetRecordsResponse(
-            goodsItemRecords = getTestRecords(requestEori, recordsPerPage),
+            goodsItemRecords = getTestRecords(requestEori, 9),
             Pagination(totalRecordsNum, 3, 3, None, Some(2))
           )
         )
@@ -143,10 +143,10 @@ class StoreRecordsControllerSpec extends SpecBase with MockitoSugar with GetReco
       running(application) {
         val result = route(application, validFakeHeadRequest).value
         status(result) shouldBe Status.OK
-        verify(mockRecordsRepository, times(3)).saveRecords(any())
-        verify(mockRouterConnector, times(3)).getRecords(any(), any(), any(), any())(any())
-        verify(mockRecordsRepository, times(1)).deleteInactive(any())
         verify(mockRecordsRepository, times(1)).getLatest(any())
+        verify(mockRouterConnector, times(3)).getRecords(any(), any(), any(), any())(any())
+        verify(mockRecordsRepository, times(3)).saveRecords(any())
+        verify(mockRecordsRepository, times(1)).deleteInactive(any())
       }
     }
   }

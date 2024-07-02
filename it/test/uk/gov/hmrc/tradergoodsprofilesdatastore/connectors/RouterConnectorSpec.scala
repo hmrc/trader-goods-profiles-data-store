@@ -22,9 +22,11 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
 
 import java.time.Instant
 
@@ -77,14 +79,14 @@ class RouterConnectorSpec
           .willReturn(serverError())
       )
 
-      connector.submitTraderProfile(traderProfile, testEori).futureValue
+      connector.submitTraderProfile(traderProfile, testEori).failed.futureValue
     }
   }
 
   ".getTGPRecords" - {
 
     "must get records from router" in {
-
+      val response = GetRecordsResponse(goodsItemRecords = Seq.empty, Pagination(0, 0, 0, None, None))
       wireMockServer.stubFor(
         get(
           urlEqualTo(
@@ -92,7 +94,7 @@ class RouterConnectorSpec
           )
         )
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
-          .willReturn(ok())
+          .willReturn(ok().withBody(Json.toJson(response).toString()))
       )
 
       connector.getRecords(eori, Some(lastUpdatedDate), Some(page), Some(recordsize)).futureValue
