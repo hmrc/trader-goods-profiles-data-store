@@ -56,14 +56,13 @@ class StoreRecordsController @Inject() (
       .flatMap(_ => storeRecordsRecursively(eori, 1, None, 0).map(_ => Ok))
   }
 
-  def storeRecordsRecursively(
+  private def storeRecordsRecursively(
     eori: String,
     page: Int,
     lastUpdatedDate: Option[String],
     numRecordsSaved: Int
   )(implicit request: Request[_]): Future[Done] =
-    routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(10)).flatMap { httpResponse =>
-      val recordsResponse = httpResponse.json.as[GetRecordsResponse]
+    routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(10)).flatMap { recordsResponse =>
       recordsRepository.saveRecords(recordsResponse.goodsItemRecords).flatMap { _ =>
         val newNumRecordsSaved = recordsResponse.goodsItemRecords.size + numRecordsSaved
         if (newNumRecordsSaved >= recordsResponse.pagination.totalRecords) {

@@ -77,7 +77,7 @@ class RouterConnectorSpec
           .willReturn(serverError())
       )
 
-      connector.submitTraderProfile(traderProfile, testEori).failed.futureValue
+      connector.submitTraderProfile(traderProfile, testEori).futureValue
     }
   }
 

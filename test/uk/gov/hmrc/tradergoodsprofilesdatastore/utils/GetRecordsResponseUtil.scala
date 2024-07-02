@@ -26,28 +26,13 @@ import scala.language.postfixOps
 trait GetRecordsResponseUtil {
   private val timestamp = Instant.parse("2024-10-12T16:12:34Z")
 
-  def getRecordsResponse(eori: String, page: Int, size: Int): GetRecordsResponse = {
-    val totalRecords  = 15
-    val effectiveSize = page match {
-      case 1 => Math.min(size, 10)
-      case 2 => Math.min(size, 5)
-      case _ => 0
-    }
+  def getTestRecords(eori: String, numRecords: Int): Seq[GoodsItemRecords] =
+    (0 until numRecords - 1).map(_ => getGoodsItemRecords(eori))
 
-    val records = if (effectiveSize > 0) {
-      (1 to totalRecords).map(_ => getGoodsItemRecords(eori))
-    } else {
-      Seq.empty[GoodsItemRecords]
-    }
-
-    val paginatedRecords = records.slice((page - 1) * size, (page - 1) * size + effectiveSize)
-
-    response.GetRecordsResponse(paginatedRecords, Pagination(totalRecords, page, 2, Some(0), Some(0)))
-  }
-  def getGoodsItemRecords(eori: String) = GoodsItemRecords(
+  def getGoodsItemRecords(eori: String): GoodsItemRecords = GoodsItemRecords(
     eori,
     "GB098765432112",
-    "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f",
+    java.util.UUID.randomUUID.toString,
     "BAN001002",
     "10410100",
     "Not requested",

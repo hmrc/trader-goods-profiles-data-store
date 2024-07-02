@@ -53,19 +53,19 @@ class GetRecordsController @Inject() (
   def getRecordsCount(
     eori: String
   ): Action[AnyContent] = identify.async { implicit request =>
-    routerConnector.getRecords(eori).map { httpResponse =>
-      val recordsResponse = httpResponse.json.as[GetRecordsResponse]
+    routerConnector.getRecords(eori).map { recordsResponse =>
       Ok(Json.toJson(recordsResponse.pagination.totalRecords))
     }
   }
 
-  def buildPagination(sizeOpt: Option[Int], pageOpt: Option[Int], totalRecords: Double): Pagination = {
-    val size       = sizeOpt.getOrElse(10)
-    val page       = pageOpt.getOrElse(1)
-    val mod        = totalRecords % size
-    val totalPages = ((totalRecords - mod) / size).toInt
-    val nextPage   = if (page == totalPages) None else Some(page + 1)
-    val prevPage   = if (page == 1) None else Some(page - 1)
+  private def buildPagination(sizeOpt: Option[Int], pageOpt: Option[Int], totalRecords: Double): Pagination = {
+    val size                 = sizeOpt.getOrElse(10)
+    val page                 = pageOpt.getOrElse(1)
+    val mod                  = totalRecords % size
+    val totalRecordsMinusMod = totalRecords - mod
+    val totalPages           = ((totalRecordsMinusMod / size) + 1).toInt
+    val nextPage             = if (page >= totalPages || page < 1) None else Some(page + 1)
+    val prevPage             = if (page <= 1 || page > totalPages) None else Some(page - 1)
     Pagination(totalRecords.toInt, page, totalPages, nextPage, prevPage)
   }
 

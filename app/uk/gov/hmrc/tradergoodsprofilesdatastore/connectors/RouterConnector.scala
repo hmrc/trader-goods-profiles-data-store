@@ -19,12 +19,13 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
 import org.apache.pekko.Done
 import play.api.Configuration
+import play.api.http.Status.OK
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
-
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -65,7 +66,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
     lastUpdatedDate: Option[String] = None,
     page: Option[Int] = None,
     size: Option[Int] = None
-  )(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+  )(implicit hc: HeaderCarrier): Future[GetRecordsResponse] = {
     var queryParams: Map[String, String] = Map.empty
 
     if (lastUpdatedDate.isDefined) {
@@ -84,6 +85,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
       .get(tgpRecordsUrl(eori, queryParams))
       .setHeader(clientIdHeader)
       .execute[HttpResponse]
+      .map(response => response.json.as[GetRecordsResponse])
   }
 
   def deleteRecord(
