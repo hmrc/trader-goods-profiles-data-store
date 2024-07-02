@@ -41,9 +41,12 @@ class RecordsRepository @Inject() (
       )
     ) {
 
-  private def byRecordId(recordId: String): Bson = Filters.equal("recordId", recordId)
-  private def byEori(eori: String): Bson         = Filters.equal("eori", eori)
-  private def byLatest: Bson                     = Sorts.descending("updatedDateTime")
+  private def byRecordId(recordId: String): Bson  = Filters.equal("recordId", recordId)
+  private def byEori(eori: String): Bson          = Filters.equal("eori", eori)
+  private def byEoriAndActive(eori: String): Bson =
+    Filters.and(Filters.equal("eori", eori), Filters.equal("active", false))
+
+  private def byLatest: Bson = Sorts.descending("updatedDateTime")
 
   def saveRecords(records: Seq[GoodsItemRecords]): Future[Boolean] =
     Future
@@ -63,17 +66,42 @@ class RecordsRepository @Inject() (
       .find[GoodsItemRecords](byRecordId(recordId))
       .headOption()
 
+  def getMany(eori: String, pageOpt: Option[Int], sizeOpt: Option[Int]): Future[Seq[GoodsItemRecords]] = {
+    val size = sizeOpt.getOrElse(10)
+    val page = pageOpt.getOrElse(1)
+    val skip = (page - 1) * size
+    collection
+      .find[GoodsItemRecords](byEori(eori))
+      .sort(byLatest)
+      .limit(size)
+      .skip(skip)
+      .toFuture()
+  }
+
+  def getCount(eori: String): Future[Long] =
+    collection
+      .countDocuments(byEori(eori))
+      .toFuture()
+
   def getLatest(eori: String): Future[Option[GoodsItemRecords]] =
     collection
       .find[GoodsItemRecords](byEori(eori))
-      .limit(1)
       .sort(byLatest)
+      .limit(1)
       .headOption()
 
   def delete(recordId: String): Future[Boolean] =
     collection
       .deleteOne(
         filter = byRecordId(recordId)
+      )
+      .toFuture()
+      .map(_.getDeletedCount > 0)
+
+  def deleteInactive(eori: String): Future[Boolean] =
+    collection
+      .deleteMany(
+        filter = byEoriAndActive(eori)
       )
       .toFuture()
       .map(_.getDeletedCount > 0)

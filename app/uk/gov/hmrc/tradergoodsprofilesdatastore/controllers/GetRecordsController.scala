@@ -21,29 +21,52 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.CheckRecordsRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{CheckRecordsRepository, RecordsRepository}
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class GetRecordsController @Inject() (
   checkRecordsRepository: CheckRecordsRepository,
-  cc: ControllerComponents,
   routerConnector: RouterConnector,
+  recordsRepository: RecordsRepository,
+  cc: ControllerComponents,
   identify: IdentifierAction
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
-  def getRecords(
+  def getLocalRecords(
     eori: String,
-    page: Option[Int],
-    size: Option[Int]
+    pageOpt: Option[Int],
+    sizeOpt: Option[Int]
   ): Action[AnyContent] = identify.async { implicit request =>
-    for {
-      httpResponse   <- routerConnector.getRecords(eori, page = page, size = size)
-      recordsResponse = httpResponse.json.as[GetRecordsResponse]
-    } yield Ok(Json.toJson(recordsResponse))
+    recordsRepository.getCount(eori).flatMap { totalRecords =>
+      recordsRepository.getMany(eori, pageOpt, sizeOpt).map { records =>
+        val getRecordsResponse =
+          GetRecordsResponse(goodsItemRecords = records, buildPagination(sizeOpt, pageOpt, totalRecords))
+        Ok(Json.toJson(getRecordsResponse))
+      }
+    }
+  }
+
+  def getRecordsCount(
+    eori: String
+  ): Action[AnyContent] = identify.async { implicit request =>
+    routerConnector.getRecords(eori).map { httpResponse =>
+      val recordsResponse = httpResponse.json.as[GetRecordsResponse]
+      Ok(Json.toJson(recordsResponse.pagination.totalRecords))
+    }
+  }
+
+  def buildPagination(sizeOpt: Option[Int], pageOpt: Option[Int], totalRecords: Double): Pagination = {
+    val size       = sizeOpt.getOrElse(10)
+    val page       = pageOpt.getOrElse(1)
+    val mod        = totalRecords % size
+    val totalPages = ((totalRecords - mod) / size).toInt
+    val nextPage   = if (page == totalPages) None else Some(page + 1)
+    val prevPage   = if (page == 1) None else Some(page - 1)
+    Pagination(totalRecords.toInt, page, totalPages, nextPage, prevPage)
   }
 
   def checkRecords(eori: String): Action[AnyContent] = identify.async { implicit request =>

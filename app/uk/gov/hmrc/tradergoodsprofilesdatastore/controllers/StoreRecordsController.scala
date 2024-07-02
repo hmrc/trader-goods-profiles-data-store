@@ -67,7 +67,7 @@ class StoreRecordsController @Inject() (
       recordsRepository.saveRecords(recordsResponse.goodsItemRecords).flatMap { _ =>
         val newNumRecordsSaved = recordsResponse.goodsItemRecords.size + numRecordsSaved
         if (newNumRecordsSaved >= recordsResponse.pagination.totalRecords) {
-          Future.successful(Done)
+          recordsRepository.deleteInactive(eori).map(_ => Done)
         } else {
           storeRecordsRecursively(eori, page + 1, lastUpdatedDate, newNumRecordsSaved)
         }
