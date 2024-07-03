@@ -16,12 +16,9 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.utils
 
-import play.api.libs.json.{JsValue, Json}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models._
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GetRecordsResponse, GoodsItemRecords, Pagination}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GoodsItemRecords}
 
 import java.time.Instant
-import scala.language.postfixOps
 
 trait GetRecordsResponseUtil {
   private val timestamp = Instant.parse("2024-10-12T16:12:34Z")

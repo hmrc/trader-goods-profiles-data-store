@@ -22,13 +22,12 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{CheckRecordsRepository, RecordsRepository}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class GetRecordsController @Inject() (
-  checkRecordsRepository: CheckRecordsRepository,
   routerConnector: RouterConnector,
   recordsRepository: RecordsRepository,
   cc: ControllerComponents,
@@ -69,12 +68,4 @@ class GetRecordsController @Inject() (
     Pagination(totalRecords.toInt, page, totalPages, nextPage, prevPage)
   }
 
-  def checkRecords(eori: String): Action[AnyContent] = identify.async { implicit request =>
-    checkRecordsRepository
-      .get(eori)
-      .map {
-        case Some(_) => Ok
-        case None    => NotFound
-      }
-  }
 }

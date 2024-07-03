@@ -20,7 +20,6 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{CheckRecordsRepository, RecordsRepository}
 import org.apache.pekko.Done
 
@@ -43,7 +42,7 @@ class StoreRecordsController @Inject() (
     recordsRepository.getLatest(eori).flatMap {
       case Some(record) =>
         storeRecordsRecursively(eori, 1, Some(record.updatedDateTime.plusSeconds(1).toString), 0)
-          .map(_ => Ok)
+          .map(_ => NoContent)
       case _            => Future.successful(NotFound)
     }
   }
@@ -53,7 +52,7 @@ class StoreRecordsController @Inject() (
   ): Action[AnyContent] = identify.async { implicit request =>
     checkRecordsRepository
       .set(eori)
-      .flatMap(_ => storeRecordsRecursively(eori, 1, None, 0).map(_ => Ok))
+      .flatMap(_ => storeRecordsRecursively(eori, 1, None, 0).map(_ => NoContent))
   }
 
   private def storeRecordsRecursively(

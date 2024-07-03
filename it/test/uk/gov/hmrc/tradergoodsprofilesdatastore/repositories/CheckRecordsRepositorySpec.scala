@@ -25,9 +25,6 @@ import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.CheckRecords
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GoodsItemRecords}
-
-import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class CheckRecordsRepositorySpec

@@ -22,12 +22,10 @@ import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
 import play.api.inject.bind
-import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.CheckRecords
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{CheckRecordsRepository, RecordsRepository}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
@@ -40,7 +38,7 @@ class StoreRecordsControllerSpec extends SpecBase with MockitoSugar with GetReco
 
   "storeAllRecords" - {
 
-    "return 200 and store all records in db" in {
+    "return 204 and store all records in db" in {
       val totalRecordsNum = 29
 
       val requestEori          = "GB123456789099"
@@ -87,7 +85,7 @@ class StoreRecordsControllerSpec extends SpecBase with MockitoSugar with GetReco
         .build()
       running(application) {
         val result = route(application, validFakeHeadRequest).value
-        status(result) shouldBe Status.OK
+        status(result) shouldBe Status.NO_CONTENT
         verify(mockCheckRecordsRepository, times(1)).set(any())
         verify(mockRouterConnector, times(3)).getRecords(any(), any(), any(), any())(any())
         verify(mockRecordsRepository, times(3)).saveRecords(any())
@@ -98,7 +96,7 @@ class StoreRecordsControllerSpec extends SpecBase with MockitoSugar with GetReco
 
   "storeLatestRecords" - {
 
-    "return 200 and store latest records in db" in {
+    "return 204 and store latest records in db" in {
       val totalRecordsNum = 29
 
       val requestEori          = "GB123456789099"
@@ -142,7 +140,7 @@ class StoreRecordsControllerSpec extends SpecBase with MockitoSugar with GetReco
         .build()
       running(application) {
         val result = route(application, validFakeHeadRequest).value
-        status(result) shouldBe Status.OK
+        status(result) shouldBe Status.NO_CONTENT
         verify(mockRecordsRepository, times(1)).getLatest(any())
         verify(mockRouterConnector, times(3)).getRecords(any(), any(), any(), any())(any())
         verify(mockRecordsRepository, times(3)).saveRecords(any())

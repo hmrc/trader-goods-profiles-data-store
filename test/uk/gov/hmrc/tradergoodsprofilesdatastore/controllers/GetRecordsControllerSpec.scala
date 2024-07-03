@@ -27,9 +27,8 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.CheckRecords
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{CheckRecordsRepository, RecordsRepository}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -130,55 +129,6 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
         }
       }
     }
-  }
-
-  "checkRecords" - {
-    "return 200 if the checkRecords is present" in {
-
-      val requestEori = "GB123456789099"
-      val checkUrl    = routes.GetRecordsController
-        .checkRecords(requestEori)
-        .url
-
-      val validFakeGetRequest = FakeRequest("GET", checkUrl)
-
-      val mockCheckRecordsRepository = mock[CheckRecordsRepository]
-      when(mockCheckRecordsRepository.get(any())) thenReturn Future.successful(Some(CheckRecords(requestEori)))
-
-      val application = applicationBuilder()
-        .overrides(
-          bind[CheckRecordsRepository].toInstance(mockCheckRecordsRepository)
-        )
-        .build()
-      running(application) {
-        val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.OK
-      }
-    }
-
-    "return 404 if the checkRecords is not present" in {
-
-      val requestEori = "GB123456789099"
-      val checkUrl    = routes.GetRecordsController
-        .checkRecords(requestEori)
-        .url
-
-      val validFakeGetRequest = FakeRequest("GET", checkUrl)
-
-      val mockCheckRecordsRepository = mock[CheckRecordsRepository]
-      when(mockCheckRecordsRepository.get(any())) thenReturn Future.successful(None)
-
-      val application = applicationBuilder()
-        .overrides(
-          bind[CheckRecordsRepository].toInstance(mockCheckRecordsRepository)
-        )
-        .build()
-      running(application) {
-        val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.NOT_FOUND
-      }
-    }
-
   }
 
   "getRecordsCount" - {
