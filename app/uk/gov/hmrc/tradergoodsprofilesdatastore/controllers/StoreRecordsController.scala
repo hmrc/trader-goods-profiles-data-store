@@ -60,16 +60,7 @@ class StoreRecordsController @Inject() (
     page: Int,
     lastUpdatedDate: Option[String],
     numRecordsSaved: Int
-  )(implicit request: Request[_]): Future[Done] = {
-    println("storeRecordsRecursively")
-    println("eori")
-    println(eori)
-    println("page")
-    println(page)
-    println("lastUpdatedDate")
-    println(lastUpdatedDate)
-    println("numRecordsSaved")
-    println(numRecordsSaved)
+  )(implicit request: Request[_]): Future[Done] =
     routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(10)).flatMap { recordsResponse =>
       recordsRepository.saveRecords(recordsResponse.goodsItemRecords).flatMap { _ =>
         val newNumRecordsSaved = recordsResponse.goodsItemRecords.size + numRecordsSaved
@@ -80,5 +71,4 @@ class StoreRecordsController @Inject() (
         }
       }
     }
-  }
 }
