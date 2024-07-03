@@ -57,7 +57,7 @@ class GetRecordsController @Inject() (
     }
   }
 
-  private def buildPagination(sizeOpt: Option[Int], pageOpt: Option[Int], totalRecords: Double): Pagination = {
+  private def buildPagination(sizeOpt: Option[Int], pageOpt: Option[Int], totalRecords: Long): Pagination = {
     val size                 = sizeOpt.getOrElse(10)
     val page                 = pageOpt.getOrElse(1)
     val mod                  = totalRecords % size
