@@ -87,6 +87,66 @@ class RecordsRepositorySpec
     updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
   )
 
+  private val latestRecordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204p"
+
+  val latestGoodsItemRecords: GoodsItemRecords = GoodsItemRecords(
+    eori = "GB123456789001",
+    actorId = "GB098765432112",
+    recordId = latestRecordId,
+    traderRef = "BAN001001",
+    comcode = "10410100",
+    adviceStatus = "Not requested",
+    goodsDescription = "Organic bananas",
+    countryOfOrigin = "EC",
+    category = 3,
+    assessments = Some(Seq(sampleAssessment)),
+    supplementaryUnit = Some(500),
+    measurementUnit = Some("square meters(m^2)"),
+    comcodeEffectiveFromDate = Instant.parse("2024-10-12T16:12:34Z"),
+    comcodeEffectiveToDate = Some(Instant.parse("2024-10-12T16:12:34Z")),
+    version = 1,
+    active = true,
+    toReview = false,
+    reviewReason = Some("no reason"),
+    declarable = "IMMI ready",
+    ukimsNumber = "XIUKIM47699357400020231115081800",
+    nirmsNumber = "RMS-GB-123456",
+    niphlNumber = "6 S12345",
+    locked = false,
+    createdDateTime = Instant.parse("2024-11-12T16:12:34Z"),
+    updatedDateTime = Instant.parse("2024-11-12T16:12:34Z")
+  )
+
+  private val inactiveRecordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204g"
+
+  val inactiveGoodsItemRecords: GoodsItemRecords = GoodsItemRecords(
+    eori = "GB123456789001",
+    actorId = "GB098765432112",
+    recordId = inactiveRecordId,
+    traderRef = "BAN001001",
+    comcode = "10410100",
+    adviceStatus = "Not requested",
+    goodsDescription = "Organic bananas",
+    countryOfOrigin = "EC",
+    category = 3,
+    assessments = Some(Seq(sampleAssessment)),
+    supplementaryUnit = Some(500),
+    measurementUnit = Some("square meters(m^2)"),
+    comcodeEffectiveFromDate = Instant.parse("2024-10-12T16:12:34Z"),
+    comcodeEffectiveToDate = Some(Instant.parse("2024-10-12T16:12:34Z")),
+    version = 1,
+    active = false,
+    toReview = false,
+    reviewReason = Some("no reason"),
+    declarable = "IMMI ready",
+    ukimsNumber = "XIUKIM47699357400020231115081800",
+    nirmsNumber = "RMS-GB-123456",
+    niphlNumber = "6 S12345",
+    locked = false,
+    createdDateTime = Instant.parse("2024-10-12T16:12:34Z"),
+    updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
+  )
+
   protected override val repository = new RecordsRepository(mongoComponent = mongoComponent)
 
   private def byRecordId(recordId: String): Bson = Filters.equal("recordId", recordId)
@@ -125,6 +185,68 @@ class RecordsRepositorySpec
     "when there is no record for this recordId it must return None" in {
       repository.get("recordId that does not exist").futureValue must not be defined
     }
+
+    "when there are records for this eori it must return the count" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+
+      val result = repository.getCount(sampleGoodsItemRecords.eori).futureValue
+      result mustEqual 3
+    }
+
+    "when there are no records for this eori it must return 0" in {
+      repository.getCount(sampleGoodsItemRecords.eori).futureValue mustEqual 0
+    }
+
+    "when there are 8 records for this eori it must return the records and it asks for page 2 of size 5" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+
+      val result = repository.getMany(sampleGoodsItemRecords.eori, Some(2), Some(5)).futureValue
+      result.size mustEqual 3
+    }
+
+    "when there are 8 records for this eori it must return empty Array and it asks for page 3 of size 5" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+
+      val result = repository.getMany(sampleGoodsItemRecords.eori, Some(3), Some(5)).futureValue
+      result.size mustEqual 0
+    }
+
+    "when there are no records for this eori it must return empty Array" in {
+      val result = repository.getMany(sampleGoodsItemRecords.eori, None, None).futureValue
+      result.size mustEqual 0
+    }
+
+    "when there are 8 records for this eori it must get the last updated" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(latestGoodsItemRecords).futureValue
+
+      val result = repository.getLatest(sampleGoodsItemRecords.eori).futureValue
+      result.value.recordId mustEqual latestRecordId
+    }
+
+    "when there are no records for this eori it must return None" in {
+      repository.getLatest(sampleGoodsItemRecords.eori).futureValue mustEqual None
+    }
   }
 
   ".delete" - {
@@ -147,6 +269,25 @@ class RecordsRepositorySpec
 
       repository.delete("recordId that does not exist").futureValue mustEqual false
     }
+
+    "when there are inactive records for this eori it must delete them and return num of records deleted" in {
+
+      insert(sampleGoodsItemRecords).futureValue
+      insert(inactiveGoodsItemRecords).futureValue
+
+      val result = repository.deleteInactive(sampleGoodsItemRecords.eori).futureValue
+      result mustEqual 1
+
+      // Making sure record is deleted
+      repository.get(inactiveRecordId).futureValue must not be defined
+    }
+
+    "when there are no inactive records for this eori it must return 0" in {
+      insert(sampleGoodsItemRecords).futureValue
+
+      repository.deleteInactive(sampleGoodsItemRecords.eori).futureValue mustEqual 0
+    }
+
   }
 
 }

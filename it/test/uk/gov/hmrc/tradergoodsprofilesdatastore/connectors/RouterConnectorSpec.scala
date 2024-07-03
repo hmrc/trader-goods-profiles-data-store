@@ -83,7 +83,7 @@ class RouterConnectorSpec
     }
   }
 
-  ".getTGPRecords" - {
+  ".getRecords" - {
 
     "must get records from router" in {
       val response = GetRecordsResponse(goodsItemRecords = Seq.empty, Pagination(0, 0, 0, None, None))

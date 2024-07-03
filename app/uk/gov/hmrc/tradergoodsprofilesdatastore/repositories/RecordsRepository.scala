@@ -98,11 +98,11 @@ class RecordsRepository @Inject() (
       .toFuture()
       .map(_.getDeletedCount > 0)
 
-  def deleteInactive(eori: String): Future[Boolean] =
+  def deleteInactive(eori: String): Future[Long] =
     collection
       .deleteMany(
         filter = byEoriAndActive(eori)
       )
       .toFuture()
-      .map(_.getDeletedCount > 0)
+      .map(_.getDeletedCount)
 }
