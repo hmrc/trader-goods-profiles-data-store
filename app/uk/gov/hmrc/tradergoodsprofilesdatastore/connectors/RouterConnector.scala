@@ -71,19 +71,12 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
     page: Option[Int] = None,
     size: Option[Int] = None
   )(implicit hc: HeaderCarrier): Future[GetRecordsResponse] = {
-    var queryParams: Map[String, String] = Map.empty
+    val lastUpdatedDatePair = lastUpdatedDate.map(date => ("lastUpdatedDate", date))
+    val pagePair = page.map(page => ("page", page.toString))
+    val sizePair = size.map(size => ("size", size.toString))
 
-    if (lastUpdatedDate.isDefined) {
-      queryParams = queryParams updated ("lastUpdatedDate", lastUpdatedDate.get)
-    }
-
-    if (page.isDefined) {
-      queryParams = queryParams updated ("page", page.get.toString)
-    }
-
-    if (size.isDefined) {
-      queryParams = queryParams updated ("size", size.get.toString)
-    }
+    val queryParams: Map[String, String] = List(lastUpdatedDatePair, pagePair, sizePair)
+      .foldLeft(Map.empty[String, String])((cur, pair) => cur ++ pair)
 
     httpClient
       .get(tgpRecordsUrl(eori, queryParams))
