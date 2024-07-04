@@ -25,6 +25,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.{ProfileRequest, UpdateRecordRequest}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
 
@@ -146,6 +147,35 @@ class RouterConnectorSpec
       )
 
       connector.deleteRecord(eori, recordId, actorId).failed.futureValue
+    }
+  }
+
+  ".updateRecord" - {
+
+    "must update a record in B&T database" in {
+
+      val updateRecord = UpdateRecordRequest(testEori, Some("updated-trader-ref"))
+
+      wireMockServer.stubFor(
+        patch(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .willReturn(ok())
+      )
+
+      connector.updateRecord(updateRecord, testEori, recordId).futureValue
+    }
+
+    "must return a failed future when the server returns an error" in {
+
+      val updateRecord = UpdateRecordRequest(testEori, Some("updated-trader-ref"))
+
+      wireMockServer.stubFor(
+        patch(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .willReturn(serverError())
+      )
+
+      connector.updateRecord(updateRecord, testEori, recordId).failed.futureValue
     }
   }
 

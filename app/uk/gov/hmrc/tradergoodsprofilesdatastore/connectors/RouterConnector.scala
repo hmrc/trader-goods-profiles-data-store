@@ -26,6 +26,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.UpdateRecordRequest
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -52,6 +53,12 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
     actorId: String
   ) =
     url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records/$recordId?actorId=$actorId"
+
+  private def tgpUpdateRecordUrl(
+    eori: String,
+    recordId: String
+  ) =
+    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records/$recordId"
 
   def submitTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
@@ -101,6 +108,22 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
       .map { response =>
         response.status match {
           case NO_CONTENT => Done
+        }
+      }
+
+  def updateRecord(
+    updateRecord: UpdateRecordRequest,
+    eori: String,
+    recordId: String
+  )(implicit hc: HeaderCarrier): Future[Done] =
+    httpClient
+      .patch(tgpUpdateRecordUrl(eori, recordId))
+      .setHeader(clientIdHeader)
+      .withBody(Json.toJson(updateRecord))
+      .execute[HttpResponse]
+      .map { response =>
+        response.status match {
+          case OK => Done
         }
       }
 }
