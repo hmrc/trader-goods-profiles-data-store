@@ -24,6 +24,8 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
+import uk.gov.hmrc.tradergoodsprofilesdatastore.base.TestConstants.testEori
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.UpdateRecordRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GoodsItemRecords}
 
 import java.time.Instant
@@ -57,12 +59,18 @@ class RecordsRepositorySpec
     condition = Some(sampleCondition)
   )
 
-  private val recordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f"
+  private val testrecordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f"
+  private val updateEori   = "GB123456789001"
+
+  val sampleUpdateRequest: UpdateRecordRequest = UpdateRecordRequest(
+    actorId = "GB098765432112",
+    traderRef = Some("updated-reference")
+  )
 
   val sampleGoodsItemRecords: GoodsItemRecords = GoodsItemRecords(
     eori = "GB123456789001",
     actorId = "GB098765432112",
-    recordId = recordId,
+    recordId = testrecordId,
     traderRef = "BAN001001",
     comcode = "10410100",
     adviceStatus = "Not requested",
@@ -118,7 +126,7 @@ class RecordsRepositorySpec
 
     "when there is a record for this recordId it must get the record" in {
       insert(sampleGoodsItemRecords).futureValue
-      val result = repository.get(recordId).futureValue
+      val result = repository.get(testrecordId).futureValue
       result.value mustEqual sampleGoodsItemRecords
     }
 
@@ -133,11 +141,11 @@ class RecordsRepositorySpec
 
       insert(sampleGoodsItemRecords).futureValue
 
-      val result = repository.delete(recordId).futureValue
+      val result = repository.delete(testrecordId).futureValue
       result mustEqual true
 
       // Making sure record is deleted
-      repository.get(recordId).futureValue must not be defined
+      repository.get(testrecordId).futureValue must not be defined
     }
 
     "when there is no record for this recordId it must return false" in {
@@ -147,6 +155,20 @@ class RecordsRepositorySpec
 
       repository.delete("recordId that does not exist").futureValue mustEqual false
     }
+  }
+
+  ".update" - {
+
+    "when there is a record for this recordId it must update the record" in {
+      insert(sampleGoodsItemRecords).futureValue
+      val expectedGoodsItemRecords = sampleGoodsItemRecords.copy(traderRef = "updated-reference")
+      val result                   = repository.update(updateEori, testrecordId, sampleUpdateRequest).futureValue
+      result.value mustEqual expectedGoodsItemRecords
+    }
+    "when there is no record for this recordId it must return None" in {
+      repository.update("eori", "recordId that does not exist", sampleUpdateRequest).futureValue must not be defined
+    }
+
   }
 
 }
