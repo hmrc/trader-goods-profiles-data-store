@@ -21,6 +21,7 @@ import org.mongodb.scala.model._
 import org.mongodb.scala.result.DeleteResult
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.UpdateRecordRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GoodsItemRecords
 
 import javax.inject.{Inject, Singleton}
@@ -69,4 +70,38 @@ class RecordsRepository @Inject() (
       )
       .toFuture()
       .map(_.getDeletedCount > 0)
+
+  def saveRecord(record: GoodsItemRecords): Future[Boolean] =
+    collection
+      .replaceOne(
+        filter = byRecordId(record.recordId),
+        replacement = record,
+        options = ReplaceOptions().upsert(true)
+      )
+      .toFuture()
+      .map(_ => true)
+
+  def update(recordId: String, updateRequest: UpdateRecordRequest): Future[Option[GoodsItemRecords]] =
+    get(recordId).flatMap {
+      case Some(existingRecord) =>
+        val updatedRecord = existingRecord.copy(
+          traderRef = updateRequest.traderRef.getOrElse(existingRecord.traderRef),
+          comcode = updateRequest.comcode.getOrElse(existingRecord.comcode),
+          goodsDescription = updateRequest.goodsDescription.getOrElse(existingRecord.goodsDescription),
+          countryOfOrigin = updateRequest.countryOfOrigin.getOrElse(existingRecord.countryOfOrigin),
+          category = updateRequest.category.getOrElse(existingRecord.category),
+          assessments = updateRequest.assessments.orElse(existingRecord.assessments),
+          supplementaryUnit = updateRequest.supplementaryUnit.orElse(existingRecord.supplementaryUnit),
+          measurementUnit = updateRequest.measurementUnit.orElse(existingRecord.measurementUnit),
+          comcodeEffectiveFromDate =
+            updateRequest.comcodeEffectiveFromDate.getOrElse(existingRecord.comcodeEffectiveFromDate),
+          comcodeEffectiveToDate = updateRequest.comcodeEffectiveToDate.orElse(existingRecord.comcodeEffectiveToDate)
+        )
+
+        saveRecord(updatedRecord).map { case true =>
+          Some(updatedRecord)
+        }
+
+      case None => Future.successful(None)
+    }
 }

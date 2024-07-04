@@ -24,7 +24,7 @@ import play.api.libs.json.Json
 import play.api.mvc.Results.{InternalServerError, NotFound}
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, HttpResponse, MethodNotAllowedException, NotFoundException, StringContextOps}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.{ProfileRequest, UpdateRecordRequest}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -50,6 +50,12 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
     actorId: String
   ) =
     url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records/$recordId?actorId=$actorId"
+
+  private def tgpUpdateRecordUrl(
+    eori: String,
+    recordId: String
+  ) =
+    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records/$recordId"
 
   def submitTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
@@ -78,6 +84,18 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
     httpClient
       .delete(tgpDeleteRecordUrl(eori, recordId, actorId))
       .setHeader(clientIdHeader)
+      .execute[HttpResponse]
+      .map(_ => Done)
+
+  def updateRecord(
+    updateRecord: UpdateRecordRequest,
+    eori: String,
+    recordId: String
+  )(implicit hc: HeaderCarrier): Future[Done] =
+    httpClient
+      .patch(tgpUpdateRecordUrl(eori, recordId))
+      .setHeader(clientIdHeader)
+      .withBody(Json.toJson(updateRecord))
       .execute[HttpResponse]
       .map(_ => Done)
 }
