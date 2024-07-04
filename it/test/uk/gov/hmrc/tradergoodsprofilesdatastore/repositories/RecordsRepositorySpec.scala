@@ -60,7 +60,6 @@ class RecordsRepositorySpec
   )
 
   private val testrecordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f"
-  private val updateEori   = "GB123456789001"
 
   val sampleUpdateRequest: UpdateRecordRequest = UpdateRecordRequest(
     actorId = "GB098765432112",
@@ -162,11 +161,11 @@ class RecordsRepositorySpec
     "when there is a record for this recordId it must update the record" in {
       insert(sampleGoodsItemRecords).futureValue
       val expectedGoodsItemRecords = sampleGoodsItemRecords.copy(traderRef = "updated-reference")
-      val result                   = repository.update(updateEori, testrecordId, sampleUpdateRequest).futureValue
+      val result                   = repository.update(testrecordId, sampleUpdateRequest).futureValue
       result.value mustEqual expectedGoodsItemRecords
     }
     "when there is no record for this recordId it must return None" in {
-      repository.update("eori", "recordId that does not exist", sampleUpdateRequest).futureValue must not be defined
+      repository.update("recordId that does not exist", sampleUpdateRequest).futureValue must not be defined
     }
 
   }

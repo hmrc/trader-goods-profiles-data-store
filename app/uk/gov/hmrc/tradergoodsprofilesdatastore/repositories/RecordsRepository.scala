@@ -81,7 +81,7 @@ class RecordsRepository @Inject() (
       .toFuture()
       .map(_ => true)
 
-  def update(eori: String, recordId: String, updateRequest: UpdateRecordRequest): Future[Option[GoodsItemRecords]] =
+  def update(recordId: String, updateRequest: UpdateRecordRequest): Future[Option[GoodsItemRecords]] =
     get(recordId).flatMap {
       case Some(existingRecord) =>
         val updatedRecord = existingRecord.copy(
@@ -98,9 +98,8 @@ class RecordsRepository @Inject() (
           comcodeEffectiveToDate = updateRequest.comcodeEffectiveToDate.orElse(existingRecord.comcodeEffectiveToDate)
         )
 
-        saveRecord(updatedRecord).map {
-          case true  => Some(updatedRecord)
-          case false => None
+        saveRecord(updatedRecord).map { case true =>
+          Some(updatedRecord)
         }
 
       case None => Future.successful(None)
