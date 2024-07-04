@@ -72,8 +72,8 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
     size: Option[Int] = None
   )(implicit hc: HeaderCarrier): Future[GetRecordsResponse] = {
     val lastUpdatedDatePair = lastUpdatedDate.map(date => ("lastUpdatedDate", date))
-    val pagePair = page.map(page => ("page", page.toString))
-    val sizePair = size.map(size => ("size", size.toString))
+    val pagePair            = page.map(page => ("page", page.toString))
+    val sizePair            = size.map(size => ("size", size.toString))
 
     val queryParams: Map[String, String] = List(lastUpdatedDatePair, pagePair, sizePair)
       .foldLeft(Map.empty[String, String])((cur, pair) => cur ++ pair)
