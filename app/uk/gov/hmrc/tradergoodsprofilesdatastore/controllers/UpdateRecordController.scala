@@ -17,15 +17,15 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.apache.pekko.Done
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.{ProfileRequest, UpdateRecordRequest}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.UpdateRecordRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 class UpdateRecordController @Inject() (
   recordsRepository: RecordsRepository,

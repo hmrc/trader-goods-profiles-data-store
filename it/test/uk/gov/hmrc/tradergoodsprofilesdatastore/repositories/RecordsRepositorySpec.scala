@@ -24,7 +24,6 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
-import uk.gov.hmrc.tradergoodsprofilesdatastore.base.TestConstants.testEori
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.UpdateRecordRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GoodsItemRecords}
 
