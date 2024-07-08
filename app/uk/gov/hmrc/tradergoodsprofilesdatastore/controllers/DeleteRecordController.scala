@@ -44,7 +44,7 @@ class DeleteRecordController @Inject() (
           }
         }
       case None                   =>
-        Future.successful(NotFound)
+        Future.successful(NotFound("in data store"))
     }
   }
 }

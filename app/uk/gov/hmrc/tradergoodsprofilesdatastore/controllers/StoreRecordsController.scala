@@ -41,7 +41,7 @@ class StoreRecordsController @Inject() (
   ): Action[AnyContent] = identify.async { implicit request =>
     recordsRepository.getLatest(eori).flatMap {
       case Some(record) =>
-        storeRecordsRecursively(eori, 1, Some(record.updatedDateTime.plusSeconds(1).toString), 0)
+        storeRecordsRecursively(eori, 1, Some(record.updatedDateTime.toString), 0)
           .map(_ => NoContent)
       case _            => Future.successful(NotFound)
     }

@@ -21,6 +21,8 @@ import org.apache.pekko.Done
 import play.api.Configuration
 import play.api.http.Status.{NO_CONTENT, OK}
 import play.api.libs.json.Json
+import sttp.model.Uri
+import sttp.model.Uri.UriContext
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
@@ -38,14 +40,8 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   private def traderProfileUrl(eori: String) =
     url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori"
 
-  private def tgpRecordsUrl(
-    eori: String,
-    queryParams: Map[String, String]
-  ) = if (queryParams == Map.empty) {
-    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records"
-  } else {
-    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records?$queryParams"
-  }
+  private def tgpRecordsUri(eori: String, lastUpdatedDate: Option[String], page: Option[Int], size: Option[Int]): Uri =
+    uri"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records?lastUpdatedDate=$lastUpdatedDate&page=$page&size=$size"
 
   private def tgpDeleteRecordUrl(
     eori: String,
@@ -78,15 +74,10 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
     page: Option[Int] = None,
     size: Option[Int] = None
   )(implicit hc: HeaderCarrier): Future[GetRecordsResponse] = {
-    val lastUpdatedDatePair = lastUpdatedDate.map(date => ("lastUpdatedDate", date))
-    val pagePair            = page.map(page => ("page", page.toString))
-    val sizePair            = size.map(size => ("size", size.toString))
-
-    val queryParams: Map[String, String] = List(lastUpdatedDatePair, pagePair, sizePair)
-      .foldLeft(Map.empty[String, String])((cur, pair) => cur ++ pair)
-
+    val uri = tgpRecordsUri(eori, lastUpdatedDate, page, size).toString()
+    println(uri)
     httpClient
-      .get(tgpRecordsUrl(eori, queryParams))
+      .get(url"$uri")
       .setHeader(clientIdHeader)
       .execute[HttpResponse]
       .map { response =>
