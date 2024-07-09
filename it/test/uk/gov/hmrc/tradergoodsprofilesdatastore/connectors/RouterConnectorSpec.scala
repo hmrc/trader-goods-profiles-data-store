@@ -22,9 +22,11 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.{ProfileRequest, UpdateRecordRequest}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
 
 import java.time.Instant
 
@@ -81,10 +83,10 @@ class RouterConnectorSpec
     }
   }
 
-  ".getTGPRecords" - {
+  ".getRecords" - {
 
     "must get records from router" in {
-
+      val response = GetRecordsResponse(goodsItemRecords = Seq.empty, Pagination(0, 0, 0, None, None))
       wireMockServer.stubFor(
         get(
           urlEqualTo(
@@ -92,10 +94,25 @@ class RouterConnectorSpec
           )
         )
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
-          .willReturn(ok())
+          .willReturn(ok().withBody(Json.toJson(response).toString()))
       )
 
       connector.getRecords(eori, Some(lastUpdatedDate), Some(page), Some(recordsize)).futureValue
+    }
+
+    "must get all records from router" in {
+      val response = GetRecordsResponse(goodsItemRecords = Seq.empty, Pagination(0, 0, 0, None, None))
+      wireMockServer.stubFor(
+        get(
+          urlEqualTo(
+            s"/trader-goods-profiles-router/traders/$eori/records"
+          )
+        )
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .willReturn(ok().withBody(Json.toJson(response).toString()))
+      )
+
+      connector.getRecords(eori, None, None, None).futureValue
     }
 
     "must return a failed future when the server returns an error" in {

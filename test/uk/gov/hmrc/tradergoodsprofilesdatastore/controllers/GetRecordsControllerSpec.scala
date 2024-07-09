@@ -25,58 +25,139 @@ import play.api.inject.bind
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
 
-import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 
 class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecordsResponseUtil {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
 
-  val requestEori             = "GB123456789099"
-  private val lastUpdatedDate = Instant.now().toString
-  private val recordssize     = 20
-  private val page            = 1
+  "getLocalRecords" - {
+    "return 200 and the records from the data store with size 10 and page 1 and 35 records in db" in {
 
-  private val getUrl              = routes.GetRecordsController
-    .getRecords(requestEori, Some(lastUpdatedDate), Some(page), Some(recordssize))
-    .url
-  private val validFakeGetRequest = FakeRequest(
-    "GET",
-    getUrl
-  )
+      val recordsSize = 10
+      val page        = 1
+      val requestEori = "GB123456789099"
+      val getUrl      = routes.GetRecordsController
+        .getLocalRecords(requestEori, Some(page), Some(recordsSize))
+        .url
 
-  s"GET $getUrl" - {
+      val validFakeGetRequest = FakeRequest("GET", getUrl)
 
-    "return 200 and the records when data is successfully retrieved and saved" in {
-
-      val recordsResponse       = getRecordsResponse(requestEori, page, recordssize)
-      val httpResponse          = HttpResponse(OK, Json.toJson(recordsResponse).toString())
+      val totalRecordsNum       = 35
+      val totalPagesNum         = 4
+      val records               = getTestRecords(requestEori, recordsSize)
+      val pagination            = Pagination(totalRecordsNum, page, totalPagesNum, Some(page + 1), None)
       val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.saveRecords(any())) thenReturn Future.successful(true)
-
-      val mockRouterConnector = mock[RouterConnector]
-      when(mockRouterConnector.getRecords(any(), any(), any(), any())(any()))
-        .thenReturn(Future.successful(httpResponse))
+      when(mockRecordsRepository.getCount(any())) thenReturn Future.successful(totalRecordsNum)
+      when(mockRecordsRepository.getMany(any(), any(), any())) thenReturn Future.successful(records)
 
       val application = applicationBuilder()
         .overrides(
-          bind[RecordsRepository].toInstance(mockRecordsRepository),
+          bind[RecordsRepository].toInstance(mockRecordsRepository)
+        )
+        .build()
+      running(application) {
+        val result = route(application, validFakeGetRequest).value
+        status(result) shouldBe Status.OK
+        contentAsString(result) mustBe Json.toJson(GetRecordsResponse(goodsItemRecords = records, pagination)).toString
+      }
+    }
+
+    "return 200 and empty Seq from the data store with size 10 and page 100 and 35 records in db" in {
+
+      val recordsSize = 10
+      val page        = 100
+      val requestEori = "GB123456789099"
+      val getUrl      = routes.GetRecordsController
+        .getLocalRecords(requestEori, Some(page), Some(recordsSize))
+        .url
+
+      val validFakeGetRequest = FakeRequest("GET", getUrl)
+
+      val totalRecordsNum       = 35
+      val totalPagesNum         = 4
+      val records               = Seq.empty
+      val pagination            = Pagination(totalRecordsNum, page, totalPagesNum, None, None)
+      val mockRecordsRepository = mock[RecordsRepository]
+      when(mockRecordsRepository.getCount(any())) thenReturn Future.successful(totalRecordsNum)
+      when(mockRecordsRepository.getMany(any(), any(), any())) thenReturn Future.successful(records)
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[RecordsRepository].toInstance(mockRecordsRepository)
+        )
+        .build()
+      running(application) {
+        val result = route(application, validFakeGetRequest).value
+        status(result) shouldBe Status.OK
+        contentAsString(result) mustBe Json.toJson(GetRecordsResponse(goodsItemRecords = records, pagination)).toString
+      }
+    }
+
+    "return Runtime Error with size 10 and page -10 and 35 records in db" in {
+
+      val recordsSize = 10
+      val page        = -10
+      val requestEori = "GB123456789099"
+      val getUrl      = routes.GetRecordsController
+        .getLocalRecords(requestEori, Some(page), Some(recordsSize))
+        .url
+
+      val validFakeGetRequest = FakeRequest("GET", getUrl)
+
+      val totalRecordsNum       = 35
+      val mockRecordsRepository = mock[RecordsRepository]
+      when(mockRecordsRepository.getCount(any())) thenReturn Future.successful(totalRecordsNum)
+      when(mockRecordsRepository.getMany(any(), any(), any())) thenReturn Future.failed(
+        new RuntimeException("Skip cannot be negative")
+      )
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[RecordsRepository].toInstance(mockRecordsRepository)
+        )
+        .build()
+      running(application) {
+        intercept[RuntimeException] {
+          await(route(application, validFakeGetRequest).value)
+        }
+      }
+    }
+  }
+
+  "getRecordsCount" - {
+    "return 200 and the total number of records" in {
+      val totalRecordsNum = 10000
+      val requestEori     = "GB123456789099"
+      val checkUrl        = routes.GetRecordsController
+        .getRecordsCount(requestEori)
+        .url
+
+      val validFakeGetRequest = FakeRequest("GET", checkUrl)
+
+      val mockRouterConnector = mock[RouterConnector]
+      when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn Future.successful(
+        GetRecordsResponse(goodsItemRecords = Seq.empty, Pagination(totalRecordsNum, 0, 0, None, None))
+      )
+
+      val application = applicationBuilder()
+        .overrides(
           bind[RouterConnector].toInstance(mockRouterConnector)
         )
         .build()
       running(application) {
         val result = route(application, validFakeGetRequest).value
         status(result) shouldBe Status.OK
-        contentAsString(result) mustBe Json.toJson(recordsResponse).toString
+        contentAsString(result) mustBe Json.toJson(totalRecordsNum).toString
+
       }
     }
-
   }
 
 }

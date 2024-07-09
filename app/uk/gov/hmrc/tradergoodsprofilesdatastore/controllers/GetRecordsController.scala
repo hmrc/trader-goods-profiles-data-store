@@ -21,32 +21,51 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class GetRecordsController @Inject() (
+  routerConnector: RouterConnector,
   recordsRepository: RecordsRepository,
   cc: ControllerComponents,
-  routerConnector: RouterConnector,
   identify: IdentifierAction
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
-  def getRecords(
+  def getLocalRecords(
     eori: String,
-    lastUpdatedDate: Option[String],
-    page: Option[Int],
-    size: Option[Int]
+    pageOpt: Option[Int],
+    sizeOpt: Option[Int]
   ): Action[AnyContent] = identify.async { implicit request =>
-    for {
-      httpResponse   <- routerConnector.getRecords(eori, lastUpdatedDate, page, size)
-      recordsResponse = httpResponse.json.as[GetRecordsResponse]
-      _              <- recordsRepository.saveRecords(recordsResponse.goodsItemRecords)
-    } yield Ok(Json.toJson(recordsResponse))
+    recordsRepository.getCount(eori).flatMap { totalRecords =>
+      recordsRepository.getMany(eori, pageOpt, sizeOpt).map { records =>
+        val getRecordsResponse =
+          GetRecordsResponse(goodsItemRecords = records, buildPagination(sizeOpt, pageOpt, totalRecords))
+        Ok(Json.toJson(getRecordsResponse))
+      }
+    }
+  }
 
+  def getRecordsCount(
+    eori: String
+  ): Action[AnyContent] = identify.async { implicit request =>
+    routerConnector.getRecords(eori).map { recordsResponse =>
+      Ok(Json.toJson(recordsResponse.pagination.totalRecords))
+    }
+  }
+
+  private def buildPagination(sizeOpt: Option[Int], pageOpt: Option[Int], totalRecords: Long): Pagination = {
+    val size                 = sizeOpt.getOrElse(10)
+    val page                 = pageOpt.getOrElse(1)
+    val mod                  = totalRecords % size
+    val totalRecordsMinusMod = totalRecords - mod
+    val totalPages           = ((totalRecordsMinusMod / size) + 1).toInt
+    val nextPage             = if (page >= totalPages || page < 1) None else Some(page + 1)
+    val prevPage             = if (page <= 1 || page > totalPages) None else Some(page - 1)
+    Pagination(totalRecords.toInt, page, totalPages, nextPage, prevPage)
   }
 
 }
