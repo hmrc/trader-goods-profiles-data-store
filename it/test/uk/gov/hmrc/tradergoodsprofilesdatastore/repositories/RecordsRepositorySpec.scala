@@ -265,7 +265,7 @@ class RecordsRepositorySpec
       result mustEqual true
 
       // Making sure record is deleted
-      repository.get(testrecordId).futureValue must not be defined
+      withClue("make sure record is deleted")(repository.get(testrecordId).futureValue must not be defined)
     }
 
     "when there is no record for this recordId it must return false" in {
@@ -285,7 +285,7 @@ class RecordsRepositorySpec
       result mustEqual 1
 
       // Making sure record is deleted
-      repository.get(inactiveRecordId).futureValue must not be defined
+      withClue("make sure record is deleted")(repository.get(inactiveRecordId).futureValue must not be defined)
     }
 
     "when there are no inactive records for this eori it must return 0" in {
