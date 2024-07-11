@@ -160,4 +160,55 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
     }
   }
 
+  "getRecord" - {
+    "return Ok with record in body when it is found" in {
+      val requestEori = "GB123456789099"
+      val record      = getGoodsItemRecords(requestEori)
+      val checkUrl    = routes.GetRecordsController
+        .getRecord(requestEori, record.recordId)
+        .url
+
+      val validFakeGetRequest = FakeRequest("GET", checkUrl)
+
+      val mockRecordsRepository = mock[RecordsRepository]
+      when(mockRecordsRepository.get(any())) thenReturn Future.successful(Some(record))
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[RecordsRepository].toInstance(mockRecordsRepository)
+        )
+        .build()
+
+      running(application) {
+        val result = route(application, validFakeGetRequest).value
+        status(result) shouldBe Status.OK
+        contentAsString(result) mustBe Json.toJson(record).toString
+      }
+    }
+
+    "return Not found when the record does not exist in our database" in {
+      val requestEori = "GB123456789099"
+      val record      = getGoodsItemRecords(requestEori)
+      val checkUrl    = routes.GetRecordsController
+        .getRecord(requestEori, record.recordId)
+        .url
+
+      val validFakeGetRequest = FakeRequest("GET", checkUrl)
+
+      val mockRecordsRepository = mock[RecordsRepository]
+      when(mockRecordsRepository.get(any())) thenReturn Future.successful(None)
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[RecordsRepository].toInstance(mockRecordsRepository)
+        )
+        .build()
+
+      running(application) {
+        val result = route(application, validFakeGetRequest).value
+        status(result) shouldBe Status.NOT_FOUND
+      }
+    }
+  }
+
 }

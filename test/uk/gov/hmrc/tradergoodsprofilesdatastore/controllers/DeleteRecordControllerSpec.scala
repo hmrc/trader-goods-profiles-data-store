@@ -28,7 +28,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeIdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GoodsItemRecords}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GoodsItemRecord}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
 import java.time.Instant
@@ -59,7 +59,7 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
     condition = Some(sampleCondition)
   )
 
-  val sampleGoodsItemRecord: GoodsItemRecords = GoodsItemRecords(
+  val sampleGoodsItemRecord: GoodsItemRecord = GoodsItemRecord(
     eori = testEori,
     actorId = "GB098765432112",
     recordId = testRecordId,
