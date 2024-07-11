@@ -20,7 +20,7 @@ import play.api.libs.json._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.ResponseModelSupport.removeNulls
 
 import java.time.Instant
-case class GoodsItemRecords(
+case class GoodsItemRecord(
   eori: String,
   actorId: String,
   recordId: String,
@@ -48,9 +48,9 @@ case class GoodsItemRecords(
   updatedDateTime: Instant
 )
 
-object GoodsItemRecords {
+object GoodsItemRecord {
 
-  implicit val goodsItemRecordsWrites: Writes[GoodsItemRecords] = (goodsItemRecords: GoodsItemRecords) =>
+  implicit val goodsItemRecordsWrites: Writes[GoodsItemRecord] = (goodsItemRecords: GoodsItemRecord) =>
     removeNulls(
       Json.obj(
         "eori"                     -> goodsItemRecords.eori,
@@ -81,9 +81,9 @@ object GoodsItemRecords {
       )
     )
 
-  implicit val goodsItemRecordsReads: Reads[GoodsItemRecords] = (json: JsValue) =>
+  implicit val goodsItemRecordsReads: Reads[GoodsItemRecord] = (json: JsValue) =>
     JsSuccess(
-      GoodsItemRecords(
+      GoodsItemRecord(
         (json \ "eori").as[String],
         (json \ "actorId").as[String],
         (json \ "recordId").as[String],
@@ -112,7 +112,7 @@ object GoodsItemRecords {
       )
     )
 
-  implicit val goodsItemRecordsFormat: Format[GoodsItemRecords] =
+  implicit val goodsItemRecordsFormat: Format[GoodsItemRecord] =
     Format(goodsItemRecordsReads, goodsItemRecordsWrites)
 
 }

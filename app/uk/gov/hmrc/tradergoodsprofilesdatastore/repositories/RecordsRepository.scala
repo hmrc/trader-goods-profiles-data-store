@@ -22,7 +22,7 @@ import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.UpdateRecordRequest
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GoodsItemRecords
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GoodsItemRecord
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -32,10 +32,10 @@ class RecordsRepository @Inject() (
   mongoComponent: MongoComponent,
   config: DataStoreAppConfig
 )(implicit ec: ExecutionContext)
-    extends PlayMongoRepository[GoodsItemRecords](
+    extends PlayMongoRepository[GoodsItemRecord](
       collectionName = "goodsItemRecords",
       mongoComponent = mongoComponent,
-      domainFormat = GoodsItemRecords.goodsItemRecordsFormat,
+      domainFormat = GoodsItemRecord.goodsItemRecordsFormat,
       indexes = Seq(
         IndexModel(
           Indexes.ascending("recordId"),
@@ -51,7 +51,7 @@ class RecordsRepository @Inject() (
 
   private def byLatest: Bson = Sorts.descending("updatedDateTime")
 
-  def saveRecords(records: Seq[GoodsItemRecords]): Future[Boolean] =
+  def saveRecords(records: Seq[GoodsItemRecord]): Future[Boolean] =
     Future
       .sequence(records.map { record =>
         collection
@@ -64,9 +64,9 @@ class RecordsRepository @Inject() (
       })
       .map(_ => true)
 
-  def get(recordId: String): Future[Option[GoodsItemRecords]] =
+  def get(recordId: String): Future[Option[GoodsItemRecord]] =
     collection
-      .find[GoodsItemRecords](byRecordId(recordId))
+      .find[GoodsItemRecord](byRecordId(recordId))
       .headOption()
 
   def getMany(eori: String, pageOpt: Option[Int], sizeOpt: Option[Int]): Future[Seq[GoodsItemRecords]] = {
@@ -74,7 +74,7 @@ class RecordsRepository @Inject() (
     val page = pageOpt.getOrElse(config.startingPage)
     val skip = (page - 1) * size
     collection
-      .find[GoodsItemRecords](byEori(eori))
+      .find[GoodsItemRecord](byEori(eori))
       .sort(byLatest)
       .limit(size)
       .skip(skip)
@@ -86,9 +86,9 @@ class RecordsRepository @Inject() (
       .countDocuments(byEori(eori))
       .toFuture()
 
-  def getLatest(eori: String): Future[Option[GoodsItemRecords]] =
+  def getLatest(eori: String): Future[Option[GoodsItemRecord]] =
     collection
-      .find[GoodsItemRecords](byEori(eori))
+      .find[GoodsItemRecord](byEori(eori))
       .sort(byLatest)
       .limit(1)
       .headOption()
@@ -109,7 +109,7 @@ class RecordsRepository @Inject() (
       .toFuture()
       .map(_.getDeletedCount)
 
-  def saveRecord(record: GoodsItemRecords): Future[Boolean] =
+  def saveRecord(record: GoodsItemRecord): Future[Boolean] =
     collection
       .replaceOne(
         filter = byRecordId(record.recordId),
@@ -119,7 +119,7 @@ class RecordsRepository @Inject() (
       .toFuture()
       .map(_ => true)
 
-  def update(recordId: String, updateRequest: UpdateRecordRequest): Future[Option[GoodsItemRecords]] =
+  def update(recordId: String, updateRequest: UpdateRecordRequest): Future[Option[GoodsItemRecord]] =
     get(recordId).flatMap {
       case Some(existingRecord) =>
         val updatedRecord = existingRecord.copy(

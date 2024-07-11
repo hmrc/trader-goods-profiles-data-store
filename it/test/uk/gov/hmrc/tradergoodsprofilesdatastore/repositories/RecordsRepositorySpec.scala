@@ -25,7 +25,7 @@ import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.UpdateRecordRequest
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GoodsItemRecords}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GoodsItemRecord}
 
 import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -33,7 +33,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class RecordsRepositorySpec
     extends AnyFreeSpec
     with Matchers
-    with PlayMongoRepositorySupport[GoodsItemRecords]
+    with PlayMongoRepositorySupport[GoodsItemRecord]
     with ScalaFutures
     with IntegrationPatience
     with OptionValues
@@ -65,7 +65,7 @@ class RecordsRepositorySpec
     traderRef = Some("updated-reference")
   )
 
-  val sampleGoodsItemRecords: GoodsItemRecords = GoodsItemRecords(
+  val sampleGoodsItemRecords: GoodsItemRecord = GoodsItemRecord(
     eori = "GB123456789001",
     actorId = "GB098765432112",
     recordId = testrecordId,
@@ -95,7 +95,7 @@ class RecordsRepositorySpec
 
   private val latestRecordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204p"
 
-  val latestGoodsItemRecords: GoodsItemRecords = GoodsItemRecords(
+  val latestGoodsItemRecords: GoodsItemRecord = GoodsItemRecord(
     eori = "GB123456789001",
     actorId = "GB098765432112",
     recordId = latestRecordId,
@@ -125,7 +125,7 @@ class RecordsRepositorySpec
 
   private val inactiveRecordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204g"
 
-  val inactiveGoodsItemRecords: GoodsItemRecords = GoodsItemRecords(
+  val inactiveGoodsItemRecords: GoodsItemRecord = GoodsItemRecord(
     eori = "GB123456789001",
     actorId = "GB098765432112",
     recordId = inactiveRecordId,
