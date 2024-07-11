@@ -61,7 +61,7 @@ class StoreRecordsController @Inject() (
     lastUpdatedDate: Option[String],
     numRecordsSaved: Int
   )(implicit request: Request[_]): Future[Done] =
-    routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(10)).flatMap { recordsResponse =>
+    routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(10000)).flatMap { recordsResponse =>
       recordsRepository.saveRecords(recordsResponse.goodsItemRecords).flatMap { _ =>
         val newNumRecordsSaved = recordsResponse.goodsItemRecords.size + numRecordsSaved
         if (newNumRecordsSaved >= recordsResponse.pagination.totalRecords) {
