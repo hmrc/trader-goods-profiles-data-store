@@ -69,7 +69,7 @@ class RecordsRepository @Inject() (
       .find[GoodsItemRecord](byRecordId(recordId))
       .headOption()
 
-  def getMany(eori: String, pageOpt: Option[Int], sizeOpt: Option[Int]): Future[Seq[GoodsItemRecords]] = {
+  def getMany(eori: String, pageOpt: Option[Int], sizeOpt: Option[Int]): Future[Seq[GoodsItemRecord]] = {
     val size = sizeOpt.getOrElse(config.pageSize)
     val page = pageOpt.getOrElse(config.startingPage)
     val skip = (page - 1) * size
