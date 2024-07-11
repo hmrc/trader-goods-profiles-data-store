@@ -20,7 +20,7 @@ import play.api.libs.json._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 
 case class GetRecordsResponse(
-  goodsItemRecords: Seq[GoodsItemRecords],
+  goodsItemRecords: Seq[GoodsItemRecord],
   pagination: Pagination
 )
 
@@ -28,7 +28,7 @@ object GetRecordsResponse {
   implicit val recordsReads: Reads[GetRecordsResponse] = (json: JsValue) =>
     JsSuccess(
       response.GetRecordsResponse(
-        (json \ "goodsItemRecords").as[Seq[GoodsItemRecords]],
+        (json \ "goodsItemRecords").as[Seq[GoodsItemRecord]],
         (json \ "pagination").as[Pagination]
       )
     )
