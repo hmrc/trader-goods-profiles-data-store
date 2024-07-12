@@ -157,30 +157,50 @@ class RecordsRepository @Inject() (
     }
 
   def filterRecords(eori: String, searchTerm: Option[String], field: Option[String]): Future[Seq[GoodsItemRecord]] =
-    field match {
+    searchTerm match {
       case Some(value) =>
-        searchTerm match {
+        field match {
           case Some("traderRef")        =>
             collection
-              .find[GoodsItemRecord](byTraderRef(value))
+              .find[GoodsItemRecord](
+                Filters.and(
+                  byEori(eori),
+                  byTraderRef(value)
+                )
+              )
               .sort(byLatest)
               .toFuture()
           case Some("goodsDescription") =>
             collection
-              .find[GoodsItemRecord](byGoodsDescription(value))
+              .find[GoodsItemRecord](
+                Filters.and(
+                  byEori(eori),
+                  byGoodsDescription(value)
+                )
+              )
               .sort(byLatest)
               .toFuture()
           case Some("countryOfOrigin")  =>
             collection
-              .find[GoodsItemRecord](byCountryOfOrigin(value))
+              .find[GoodsItemRecord](
+                Filters.and(
+                  byEori(eori),
+                  byCountryOfOrigin(value)
+                )
+              )
               .sort(byLatest)
               .toFuture()
           case None                     =>
             collection
-              .find[GoodsItemRecord](byCountryOfOriginOrGoodsDescriptionOrTraderRef(value))
+              .find[GoodsItemRecord](
+                Filters.and(
+                  byEori(eori),
+                  byCountryOfOriginOrGoodsDescriptionOrTraderRef(value)
+                )
+              )
               .sort(byLatest)
               .toFuture()
         }
-      case None        => getMany(eori, None, None)
+      case None        => Future.successful(Seq.empty)
     }
 }

@@ -19,6 +19,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
@@ -30,25 +31,34 @@ class FilterRecordsController @Inject() (
   storeRecordsController: StoreRecordsController,
   recordsRepository: RecordsRepository,
   cc: ControllerComponents,
-  identify: IdentifierAction
+  identify: IdentifierAction,
+  config: DataStoreAppConfig
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
-  def filterLocalRecords(eori: String, searchTerm: Option[String], field: Option[String]): Action[AnyContent] =
+  def filterLocalRecords(
+    eori: String,
+    searchTerm: Option[String],
+    field: Option[String],
+    pageOpt: Option[Int],
+    sizeOpt: Option[Int]
+  ): Action[AnyContent] =
     identify.async { implicit request =>
       for {
         _               <- storeRecordsController.storeLatestRecords(eori).apply(request)
         filteredRecords <- recordsRepository.filterRecords(eori, searchTerm, field)
       } yield {
-        val pagination         = buildPagination(None, None, filteredRecords.size.toLong)
-        val getRecordsResponse = GetRecordsResponse(goodsItemRecords = filteredRecords, pagination = pagination)
+        val size               = sizeOpt.getOrElse(config.pageSize)
+        val page               = pageOpt.getOrElse(config.startingPage)
+        val skip               = (page - 1) * size
+        val paginatedRecords   = filteredRecords.drop(skip).take(size)
+        val pagination         = buildPagination(size, page, filteredRecords.size.toLong)
+        val getRecordsResponse = GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination = pagination)
         Ok(Json.toJson(getRecordsResponse))
       }
     }
 
-  private def buildPagination(sizeOpt: Option[Int], pageOpt: Option[Int], totalRecords: Long): Pagination = {
-    val size                 = sizeOpt.getOrElse(10)
-    val page                 = pageOpt.getOrElse(1)
+  private def buildPagination(size: Int, page: Int, totalRecords: Long): Pagination = {
     val mod                  = totalRecords % size
     val totalRecordsMinusMod = totalRecords - mod
     val totalPages           = ((totalRecordsMinusMod / size) + 1).toInt
