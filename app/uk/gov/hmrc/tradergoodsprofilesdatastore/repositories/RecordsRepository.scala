@@ -51,6 +51,19 @@ class RecordsRepository @Inject() (
 
   private def byLatest: Bson = Sorts.descending("updatedDateTime")
 
+  private def byTraderRef(traderRef: String): Bson = Filters.equal("traderRef", traderRef)
+
+  private def byGoodsDescription(goodsDescription: String): Bson = Filters.equal("goodsDescription", goodsDescription)
+
+  private def byCountryOfOrigin(countryOfOrigin: String): Bson = Filters.equal("countryOfOrigin", countryOfOrigin)
+
+  private def byCountryOfOriginOrGoodsDescriptionOrTraderRef(value: String): Bson =
+    Filters.or(
+      Filters.equal("traderRef", value),
+      Filters.equal("goodsDescription", value),
+      Filters.equal("countryOfOrigin", value)
+    )
+
   def saveRecords(records: Seq[GoodsItemRecord]): Future[Boolean] =
     Future
       .sequence(records.map { record =>
@@ -141,5 +154,33 @@ class RecordsRepository @Inject() (
         }
 
       case None => Future.successful(None)
+    }
+
+  def filterRecords(eori: String, searchTerm: Option[String], field: Option[String]): Future[Seq[GoodsItemRecord]] =
+    field match {
+      case Some(value) =>
+        searchTerm match {
+          case Some("traderRef")        =>
+            collection
+              .find[GoodsItemRecord](byTraderRef(value))
+              .sort(byLatest)
+              .toFuture()
+          case Some("goodsDescription") =>
+            collection
+              .find[GoodsItemRecord](byGoodsDescription(value))
+              .sort(byLatest)
+              .toFuture()
+          case Some("countryOfOrigin")  =>
+            collection
+              .find[GoodsItemRecord](byCountryOfOrigin(value))
+              .sort(byLatest)
+              .toFuture()
+          case None                     =>
+            collection
+              .find[GoodsItemRecord](byCountryOfOriginOrGoodsDescriptionOrTraderRef(value))
+              .sort(byLatest)
+              .toFuture()
+        }
+      case None        => getMany(eori, None, None)
     }
 }
