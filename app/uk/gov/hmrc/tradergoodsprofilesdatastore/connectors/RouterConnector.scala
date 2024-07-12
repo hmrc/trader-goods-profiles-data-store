@@ -25,9 +25,8 @@ import sttp.model.Uri.UriContext
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.UpdateRecordRequest
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.{CreateRecordRequest, ProfileRequest, UpdateRecordRequest}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, GoodsItemRecord}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -60,6 +59,9 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   ) =
     url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records/$recordId"
 
+  private def createGoodsRecordUrl(eori: String) =
+    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records"
+
   def submitTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
       .put(traderProfileUrl(eori))
@@ -72,6 +74,16 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
         }
       }
 
+  def createRecord(
+    createRecordRequest: CreateRecordRequest
+  )(implicit hc: HeaderCarrier): Future[GoodsItemRecord] =
+    httpClient
+      .post(createGoodsRecordUrl(createRecordRequest.eori))
+      .setHeader(clientIdHeader)
+      .withBody(Json.toJson(createRecordRequest))
+      .execute[HttpResponse]
+      .map(response => response.json.as[GoodsItemRecord])
+
   def getRecords(
     eori: String,
     lastUpdatedDate: Option[String] = None,
@@ -83,11 +95,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
       .get(url"$uri")
       .setHeader(clientIdHeader)
       .execute[HttpResponse]
-      .map { response =>
-        response.status match {
-          case OK => response.json.as[GetRecordsResponse]
-        }
-      }
+      .map(response => response.json.as[GetRecordsResponse])
   }
 
   def deleteRecord(

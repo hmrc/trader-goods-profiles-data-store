@@ -38,7 +38,7 @@ GET request to the following endpoint
 ```
 https://<host>/trader-goods-profiles-data-store/customs/traders/goods-profiles/:eori  
 ```
-### Example response:
+### Example record:
 `ProfileResponse`:
 ```json
 {

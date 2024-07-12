@@ -16,17 +16,19 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
+import play.api.libs.json.Json
 import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.UpdateRecordRequest
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.CreateRecordRequest
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.CreateRecordResponse
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
-class UpdateRecordController @Inject() (
+class CreateRecordController @Inject() (
   recordsRepository: RecordsRepository,
   cc: ControllerComponents,
   routerConnector: RouterConnector,
@@ -34,10 +36,12 @@ class UpdateRecordController @Inject() (
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
-  def updateRecord(eori: String, recordId: String): Action[UpdateRecordRequest] =
-    identify.async(parse.json[UpdateRecordRequest]) { implicit request =>
-      routerConnector.updateRecord(request.body, eori, recordId).flatMap { record =>
-        recordsRepository.update(recordId, request.body).map(_ => Ok)
+  def create(eori: String): Action[CreateRecordRequest] =
+    identify.async(parse.json[CreateRecordRequest]) { implicit request =>
+      routerConnector.createRecord(request.body).flatMap { goodsItemRecord =>
+        recordsRepository
+          .insert(goodsItemRecord)
+          .map(_ => Ok(Json.toJson(CreateRecordResponse(goodsItemRecord.recordId))))
       }
     }
 
