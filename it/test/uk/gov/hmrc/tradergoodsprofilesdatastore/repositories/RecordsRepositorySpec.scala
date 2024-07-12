@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
+import org.mockito.Mockito.when
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Filters
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
@@ -23,7 +24,9 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
+import play.api.Configuration
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
+import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.UpdateRecordRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GoodsItemRecord}
 
@@ -150,7 +153,16 @@ class RecordsRepositorySpec
     updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
   )
 
-  protected override val repository = new RecordsRepository(mongoComponent = mongoComponent)
+  private val mockConfig = mock[DataStoreAppConfig]
+
+  when(mockConfig.startingPage) thenReturn 1
+  when(mockConfig.pageSize) thenReturn 10
+
+  protected override val repository =
+    new RecordsRepository(
+      mongoComponent = mongoComponent,
+      config = mockConfig
+    )
 
   private def byRecordId(recordId: String): Bson = Filters.equal("recordId", recordId)
 

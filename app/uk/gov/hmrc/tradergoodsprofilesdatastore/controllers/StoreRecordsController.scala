@@ -26,11 +26,13 @@ import org.apache.pekko.Done
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.mvc.Request
+import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 
 class StoreRecordsController @Inject() (
   recordsRepository: RecordsRepository,
   checkRecordsRepository: CheckRecordsRepository,
   cc: ControllerComponents,
+  config: DataStoreAppConfig,
   routerConnector: RouterConnector,
   identify: IdentifierAction
 )(implicit ec: ExecutionContext)
@@ -69,6 +71,5 @@ class StoreRecordsController @Inject() (
         } else {
           recordsRepository.deleteInactive(eori).map(_ => Done)
         }
-      }
     }
 }

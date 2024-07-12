@@ -19,6 +19,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
@@ -30,6 +31,7 @@ import scala.concurrent.ExecutionContext
 class GetRecordsController @Inject() (
   routerConnector: RouterConnector,
   recordsRepository: RecordsRepository,
+  config: DataStoreAppConfig,
   cc: ControllerComponents,
   identify: IdentifierAction
 )(implicit ec: ExecutionContext)
@@ -67,8 +69,8 @@ class GetRecordsController @Inject() (
   }
 
   private def buildPagination(sizeOpt: Option[Int], pageOpt: Option[Int], totalRecords: Long): Pagination = {
-    val size                 = sizeOpt.getOrElse(10)
-    val page                 = pageOpt.getOrElse(1)
+    val size                 = sizeOpt.getOrElse(config.pageSize)
+    val page                 = pageOpt.getOrElse(config.startingPage)
     val mod                  = totalRecords % size
     val totalRecordsMinusMod = totalRecords - mod
     val totalPages           = ((totalRecordsMinusMod / size) + 1).toInt
