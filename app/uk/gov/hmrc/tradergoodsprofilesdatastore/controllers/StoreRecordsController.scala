@@ -36,12 +36,14 @@ class StoreRecordsController @Inject() (
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
+  private val RETRIEVAL_TOTAL = 10000
+
   def storeLatestRecords(
     eori: String
   ): Action[AnyContent] = identify.async { implicit request =>
     recordsRepository.getLatest(eori).flatMap {
       case Some(record) =>
-        storeRecordsRecursively(eori, 1, Some(record.updatedDateTime.toString), 0)
+        storeRecordsRecursively(eori, 0, Some(record.updatedDateTime.toString))
           .map(_ => NoContent)
       case _            => Future.successful(NotFound)
     }
@@ -52,22 +54,20 @@ class StoreRecordsController @Inject() (
   ): Action[AnyContent] = identify.async { implicit request =>
     checkRecordsRepository
       .set(eori)
-      .flatMap(_ => storeRecordsRecursively(eori, 1, None, 0).map(_ => NoContent))
+      .flatMap(_ => storeRecordsRecursively(eori, 0, None).map(_ => NoContent))
   }
 
   private def storeRecordsRecursively(
     eori: String,
     page: Int,
-    lastUpdatedDate: Option[String],
-    numRecordsSaved: Int
+    lastUpdatedDate: Option[String]
   )(implicit request: Request[_]): Future[Done] =
-    routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(10000)).flatMap { recordsResponse =>
+    routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(RETRIEVAL_TOTAL)).flatMap { recordsResponse =>
       recordsRepository.saveRecords(recordsResponse.goodsItemRecords).flatMap { _ =>
-        val newNumRecordsSaved = recordsResponse.goodsItemRecords.size + numRecordsSaved
-        if (newNumRecordsSaved >= recordsResponse.pagination.totalRecords) {
-          recordsRepository.deleteInactive(eori).map(_ => Done)
+        if (recordsResponse.goodsItemRecords.length == RETRIEVAL_TOTAL) {
+          storeRecordsRecursively(eori, page + 1, lastUpdatedDate)
         } else {
-          storeRecordsRecursively(eori, page + 1, lastUpdatedDate, newNumRecordsSaved)
+          recordsRepository.deleteInactive(eori).map(_ => Done)
         }
       }
     }
