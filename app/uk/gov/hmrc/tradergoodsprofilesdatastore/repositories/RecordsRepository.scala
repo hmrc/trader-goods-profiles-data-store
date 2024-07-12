@@ -21,6 +21,7 @@ import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.UpdateRecordRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GoodsItemRecord
 
@@ -29,7 +30,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class RecordsRepository @Inject() (
-  mongoComponent: MongoComponent
+  mongoComponent: MongoComponent,
+  config: DataStoreAppConfig
 )(implicit ec: ExecutionContext)
     extends PlayMongoRepository[GoodsItemRecord](
       collectionName = "goodsItemRecords",
@@ -69,8 +71,8 @@ class RecordsRepository @Inject() (
       .headOption()
 
   def getMany(eori: String, pageOpt: Option[Int], sizeOpt: Option[Int]): Future[Seq[GoodsItemRecord]] = {
-    val size = sizeOpt.getOrElse(10)
-    val page = pageOpt.getOrElse(1)
+    val size = sizeOpt.getOrElse(config.pageSize)
+    val page = pageOpt.getOrElse(config.startingPage)
     val skip = (page - 1) * size
     collection
       .find[GoodsItemRecord](byEori(eori))
