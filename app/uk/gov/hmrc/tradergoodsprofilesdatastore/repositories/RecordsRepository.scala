@@ -143,7 +143,7 @@ class RecordsRepository @Inject() (
           comcodeEffectiveToDate = updateRequest.comcodeEffectiveToDate.orElse(existingRecord.comcodeEffectiveToDate)
         )
 
-        saveRecord(updatedRecord).map { case true =>
+        saveRecord(updatedRecord).map { _ =>
           Some(updatedRecord)
         }
 

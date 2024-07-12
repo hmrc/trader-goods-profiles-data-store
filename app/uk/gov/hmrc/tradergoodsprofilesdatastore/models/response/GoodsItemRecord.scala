@@ -17,7 +17,6 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 
 import play.api.libs.json._
-import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.ResponseModelSupport.removeNulls
 
 import java.time.Instant
 case class GoodsItemRecord(
