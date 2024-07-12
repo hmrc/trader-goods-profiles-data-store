@@ -17,13 +17,12 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 
 import play.api.libs.json._
-import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.ResponseModelSupport.removeNulls
 
 import java.time.Instant
 case class GoodsItemRecord(
+  recordId: String,
   eori: String,
   actorId: String,
-  recordId: String,
   traderRef: String,
   comcode: String,
   adviceStatus: String,
@@ -40,56 +39,24 @@ case class GoodsItemRecord(
   toReview: Boolean,
   reviewReason: Option[String],
   declarable: String,
-  ukimsNumber: String,
-  nirmsNumber: String,
-  niphlNumber: String,
-  locked: Boolean,
+  ukimsNumber: Option[String],
+  nirmsNumber: Option[String],
+  niphlNumber: Option[String],
   createdDateTime: Instant,
   updatedDateTime: Instant
 )
 
 object GoodsItemRecord {
-
-  implicit val goodsItemRecordsWrites: Writes[GoodsItemRecord] = (goodsItemRecords: GoodsItemRecord) =>
-    removeNulls(
-      Json.obj(
-        "eori"                     -> goodsItemRecords.eori,
-        "actorId"                  -> goodsItemRecords.actorId,
-        "recordId"                 -> goodsItemRecords.recordId,
-        "traderRef"                -> goodsItemRecords.traderRef,
-        "comcode"                  -> goodsItemRecords.comcode,
-        "adviceStatus"             -> goodsItemRecords.adviceStatus,
-        "goodsDescription"         -> goodsItemRecords.goodsDescription,
-        "countryOfOrigin"          -> goodsItemRecords.countryOfOrigin,
-        "category"                 -> goodsItemRecords.category,
-        "assessments"              -> goodsItemRecords.assessments,
-        "supplementaryUnit"        -> goodsItemRecords.supplementaryUnit,
-        "measurementUnit"          -> goodsItemRecords.measurementUnit,
-        "comcodeEffectiveFromDate" -> goodsItemRecords.comcodeEffectiveFromDate,
-        "comcodeEffectiveToDate"   -> goodsItemRecords.comcodeEffectiveToDate,
-        "version"                  -> goodsItemRecords.version,
-        "active"                   -> goodsItemRecords.active,
-        "toReview"                 -> goodsItemRecords.toReview,
-        "reviewReason"             -> goodsItemRecords.reviewReason,
-        "declarable"               -> goodsItemRecords.declarable,
-        "ukimsNumber"              -> goodsItemRecords.ukimsNumber,
-        "nirmsNumber"              -> goodsItemRecords.nirmsNumber,
-        "niphlNumber"              -> goodsItemRecords.niphlNumber,
-        "locked"                   -> goodsItemRecords.locked,
-        "createdDateTime"          -> goodsItemRecords.createdDateTime,
-        "updatedDateTime"          -> goodsItemRecords.updatedDateTime
-      )
-    )
-
-  implicit val goodsItemRecordsReads: Reads[GoodsItemRecord] = (json: JsValue) =>
+  implicit val reads: Reads[GoodsItemRecord] = (json: JsValue) =>
     JsSuccess(
       GoodsItemRecord(
+        (json \ "recordId").as[String],
         (json \ "eori").as[String],
         (json \ "actorId").as[String],
-        (json \ "recordId").as[String],
         (json \ "traderRef").as[String],
         (json \ "comcode").as[String],
-        (json \ "adviceStatus").as[String],
+        (json \ "adviceStatus")
+          .as[String],
         (json \ "goodsDescription").as[String],
         (json \ "countryOfOrigin").as[String],
         (json \ "category").as[Int],
@@ -103,16 +70,41 @@ object GoodsItemRecord {
         (json \ "toReview").as[Boolean],
         (json \ "reviewReason").asOpt[String],
         (json \ "declarable").as[String],
-        (json \ "ukimsNumber").as[String],
-        (json \ "nirmsNumber").as[String],
-        (json \ "niphlNumber").as[String],
-        (json \ "locked").as[Boolean],
+        (json \ "ukimsNumber").asOpt[String],
+        (json \ "nirmsNumber").asOpt[String],
+        (json \ "niphlNumber").asOpt[String],
         (json \ "createdDateTime").as[Instant],
         (json \ "updatedDateTime").as[Instant]
       )
     )
 
-  implicit val goodsItemRecordsFormat: Format[GoodsItemRecord] =
-    Format(goodsItemRecordsReads, goodsItemRecordsWrites)
+  implicit val writes: Writes[GoodsItemRecord] = (record: GoodsItemRecord) =>
+    Json.obj(
+      "recordId"                 -> record.recordId,
+      "eori"                     -> record.eori,
+      "actorId"                  -> record.actorId,
+      "traderRef"                -> record.traderRef,
+      "comcode"                  -> record.comcode,
+      "adviceStatus"             -> record.adviceStatus,
+      "goodsDescription"         -> record.goodsDescription,
+      "countryOfOrigin"          -> record.countryOfOrigin,
+      "category"                 -> record.category,
+      "assessments"              -> record.assessments,
+      "supplementaryUnit"        -> record.supplementaryUnit,
+      "measurementUnit"          -> record.measurementUnit,
+      "comcodeEffectiveFromDate" -> record.comcodeEffectiveFromDate,
+      "comcodeEffectiveToDate"   -> record.comcodeEffectiveToDate,
+      "version"                  -> record.version,
+      "active"                   -> record.active,
+      "toReview"                 -> record.toReview,
+      "reviewReason"             -> record.reviewReason,
+      "declarable"               -> record.declarable,
+      "ukimsNumber"              -> record.ukimsNumber,
+      "nirmsNumber"              -> record.nirmsNumber,
+      "niphlNumber"              -> record.niphlNumber,
+      "createdDateTime"          -> record.createdDateTime,
+      "updatedDateTime"          -> record.updatedDateTime
+    )
 
+  val goodsItemRecordsFormat = Format(reads, writes)
 }

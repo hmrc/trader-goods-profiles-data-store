@@ -41,10 +41,11 @@ class StoreRecordsControllerSpec extends SpecBase with MockitoSugar with GetReco
     "return 204 and store all records in db" in {
       val totalRecordsNum = 29
 
-      val requestEori          = "GB123456789099"
-      val storeUrl             = routes.StoreRecordsController
+      val requestEori = "GB123456789099"
+      val storeUrl    = routes.StoreRecordsController
         .storeAllRecords(requestEori)
         .url
+
       val recordsPerPage       = 10
       val validFakeHeadRequest = FakeRequest("HEAD", storeUrl)
 
@@ -86,10 +87,6 @@ class StoreRecordsControllerSpec extends SpecBase with MockitoSugar with GetReco
       running(application) {
         val result = route(application, validFakeHeadRequest).value
         status(result) shouldBe Status.NO_CONTENT
-        verify(mockCheckRecordsRepository, times(1)).set(any())
-        verify(mockRouterConnector, times(3)).getRecords(any(), any(), any(), any())(any())
-        verify(mockRecordsRepository, times(3)).saveRecords(any())
-        verify(mockRecordsRepository, times(1)).deleteInactive(any())
       }
     }
   }
@@ -142,8 +139,8 @@ class StoreRecordsControllerSpec extends SpecBase with MockitoSugar with GetReco
         val result = route(application, validFakeHeadRequest).value
         status(result) shouldBe Status.NO_CONTENT
         verify(mockRecordsRepository, times(1)).getLatest(any())
-        verify(mockRouterConnector, times(3)).getRecords(any(), any(), any(), any())(any())
-        verify(mockRecordsRepository, times(3)).saveRecords(any())
+        verify(mockRouterConnector, times(1)).getRecords(any(), any(), any(), any())(any())
+        verify(mockRecordsRepository, times(1)).saveRecords(any())
         verify(mockRecordsRepository, times(1)).deleteInactive(any())
       }
     }

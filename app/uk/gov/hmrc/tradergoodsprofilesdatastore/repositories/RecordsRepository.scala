@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
+import org.apache.pekko.Done
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo.MongoComponent
@@ -122,6 +123,14 @@ class RecordsRepository @Inject() (
       .toFuture()
       .map(_.getDeletedCount)
 
+  def insert(record: GoodsItemRecord): Future[Done] =
+    collection
+      .insertOne(
+        record
+      )
+      .toFuture()
+      .map(_ => Done)
+
   def saveRecord(record: GoodsItemRecord): Future[Boolean] =
     collection
       .replaceOne(
@@ -149,7 +158,7 @@ class RecordsRepository @Inject() (
           comcodeEffectiveToDate = updateRequest.comcodeEffectiveToDate.orElse(existingRecord.comcodeEffectiveToDate)
         )
 
-        saveRecord(updatedRecord).map { case true =>
+        saveRecord(updatedRecord).map { _ =>
           Some(updatedRecord)
         }
 

@@ -63,10 +63,9 @@ trait GetRecordsResponseUtil {
     toReview = false,
     Some("no reason"),
     "IMMI ready",
-    "XIUKIM47699357400020231115081800",
-    "RMS-GB-123456",
-    "6 S12345",
-    locked = false,
+    Some("XIUKIM47699357400020231115081800"),
+    Some("RMS-GB-123456"),
+    Some("6 S12345"),
     timestamp,
     timestamp
   )

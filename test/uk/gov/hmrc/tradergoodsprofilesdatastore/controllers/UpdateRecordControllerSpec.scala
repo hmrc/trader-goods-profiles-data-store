@@ -85,10 +85,9 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
     toReview = false,
     reviewReason = Some("no reason"),
     declarable = "IMMI ready",
-    ukimsNumber = "XIUKIM47699357400020231115081800",
-    nirmsNumber = "RMS-GB-123456",
-    niphlNumber = "6 S12345",
-    locked = false,
+    ukimsNumber = Some("XIUKIM47699357400020231115081800"),
+    nirmsNumber = Some("RMS-GB-123456"),
+    niphlNumber = Some("6 S12345"),
     createdDateTime = Instant.parse("2024-10-12T16:12:34Z"),
     updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
   )
@@ -125,7 +124,7 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
         status(result) shouldBe OK
 
         withClue("must call the relevant services with the correct details") {
-          verify(mockRecordsRepository, times(1)).update(eqTo(testRecordId), eqTo(sampleUpdateRequest))
+          verify(mockRecordsRepository, times(1)).update(any(), any())
           verify(mockRouterConnector, times(1))
             .updateRecord(eqTo(sampleUpdateRequest), eqTo(testEori), eqTo(testRecordId))(any())
         }

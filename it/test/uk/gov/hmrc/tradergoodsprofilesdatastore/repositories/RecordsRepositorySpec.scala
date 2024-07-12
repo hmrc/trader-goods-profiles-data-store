@@ -87,10 +87,9 @@ class RecordsRepositorySpec
     toReview = false,
     reviewReason = Some("no reason"),
     declarable = "IMMI ready",
-    ukimsNumber = "XIUKIM47699357400020231115081800",
-    nirmsNumber = "RMS-GB-123456",
-    niphlNumber = "6 S12345",
-    locked = false,
+    ukimsNumber = Some("XIUKIM47699357400020231115081800"),
+    nirmsNumber = Some("RMS-GB-123456"),
+    niphlNumber = Some("6 S12345"),
     createdDateTime = Instant.parse("2024-10-12T16:12:34Z"),
     updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
   )
@@ -152,10 +151,9 @@ class RecordsRepositorySpec
     toReview = false,
     reviewReason = Some("no reason"),
     declarable = "IMMI ready",
-    ukimsNumber = "XIUKIM47699357400020231115081800",
-    nirmsNumber = "RMS-GB-123456",
-    niphlNumber = "6 S12345",
-    locked = false,
+    ukimsNumber = Some("XIUKIM47699357400020231115081800"),
+    nirmsNumber = Some("RMS-GB-123456"),
+    niphlNumber = Some("6 S12345"),
     createdDateTime = Instant.parse("2024-11-12T16:12:34Z"),
     updatedDateTime = Instant.parse("2024-11-12T16:12:34Z")
   )
@@ -182,10 +180,9 @@ class RecordsRepositorySpec
     toReview = false,
     reviewReason = Some("no reason"),
     declarable = "IMMI ready",
-    ukimsNumber = "XIUKIM47699357400020231115081800",
-    nirmsNumber = "RMS-GB-123456",
-    niphlNumber = "6 S12345",
-    locked = false,
+    ukimsNumber = Some("XIUKIM47699357400020231115081800"),
+    nirmsNumber = Some("RMS-GB-123456"),
+    niphlNumber = Some("6 S12345"),
     createdDateTime = Instant.parse("2024-10-12T16:12:34Z"),
     updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
   )
@@ -215,8 +212,8 @@ class RecordsRepositorySpec
 
     "must update a record when there is one" in {
       repository.saveRecords(Seq(sampleGoodsItemRecords)).futureValue
-      val modifiedGoodsItemRecords = sampleGoodsItemRecords.copy(ukimsNumber = "new-ukims")
-      val expectedGoodsItemRecords = sampleGoodsItemRecords.copy(ukimsNumber = "new-ukims")
+      val modifiedGoodsItemRecords = sampleGoodsItemRecords.copy(ukimsNumber = Some("new-ukims"))
+      val expectedGoodsItemRecords = sampleGoodsItemRecords.copy(ukimsNumber = Some("new-ukims"))
 
       val saveResult    = repository.saveRecords(Seq(modifiedGoodsItemRecords)).futureValue
       val updatedRecord = find(byRecordId(sampleGoodsItemRecords.recordId)).futureValue.headOption.value
