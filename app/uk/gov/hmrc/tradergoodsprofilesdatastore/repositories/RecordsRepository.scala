@@ -45,19 +45,22 @@ class RecordsRepository @Inject() (
       )
     ) {
 
-  private def byRecordId(recordId: String): Bson  = Filters.equal("recordId", recordId)
-  private def byEori(eori: String): Bson          = Filters.equal("eori", eori)
+  private def byEori(eori: String): Bson = Filters.equal("eori", eori)
+
+  private def byEoriAndRecordId(eori: String, recordId: String): Bson =
+    Filters.and(Filters.equal("eori", eori), Filters.equal("recordId", recordId))
+
   private def byEoriAndActive(eori: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.equal("active", false))
 
   private def byLatest: Bson = Sorts.descending("updatedDateTime")
 
-  def saveRecords(records: Seq[GoodsItemRecord]): Future[Boolean] =
+  def saveRecords(eori: String, records: Seq[GoodsItemRecord]): Future[Boolean] =
     Future
       .sequence(records.map { record =>
         collection
           .replaceOne(
-            filter = byRecordId(record.recordId),
+            filter = byEoriAndRecordId(eori, record.recordId),
             replacement = record,
             options = ReplaceOptions().upsert(true)
           )
@@ -65,9 +68,9 @@ class RecordsRepository @Inject() (
       })
       .map(_ => true)
 
-  def get(recordId: String): Future[Option[GoodsItemRecord]] =
+  def get(eori: String, recordId: String): Future[Option[GoodsItemRecord]] =
     collection
-      .find[GoodsItemRecord](byRecordId(recordId))
+      .find[GoodsItemRecord](byEoriAndRecordId(eori, recordId))
       .headOption()
 
   def getMany(eori: String, pageOpt: Option[Int], sizeOpt: Option[Int]): Future[Seq[GoodsItemRecord]] = {
@@ -94,10 +97,10 @@ class RecordsRepository @Inject() (
       .limit(1)
       .headOption()
 
-  def delete(recordId: String): Future[Boolean] =
+  def delete(eori: String, recordId: String): Future[Boolean] =
     collection
       .deleteOne(
-        filter = byRecordId(recordId)
+        filter = byEoriAndRecordId(eori, recordId)
       )
       .toFuture()
       .map(_.getDeletedCount > 0)
@@ -118,18 +121,18 @@ class RecordsRepository @Inject() (
       .toFuture()
       .map(_ => Done)
 
-  def saveRecord(record: GoodsItemRecord): Future[Boolean] =
+  def saveRecord(eori: String, record: GoodsItemRecord): Future[Boolean] =
     collection
       .replaceOne(
-        filter = byRecordId(record.recordId),
+        filter = byEoriAndRecordId(eori, record.recordId),
         replacement = record,
         options = ReplaceOptions().upsert(true)
       )
       .toFuture()
       .map(_ => true)
 
-  def update(recordId: String, updateRequest: UpdateRecordRequest): Future[Option[GoodsItemRecord]] =
-    get(recordId).flatMap {
+  def update(eori: String, recordId: String, updateRequest: UpdateRecordRequest): Future[Option[GoodsItemRecord]] =
+    get(eori, recordId).flatMap {
       case Some(existingRecord) =>
         val updatedRecord = existingRecord.copy(
           traderRef = updateRequest.traderRef.getOrElse(existingRecord.traderRef),
@@ -145,7 +148,7 @@ class RecordsRepository @Inject() (
           comcodeEffectiveToDate = updateRequest.comcodeEffectiveToDate.orElse(existingRecord.comcodeEffectiveToDate)
         )
 
-        saveRecord(updatedRecord).map { _ =>
+        saveRecord(eori, updatedRecord).map { _ =>
           Some(updatedRecord)
         }
 

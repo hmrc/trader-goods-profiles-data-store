@@ -98,8 +98,8 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
 
       val mockRecordsRepository    = mock[RecordsRepository]
       val expectedGoodsItemRecords = sampleGoodsItemRecord.copy(traderRef = "updated-reference")
-      when(mockRecordsRepository.get(any())) thenReturn Future.successful(Some(sampleGoodsItemRecord))
-      when(mockRecordsRepository.update(any(), any())) thenReturn Future.successful(
+      when(mockRecordsRepository.get(any(), any())) thenReturn Future.successful(Some(sampleGoodsItemRecord))
+      when(mockRecordsRepository.update(any(), any(), any())) thenReturn Future.successful(
         Some(expectedGoodsItemRecords)
       )
 
@@ -124,7 +124,7 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
         status(result) shouldBe OK
 
         withClue("must call the relevant services with the correct details") {
-          verify(mockRecordsRepository, times(1)).update(any(), any())
+          verify(mockRecordsRepository, times(1)).update(any(), any(), any())
           verify(mockRouterConnector, times(1))
             .updateRecord(eqTo(sampleUpdateRequest), eqTo(testEori), eqTo(testRecordId))(any())
         }

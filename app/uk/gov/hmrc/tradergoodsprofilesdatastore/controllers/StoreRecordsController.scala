@@ -64,7 +64,7 @@ class StoreRecordsController @Inject() (
   )(implicit request: Request[_]): Future[Done] =
     routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(config.recursivePageSize)).flatMap {
       recordsResponse =>
-        recordsRepository.saveRecords(recordsResponse.goodsItemRecords).flatMap { _ =>
+        recordsRepository.saveRecords(eori, recordsResponse.goodsItemRecords).flatMap { _ =>
           if (recordsResponse.goodsItemRecords.length == config.recursivePageSize) {
             storeRecordsRecursively(eori, page + 1, lastUpdatedDate)
           } else {
