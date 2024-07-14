@@ -63,7 +63,7 @@ class GetRecordsController @Inject() (
   def getRecordsCount(
     eori: String
   ): Action[AnyContent] = identify.async { implicit request =>
-    routerConnector.getRecords(eori).map { recordsResponse =>
+    routerConnector.getRecords(eori, page = Some(0), size = Some(1)).map { recordsResponse =>
       Ok(Json.toJson(recordsResponse.pagination.totalRecords))
     }
   }
