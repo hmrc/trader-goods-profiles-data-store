@@ -56,7 +56,7 @@ class FilterRecordsControllerSpec
     mockRouterConnector = mock[RouterConnector]
     mockAction = mock[Action[AnyContent]]
 
-    when(mockRecordsRepository.saveRecords(any())) thenReturn Future.successful(true)
+    when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
     when(mockRecordsRepository.deleteInactive(any())) thenReturn Future.successful(0)
     when(mockRecordsRepository.getLatest(any())) thenReturn Future.successful(
       Some(getGoodsItemRecords("GB123456789099"))
