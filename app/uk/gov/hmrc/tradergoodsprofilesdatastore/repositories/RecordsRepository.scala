@@ -36,7 +36,7 @@ class RecordsRepository @Inject() (
     extends PlayMongoRepository[GoodsItemRecord](
       collectionName = "goodsItemRecords",
       mongoComponent = mongoComponent,
-      domainFormat = GoodsItemRecord.goodsItemRecordsFormat,
+      domainFormat = GoodsItemRecord.goodsItemRecordsMongoFormat,
       indexes = Seq(
         IndexModel(
           Indexes.ascending("recordId"),
@@ -48,7 +48,7 @@ class RecordsRepository @Inject() (
   private def byEori(eori: String): Bson = Filters.equal("eori", eori)
 
   private def byEoriAndRecordId(eori: String, recordId: String): Bson =
-    Filters.and(Filters.equal("eori", eori), Filters.equal("recordId", recordId))
+    Filters.and(Filters.equal("eori", eori), Filters.equal("_id", recordId))
 
   private def byEoriAndActive(eori: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.equal("active", false))
@@ -83,7 +83,7 @@ class RecordsRepository @Inject() (
       .headOption()
 
   def getMany(eori: String, pageOpt: Option[Int], sizeOpt: Option[Int]): Future[Seq[GoodsItemRecord]] = {
-    val size = sizeOpt.getOrElse(config.pageSize)
+    val size = sizeOpt.map(size => if (size > 0) size - 1 else size).getOrElse(config.pageSize)
     val page = pageOpt.getOrElse(config.startingPage)
     val skip = (page - 1) * size
     collection

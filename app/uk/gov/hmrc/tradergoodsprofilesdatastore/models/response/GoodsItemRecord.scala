@@ -47,6 +47,67 @@ case class GoodsItemRecord(
 )
 
 object GoodsItemRecord {
+  private val mongoReads: Reads[GoodsItemRecord] = (json: JsValue) =>
+    JsSuccess(
+      GoodsItemRecord(
+        (json \ "_id").as[String],
+        (json \ "eori").as[String],
+        (json \ "actorId").as[String],
+        (json \ "traderRef").as[String],
+        (json \ "comcode").as[String],
+        (json \ "adviceStatus")
+          .as[String],
+        (json \ "goodsDescription").as[String],
+        (json \ "countryOfOrigin").as[String],
+        (json \ "category").as[Int],
+        (json \ "assessments").asOpt[Seq[Assessment]],
+        (json \ "supplementaryUnit").asOpt[Double],
+        (json \ "measurementUnit").asOpt[String],
+        (json \ "comcodeEffectiveFromDate").as[Instant],
+        (json \ "comcodeEffectiveToDate").asOpt[Instant],
+        (json \ "version").as[Int],
+        (json \ "active").as[Boolean],
+        (json \ "toReview").as[Boolean],
+        (json \ "reviewReason").asOpt[String],
+        (json \ "declarable").as[String],
+        (json \ "ukimsNumber").asOpt[String],
+        (json \ "nirmsNumber").asOpt[String],
+        (json \ "niphlNumber").asOpt[String],
+        (json \ "createdDateTime").as[Instant],
+        (json \ "updatedDateTime").as[Instant]
+      )
+    )
+
+  private val mongoWrites: Writes[GoodsItemRecord] = (record: GoodsItemRecord) =>
+    Json.obj(
+      "_id"                      -> record.recordId,
+      "eori"                     -> record.eori,
+      "actorId"                  -> record.actorId,
+      "traderRef"                -> record.traderRef,
+      "comcode"                  -> record.comcode,
+      "adviceStatus"             -> record.adviceStatus,
+      "goodsDescription"         -> record.goodsDescription,
+      "countryOfOrigin"          -> record.countryOfOrigin,
+      "category"                 -> record.category,
+      "assessments"              -> record.assessments,
+      "supplementaryUnit"        -> record.supplementaryUnit,
+      "measurementUnit"          -> record.measurementUnit,
+      "comcodeEffectiveFromDate" -> record.comcodeEffectiveFromDate,
+      "comcodeEffectiveToDate"   -> record.comcodeEffectiveToDate,
+      "version"                  -> record.version,
+      "active"                   -> record.active,
+      "toReview"                 -> record.toReview,
+      "reviewReason"             -> record.reviewReason,
+      "declarable"               -> record.declarable,
+      "ukimsNumber"              -> record.ukimsNumber,
+      "nirmsNumber"              -> record.nirmsNumber,
+      "niphlNumber"              -> record.niphlNumber,
+      "createdDateTime"          -> record.createdDateTime,
+      "updatedDateTime"          -> record.updatedDateTime
+    )
+
+  val goodsItemRecordsMongoFormat: Format[GoodsItemRecord] = Format(mongoReads, mongoWrites)
+
   implicit val reads: Reads[GoodsItemRecord] = (json: JsValue) =>
     JsSuccess(
       GoodsItemRecord(
@@ -106,5 +167,4 @@ object GoodsItemRecord {
       "updatedDateTime"          -> record.updatedDateTime
     )
 
-  val goodsItemRecordsFormat = Format(reads, writes)
 }
