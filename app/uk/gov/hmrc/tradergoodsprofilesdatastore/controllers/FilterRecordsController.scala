@@ -50,7 +50,7 @@ class FilterRecordsController @Inject() (
       } yield {
         val size               = sizeOpt.getOrElse(config.pageSize)
         val page               = pageOpt.getOrElse(config.startingPage)
-        val skip               = (page - 1) * size
+        val skip               = page * size
         val paginatedRecords   = filteredRecords.drop(skip).take(size)
         val pagination         = buildPagination(size, page, filteredRecords.size.toLong)
         val getRecordsResponse = GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination = pagination)

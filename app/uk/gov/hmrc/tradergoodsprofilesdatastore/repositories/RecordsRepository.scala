@@ -199,7 +199,7 @@ class RecordsRepository @Inject() (
               )
               .sort(byLatest)
               .toFuture()
-          case None                     =>
+          case _                        =>
             collection
               .find[GoodsItemRecord](
                 Filters.and(
