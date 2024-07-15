@@ -18,6 +18,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.mockito.ArgumentMatchers.{any, anyString}
 import org.mockito.Mockito.when
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
@@ -35,9 +36,45 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class FilterRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecordsResponseUtil {
+class FilterRecordsControllerSpec
+    extends SpecBase
+    with MockitoSugar
+    with GetRecordsResponseUtil
+    with BeforeAndAfterEach {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
+
+  var mockRecordsRepository: RecordsRepository           = _
+  var mockStoreRecordsController: StoreRecordsController = _
+  var mockRouterConnector: RouterConnector               = _
+  var mockAction: Action[AnyContent]                     = _
+
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    mockRecordsRepository = mock[RecordsRepository]
+    mockStoreRecordsController = mock[StoreRecordsController]
+    mockRouterConnector = mock[RouterConnector]
+    mockAction = mock[Action[AnyContent]]
+
+    when(mockRecordsRepository.saveRecords(any())) thenReturn Future.successful(true)
+    when(mockRecordsRepository.deleteInactive(any())) thenReturn Future.successful(0)
+    when(mockRecordsRepository.getLatest(any())) thenReturn Future.successful(
+      Some(getGoodsItemRecords("GB123456789099"))
+    )
+
+    when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn
+      Future.successful(
+        GetRecordsResponse(
+          goodsItemRecords = getTestRecords("GB123456789099", 10),
+          Pagination(25, 1, 3, Some(2), None)
+        )
+      )
+
+    when(mockStoreRecordsController.storeLatestRecords(anyString()))
+      .thenReturn(mockAction)
+    when(mockAction.apply(any[Request[AnyContent]]))
+      .thenReturn(Future.successful(NoContent))
+  }
 
   "filterLocalRecords" - {
     "return 200 and the paginated records from the data store" in {
@@ -52,32 +89,9 @@ class FilterRecordsControllerSpec extends SpecBase with MockitoSugar with GetRec
         .url
 
       val validFakeGetRequest = FakeRequest("GET", getUrl)
-
-      val totalPagesNum              = 3
-      val records                    = getTestRecords(requestEori, recordsSize)
-      val paginatedRecords           = records.slice(page * size, (page + 1) * size)
-      val pagination                 = Pagination(recordsSize, page, totalPagesNum, Some(page + 1), Some(page - 1))
-      val mockRecordsRepository      = mock[RecordsRepository]
-      val mockStoreRecordsController = mock[StoreRecordsController]
-
-      when(mockRecordsRepository.saveRecords(any())) thenReturn Future.successful(true)
-      when(mockRecordsRepository.deleteInactive(any())) thenReturn Future.successful(0)
-      when(mockRecordsRepository.getLatest(any())) thenReturn Future.successful(Some(getGoodsItemRecords(requestEori)))
-      val mockRouterConnector = mock[RouterConnector]
-      when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
-        Future.successful(
-          GetRecordsResponse(
-            goodsItemRecords = getTestRecords(requestEori, size),
-            Pagination(recordsSize, 1, 3, Some(2), None)
-          )
-        )
-      )
-
-      val mockAction = mock[Action[AnyContent]]
-      when(mockStoreRecordsController.storeLatestRecords(anyString()))
-        .thenReturn(mockAction)
-      when(mockAction.apply(any[Request[AnyContent]]))
-        .thenReturn(Future.successful(NoContent))
+      val records             = getTestRecords(requestEori, recordsSize)
+      val paginatedRecords    = records.slice(page * size, (page + 1) * size)
+      val pagination          = Pagination(recordsSize, page, 3, Some(page + 1), Some(page - 1))
 
       when(mockRecordsRepository.filterRecords(any(), any(), any())) thenReturn Future.successful(records)
 
@@ -94,6 +108,35 @@ class FilterRecordsControllerSpec extends SpecBase with MockitoSugar with GetRec
         contentAsString(result) mustBe Json
           .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
           .toString
+      }
+    }
+
+    "return 400 when the field is not as expected" in {
+      val page        = 1
+      val size        = 10
+      val field       = "trader"
+      val searchTerm  = "BAN001002"
+      val requestEori = "GB123456789099"
+      val getUrl      = routes.FilterRecordsController
+        .filterLocalRecords(requestEori, Some(searchTerm), Some(field), Some(page), Some(size))
+        .url
+
+      val validFakeGetRequest = FakeRequest("GET", getUrl)
+
+      val records = getTestRecords(requestEori, 25)
+
+      when(mockRecordsRepository.filterRecords(any(), any(), any())) thenReturn Future.successful(records)
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[RouterConnector].toInstance(mockRouterConnector),
+          bind[RecordsRepository].toInstance(mockRecordsRepository)
+        )
+        .build()
+
+      running(application) {
+        val result = route(application, validFakeGetRequest).value
+        status(result) shouldBe Status.BAD_REQUEST
       }
     }
   }

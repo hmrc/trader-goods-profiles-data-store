@@ -25,7 +25,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsRespo
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class FilterRecordsController @Inject() (
   storeRecordsController: StoreRecordsController,
@@ -44,17 +44,23 @@ class FilterRecordsController @Inject() (
     sizeOpt: Option[Int]
   ): Action[AnyContent] =
     identify.async { implicit request =>
-      for {
-        _               <- storeRecordsController.storeLatestRecords(eori).apply(request)
-        filteredRecords <- recordsRepository.filterRecords(eori, searchTerm, field)
-      } yield {
-        val size               = sizeOpt.getOrElse(config.pageSize)
-        val page               = pageOpt.getOrElse(config.startingPage)
-        val skip               = page * size
-        val paginatedRecords   = filteredRecords.drop(skip).take(size)
-        val pagination         = buildPagination(size, page, filteredRecords.size.toLong)
-        val getRecordsResponse = GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination = pagination)
-        Ok(Json.toJson(getRecordsResponse))
+      val validFields = Set("traderRef", "goodsDescription", "countryOfOrigin")
+      field match {
+        case Some(value) if !validFields.contains(value) =>
+          Future.successful(BadRequest("Invalid field parameter"))
+        case _                                           =>
+          for {
+            _               <- storeRecordsController.storeLatestRecords(eori).apply(request)
+            filteredRecords <- recordsRepository.filterRecords(eori, searchTerm, field)
+          } yield {
+            val size               = sizeOpt.getOrElse(config.pageSize)
+            val page               = pageOpt.getOrElse(config.startingPage)
+            val skip               = page * size
+            val paginatedRecords   = filteredRecords.slice(skip, skip + size)
+            val pagination         = buildPagination(size, page, filteredRecords.size.toLong)
+            val getRecordsResponse = GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination = pagination)
+            Ok(Json.toJson(getRecordsResponse))
+          }
       }
     }
 

@@ -52,11 +52,7 @@ class RecordsRepository @Inject() (
 
   private def byLatest: Bson = Sorts.descending("updatedDateTime")
 
-  private def byTraderRef(traderRef: String): Bson = Filters.equal("traderRef", traderRef)
-
-  private def byGoodsDescription(goodsDescription: String): Bson = Filters.equal("goodsDescription", goodsDescription)
-
-  private def byCountryOfOrigin(countryOfOrigin: String): Bson = Filters.equal("countryOfOrigin", countryOfOrigin)
+  private def byField(field: String, searchTerm: String): Bson = Filters.equal(field, searchTerm)
 
   private def byCountryOfOriginOrGoodsDescriptionOrTraderRef(value: String): Bson =
     Filters.or(
@@ -169,37 +165,17 @@ class RecordsRepository @Inject() (
     searchTerm match {
       case Some(value) =>
         field match {
-          case Some("traderRef")        =>
+          case Some(searchField) =>
             collection
               .find[GoodsItemRecord](
                 Filters.and(
                   byEori(eori),
-                  byTraderRef(value)
+                  byField(searchField, value)
                 )
               )
               .sort(byLatest)
               .toFuture()
-          case Some("goodsDescription") =>
-            collection
-              .find[GoodsItemRecord](
-                Filters.and(
-                  byEori(eori),
-                  byGoodsDescription(value)
-                )
-              )
-              .sort(byLatest)
-              .toFuture()
-          case Some("countryOfOrigin")  =>
-            collection
-              .find[GoodsItemRecord](
-                Filters.and(
-                  byEori(eori),
-                  byCountryOfOrigin(value)
-                )
-              )
-              .sort(byLatest)
-              .toFuture()
-          case _                        =>
+          case _                 =>
             collection
               .find[GoodsItemRecord](
                 Filters.and(
