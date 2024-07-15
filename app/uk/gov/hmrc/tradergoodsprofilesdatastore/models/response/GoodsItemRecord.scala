@@ -80,7 +80,7 @@ object GoodsItemRecord {
 
   private val mongoWrites: Writes[GoodsItemRecord] = (record: GoodsItemRecord) =>
     Json.obj(
-      "_id" -> record.recordId,
+      "_id"                      -> record.recordId,
       "eori"                     -> record.eori,
       "actorId"                  -> record.actorId,
       "traderRef"                -> record.traderRef,
@@ -141,30 +141,30 @@ object GoodsItemRecord {
 
   implicit val writes: Writes[GoodsItemRecord] = (record: GoodsItemRecord) =>
     Json.obj(
-      "recordId" -> record.recordId,
-      "eori" -> record.eori,
-      "actorId" -> record.actorId,
-      "traderRef" -> record.traderRef,
-      "comcode" -> record.comcode,
-      "adviceStatus" -> record.adviceStatus,
-      "goodsDescription" -> record.goodsDescription,
-      "countryOfOrigin" -> record.countryOfOrigin,
-      "category" -> record.category,
-      "assessments" -> record.assessments,
-      "supplementaryUnit" -> record.supplementaryUnit,
-      "measurementUnit" -> record.measurementUnit,
+      "recordId"                 -> record.recordId,
+      "eori"                     -> record.eori,
+      "actorId"                  -> record.actorId,
+      "traderRef"                -> record.traderRef,
+      "comcode"                  -> record.comcode,
+      "adviceStatus"             -> record.adviceStatus,
+      "goodsDescription"         -> record.goodsDescription,
+      "countryOfOrigin"          -> record.countryOfOrigin,
+      "category"                 -> record.category,
+      "assessments"              -> record.assessments,
+      "supplementaryUnit"        -> record.supplementaryUnit,
+      "measurementUnit"          -> record.measurementUnit,
       "comcodeEffectiveFromDate" -> record.comcodeEffectiveFromDate,
-      "comcodeEffectiveToDate" -> record.comcodeEffectiveToDate,
-      "version" -> record.version,
-      "active" -> record.active,
-      "toReview" -> record.toReview,
-      "reviewReason" -> record.reviewReason,
-      "declarable" -> record.declarable,
-      "ukimsNumber" -> record.ukimsNumber,
-      "nirmsNumber" -> record.nirmsNumber,
-      "niphlNumber" -> record.niphlNumber,
-      "createdDateTime" -> record.createdDateTime,
-      "updatedDateTime" -> record.updatedDateTime
+      "comcodeEffectiveToDate"   -> record.comcodeEffectiveToDate,
+      "version"                  -> record.version,
+      "active"                   -> record.active,
+      "toReview"                 -> record.toReview,
+      "reviewReason"             -> record.reviewReason,
+      "declarable"               -> record.declarable,
+      "ukimsNumber"              -> record.ukimsNumber,
+      "nirmsNumber"              -> record.nirmsNumber,
+      "niphlNumber"              -> record.niphlNumber,
+      "createdDateTime"          -> record.createdDateTime,
+      "updatedDateTime"          -> record.updatedDateTime
     )
 
 }

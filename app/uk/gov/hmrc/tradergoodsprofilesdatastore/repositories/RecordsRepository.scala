@@ -83,7 +83,7 @@ class RecordsRepository @Inject() (
       .headOption()
 
   def getMany(eori: String, pageOpt: Option[Int], sizeOpt: Option[Int]): Future[Seq[GoodsItemRecord]] = {
-    val size = sizeOpt.getOrElse(config.pageSize)
+    val size = sizeOpt.map(size => if (size > 0) size - 1 else size).getOrElse(config.pageSize)
     val page = pageOpt.getOrElse(config.startingPage)
     val skip = (page - 1) * size
     collection
