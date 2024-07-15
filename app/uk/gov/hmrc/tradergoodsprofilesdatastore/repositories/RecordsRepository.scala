@@ -55,6 +55,15 @@ class RecordsRepository @Inject() (
 
   private def byLatest: Bson = Sorts.descending("updatedDateTime")
 
+  private def byField(field: String, searchTerm: String): Bson = Filters.equal(field, searchTerm)
+
+  private def byCountryOfOriginOrGoodsDescriptionOrTraderRef(value: String): Bson =
+    Filters.or(
+      Filters.equal("traderRef", value),
+      Filters.equal("goodsDescription", value),
+      Filters.equal("countryOfOrigin", value)
+    )
+
   def saveRecords(eori: String, records: Seq[GoodsItemRecord]): Future[Boolean] =
     Future
       .sequence(records.map { record =>
@@ -74,7 +83,7 @@ class RecordsRepository @Inject() (
       .headOption()
 
   def getMany(eori: String, pageOpt: Option[Int], sizeOpt: Option[Int]): Future[Seq[GoodsItemRecord]] = {
-    val size = sizeOpt.map(size => if (size > 0) size - 1 else size).getOrElse(config.pageSize)
+    val size = sizeOpt.getOrElse(config.pageSize)
     val page = pageOpt.getOrElse(config.startingPage)
     val skip = (page - 1) * size
     collection
@@ -155,4 +164,31 @@ class RecordsRepository @Inject() (
       case None => Future.successful(None)
     }
 
+  def filterRecords(eori: String, searchTerm: Option[String], field: Option[String]): Future[Seq[GoodsItemRecord]] =
+    searchTerm match {
+      case Some(value) =>
+        field match {
+          case Some(searchField) =>
+            collection
+              .find[GoodsItemRecord](
+                Filters.and(
+                  byEori(eori),
+                  byField(searchField, value)
+                )
+              )
+              .sort(byLatest)
+              .toFuture()
+          case _                 =>
+            collection
+              .find[GoodsItemRecord](
+                Filters.and(
+                  byEori(eori),
+                  byCountryOfOriginOrGoodsDescriptionOrTraderRef(value)
+                )
+              )
+              .sort(byLatest)
+              .toFuture()
+        }
+      case None        => Future.successful(Seq.empty)
+    }
 }

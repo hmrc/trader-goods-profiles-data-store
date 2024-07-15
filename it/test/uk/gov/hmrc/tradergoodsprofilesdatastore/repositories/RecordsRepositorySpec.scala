@@ -95,6 +95,40 @@ class RecordsRepositorySpec
     updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
   )
 
+  val sampleGoodsItemRecords2: GoodsItemRecord = GoodsItemRecord(
+    eori = "GB123456789001",
+    actorId = "GB098765432112",
+    recordId = testrecordId,
+    traderRef = "BAN001002",
+    comcode = "10410100",
+    adviceStatus = "Not requested",
+    goodsDescription = "Organic bananas",
+    countryOfOrigin = "AU",
+    category = 3,
+    assessments = Some(Seq(sampleAssessment)),
+    supplementaryUnit = Some(500),
+    measurementUnit = Some("square meters(m^2)"),
+    comcodeEffectiveFromDate = Instant.parse("2024-10-12T16:12:34Z"),
+    comcodeEffectiveToDate = Some(Instant.parse("2024-10-12T16:12:34Z")),
+    version = 1,
+    active = true,
+    toReview = false,
+    reviewReason = Some("no reason"),
+    declarable = "IMMI ready",
+    ukimsNumber = Some("XIUKIM47699357400020231115081800"),
+    nirmsNumber = Some("RMS-GB-123456"),
+    niphlNumber = Some("6 S12345"),
+    createdDateTime = Instant.parse("2024-10-12T16:12:34Z"),
+    updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
+  )
+
+  private val traderRefSearchTerm  = "BAN001002"
+  private val traderRefSearchField = "traderRef"
+  private val goodsDescriptionRefSearchTerm = "Tomatoes"
+  private val goodsDescriptionRefSearchField = "goodsDescription"
+  private val countryOfOriginSearchTerm = "AU"
+  private val countryOfOriginSearchField = "countryOfOrigin"
+
   private val latestRecordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204p"
 
   val latestGoodsItemRecords: GoodsItemRecord = GoodsItemRecord(
@@ -104,8 +138,8 @@ class RecordsRepositorySpec
     traderRef = "BAN001001",
     comcode = "10410100",
     adviceStatus = "Not requested",
-    goodsDescription = "Organic bananas",
-    countryOfOrigin = "EC",
+    goodsDescription = "Tomatoes",
+    countryOfOrigin = "AU",
     category = 3,
     assessments = Some(Seq(sampleAssessment)),
     supplementaryUnit = Some(500),
@@ -262,6 +296,101 @@ class RecordsRepositorySpec
     "when there are no records for this eori it must return None" in {
       repository.getLatest(sampleGoodsItemRecords.eori).futureValue mustEqual None
     }
+  }
+
+  ".filter" - {
+    "when there are records for this eori but no searchTerm and field is passed it must return an empty sequence" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(latestGoodsItemRecords).futureValue
+
+      val result = repository.filterRecords(sampleGoodsItemRecords.eori, None, None).futureValue
+      result mustEqual Seq.empty
+    }
+
+    "when there are records for this eori but no searchTerm is passed, but field is passed it must return an empty sequence" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(latestGoodsItemRecords).futureValue
+
+      val result = repository.filterRecords(sampleGoodsItemRecords.eori, None, Some(traderRefSearchField)).futureValue
+      result mustEqual Seq.empty
+    }
+
+    "when there are 8 records and 2 matching traderRef searchTerm for this eori and the field is passed it must return a record of size 2" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords2).futureValue
+      insert(sampleGoodsItemRecords2).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(latestGoodsItemRecords).futureValue
+      insert(latestGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+
+      val result = repository
+        .filterRecords(sampleGoodsItemRecords.eori, Some(traderRefSearchTerm), Some(traderRefSearchField))
+        .futureValue
+      result.size mustEqual 2
+      result.headOption.value.traderRef mustEqual traderRefSearchTerm
+    }
+
+    "when there are 8 records and 2 matching goodsDescription searchTerm for this eori and the field is passed it must return a record of size 2" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords2).futureValue
+      insert(sampleGoodsItemRecords2).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(latestGoodsItemRecords).futureValue
+      insert(latestGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+
+      val result = repository
+        .filterRecords(sampleGoodsItemRecords.eori, Some(goodsDescriptionRefSearchTerm), Some(goodsDescriptionRefSearchField))
+        .futureValue
+      result.size mustEqual 2
+      result.headOption.value.goodsDescription mustEqual goodsDescriptionRefSearchTerm
+    }
+
+    "when there are 8 records and 4 matching countryOfOrigin searchTerm for this eori and the field is passed it must return a record of size 4" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords2).futureValue
+      insert(sampleGoodsItemRecords2).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(latestGoodsItemRecords).futureValue
+      insert(latestGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+
+      val result = repository
+        .filterRecords(sampleGoodsItemRecords.eori, Some(countryOfOriginSearchTerm), Some(countryOfOriginSearchField))
+        .futureValue
+      result.size mustEqual 4
+      result.headOption.value.countryOfOrigin mustEqual countryOfOriginSearchTerm
+    }
+
+    "when there are 8 records and 4 matching countryOfOrigin searchTerm for this eori and the field is not passed it must return a record of size 4" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords2).futureValue
+      insert(sampleGoodsItemRecords2).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+      insert(latestGoodsItemRecords).futureValue
+      insert(latestGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords).futureValue
+
+      val result = repository
+        .filterRecords(sampleGoodsItemRecords.eori, Some(countryOfOriginSearchTerm), None)
+        .futureValue
+      result.size mustEqual 4
+      result.headOption.value.countryOfOrigin mustEqual countryOfOriginSearchTerm
+    }
+
   }
 
   ".delete" - {
