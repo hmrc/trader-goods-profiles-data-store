@@ -35,10 +35,10 @@ class DeleteRecordController @Inject() (
     extends BackendController(cc) {
 
   def deleteRecord(eori: String, recordId: String): Action[AnyContent] = identify.async { implicit request =>
-    recordsRepository.get(recordId).flatMap {
+    recordsRepository.get(eori, recordId).flatMap {
       case Some(goodsItemRecords) =>
         routerConnector.deleteRecord(eori, recordId, goodsItemRecords.actorId).flatMap { case Done =>
-          recordsRepository.delete(recordId).map {
+          recordsRepository.delete(eori, recordId).map {
             case true  => NoContent
             case false => InternalServerError("Failed to delete the record from db")
           }

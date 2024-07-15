@@ -171,7 +171,7 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
       val validFakeGetRequest = FakeRequest("GET", checkUrl)
 
       val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.get(any())) thenReturn Future.successful(Some(record))
+      when(mockRecordsRepository.get(any(), any())) thenReturn Future.successful(Some(record))
 
       val application = applicationBuilder()
         .overrides(
@@ -196,7 +196,7 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
       val validFakeGetRequest = FakeRequest("GET", checkUrl)
 
       val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.get(any())) thenReturn Future.successful(None)
+      when(mockRecordsRepository.get(any(), any())) thenReturn Future.successful(None)
 
       val application = applicationBuilder()
         .overrides(
