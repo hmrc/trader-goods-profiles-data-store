@@ -61,9 +61,9 @@ class FilterRecordsController @Inject() (
   private def buildPagination(size: Int, page: Int, totalRecords: Long): Pagination = {
     val mod                  = totalRecords % size
     val totalRecordsMinusMod = totalRecords - mod
-    val totalPages           = ((totalRecordsMinusMod / size) + 1).toInt
-    val nextPage             = if (page >= totalPages || page < 1) None else Some(page + 1)
-    val prevPage             = if (page <= 1 || page > totalPages) None else Some(page - 1)
+    val totalPages           = (totalRecordsMinusMod / size).toInt + (if (mod > 0) 1 else 0)
+    val nextPage             = if (page >= totalPages - 1 || page < 0) None else Some(page + 1)
+    val prevPage             = if (page <= 0 || page >= totalPages) None else Some(page - 1)
     Pagination(totalRecords.toInt, page, totalPages, nextPage, prevPage)
   }
 }

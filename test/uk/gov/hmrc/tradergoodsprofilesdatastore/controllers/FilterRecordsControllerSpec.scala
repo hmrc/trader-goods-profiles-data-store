@@ -40,23 +40,23 @@ class FilterRecordsControllerSpec extends SpecBase with MockitoSugar with GetRec
   implicit val ec: ExecutionContext = ExecutionContext.global
 
   "filterLocalRecords" - {
-    "return 200 and the filtered records from the data store when the search term matches" in {
-
-      val recordsSize = 5
-      val page        = 0
+    "return 200 and the paginated records from the data store" in {
+      val recordsSize = 25
+      val page        = 1
+      val size        = 10
       val field       = "traderRef"
       val searchTerm  = "BAN001002"
       val requestEori = "GB123456789099"
       val getUrl      = routes.FilterRecordsController
-        .filterLocalRecords(requestEori, Some(searchTerm), Some(field), None, None)
+        .filterLocalRecords(requestEori, Some(searchTerm), Some(field), Some(page), Some(size))
         .url
 
       val validFakeGetRequest = FakeRequest("GET", getUrl)
 
-      val totalPagesNum              = 1
+      val totalPagesNum              = 3
       val records                    = getTestRecords(requestEori, recordsSize)
-      val pagination                 = Pagination(recordsSize, page, totalPagesNum, None, None)
-      val recordsPerPage             = 10
+      val paginatedRecords           = records.slice(page * size, (page + 1) * size)
+      val pagination                 = Pagination(recordsSize, page, totalPagesNum, Some(page + 1), Some(page - 1))
       val mockRecordsRepository      = mock[RecordsRepository]
       val mockStoreRecordsController = mock[StoreRecordsController]
 
@@ -67,7 +67,7 @@ class FilterRecordsControllerSpec extends SpecBase with MockitoSugar with GetRec
       when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
         Future.successful(
           GetRecordsResponse(
-            goodsItemRecords = getTestRecords(requestEori, recordsPerPage),
+            goodsItemRecords = getTestRecords(requestEori, size),
             Pagination(recordsSize, 1, 3, Some(2), None)
           )
         )
@@ -91,7 +91,9 @@ class FilterRecordsControllerSpec extends SpecBase with MockitoSugar with GetRec
       running(application) {
         val result = route(application, validFakeGetRequest).value
         status(result) shouldBe Status.OK
-        contentAsString(result) mustBe Json.toJson(GetRecordsResponse(goodsItemRecords = records, pagination)).toString
+        contentAsString(result) mustBe Json
+          .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
+          .toString
       }
     }
   }
