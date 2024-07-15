@@ -198,7 +198,7 @@ class RecordsRepositorySpec
       config = mockConfig
     )
 
-  private def byRecordId(recordId: String): Bson = Filters.equal("recordId", recordId)
+  private def byRecordId(recordId: String): Bson = Filters.equal("_id", recordId)
 
   ".set" - {
 
@@ -237,8 +237,8 @@ class RecordsRepositorySpec
 
     "when there are records for this eori it must return the count" in {
       insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "3")).futureValue
 
       val result = repository.getCount(sampleGoodsItemRecords.eori).futureValue
       result mustEqual 3
@@ -250,27 +250,27 @@ class RecordsRepositorySpec
 
     "when there are 8 records for this eori it must return the records and it asks for page 2 of size 5" in {
       insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "3")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "4")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "6")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "7")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "8")).futureValue
 
       val result = repository.getMany(sampleGoodsItemRecords.eori, Some(2), Some(5)).futureValue
-      result.size mustEqual 3
+      result.size mustEqual 4
     }
 
     "when there are 8 records for this eori it must return empty Array and it asks for page 3 of size 5" in {
       insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "3")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "4")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "6")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "7")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "8")).futureValue
 
       val result = repository.getMany(sampleGoodsItemRecords.eori, Some(3), Some(5)).futureValue
       result.size mustEqual 0
@@ -283,10 +283,10 @@ class RecordsRepositorySpec
 
     "when there are 8 records for this eori it must get the last updated" in {
       insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "3")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "4")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
       insert(latestGoodsItemRecords).futureValue
 
       val result = repository.getLatest(sampleGoodsItemRecords.eori).futureValue
