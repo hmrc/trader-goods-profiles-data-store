@@ -91,8 +91,8 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
     "return 204 when record is deleted from data store" in {
 
       val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.get(any())) thenReturn Future.successful(Some(sampleGoodsItemRecord))
-      when(mockRecordsRepository.delete(any())) thenReturn Future.successful(true)
+      when(mockRecordsRepository.get(any(), any())) thenReturn Future.successful(Some(sampleGoodsItemRecord))
+      when(mockRecordsRepository.delete(any(), any())) thenReturn Future.successful(true)
 
       val mockRouterConnector = mock[RouterConnector]
       when(
@@ -112,8 +112,8 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
         status(result) shouldBe NO_CONTENT
 
         withClue("must call the relevant services with the correct details") {
-          verify(mockRecordsRepository, times(1)).get(eqTo(testRecordId))
-          verify(mockRecordsRepository, times(1)).delete(eqTo(testRecordId))
+          verify(mockRecordsRepository, times(1)).get(eqTo(testEori), eqTo(testRecordId))
+          verify(mockRecordsRepository, times(1)).delete(eqTo(testEori), eqTo(testRecordId))
           verify(mockRouterConnector, times(1))
             .deleteRecord(eqTo(testEori), eqTo(testRecordId), eqTo(sampleGoodsItemRecord.actorId))(any())
         }
@@ -123,8 +123,8 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
     "return an eroor when record is failed delete from data store" in {
 
       val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.get(any())) thenReturn Future.successful(Some(sampleGoodsItemRecord))
-      when(mockRecordsRepository.delete(any())) thenReturn Future.successful(false)
+      when(mockRecordsRepository.get(any(), any())) thenReturn Future.successful(Some(sampleGoodsItemRecord))
+      when(mockRecordsRepository.delete(any(), any())) thenReturn Future.successful(false)
 
       val mockRouterConnector = mock[RouterConnector]
       when(
@@ -144,8 +144,8 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
         status(result) mustBe INTERNAL_SERVER_ERROR
 
         withClue("must call the relevant services with the correct details") {
-          verify(mockRecordsRepository, times(1)).get(eqTo(testRecordId))
-          verify(mockRecordsRepository, times(1)).delete(eqTo(testRecordId))
+          verify(mockRecordsRepository, times(1)).get(eqTo(testEori), eqTo(testRecordId))
+          verify(mockRecordsRepository, times(1)).delete(eqTo(testEori), eqTo(testRecordId))
           verify(mockRouterConnector, times(1))
             .deleteRecord(eqTo(testEori), eqTo(testRecordId), eqTo(sampleGoodsItemRecord.actorId))(any())
         }
@@ -155,7 +155,7 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
     "return 404 when record does not exists" in {
 
       val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.get(any())) thenReturn Future.successful(None)
+      when(mockRecordsRepository.get(any(), any())) thenReturn Future.successful(None)
 
       val application = applicationBuilder()
         .overrides(
@@ -169,7 +169,7 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
         status(result) shouldBe NOT_FOUND
 
         withClue("must call the repository with the correct details") {
-          verify(mockRecordsRepository, times(1)).get(eqTo(testRecordId))
+          verify(mockRecordsRepository, times(1)).get(eqTo(testEori), eqTo(testRecordId))
         }
       }
     }

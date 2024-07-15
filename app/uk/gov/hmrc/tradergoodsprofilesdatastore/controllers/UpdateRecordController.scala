@@ -37,7 +37,7 @@ class UpdateRecordController @Inject() (
   def updateRecord(eori: String, recordId: String): Action[UpdateRecordRequest] =
     identify.async(parse.json[UpdateRecordRequest]) { implicit request =>
       routerConnector.updateRecord(request.body, eori, recordId).flatMap { record =>
-        recordsRepository.update(recordId, request.body).map(_ => Ok)
+        recordsRepository.update(eori, recordId, request.body).map(_ => Ok)
       }
     }
 

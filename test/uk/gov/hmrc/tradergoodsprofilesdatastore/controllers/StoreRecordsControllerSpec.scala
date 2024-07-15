@@ -50,7 +50,7 @@ class StoreRecordsControllerSpec extends SpecBase with MockitoSugar with GetReco
       val validFakeHeadRequest = FakeRequest("HEAD", storeUrl)
 
       val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.saveRecords(any())) thenReturn Future.successful(true)
+      when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
       when(mockRecordsRepository.deleteInactive(any())) thenReturn Future.successful(0)
 
       val mockCheckRecordsRepository = mock[CheckRecordsRepository]
@@ -104,7 +104,7 @@ class StoreRecordsControllerSpec extends SpecBase with MockitoSugar with GetReco
       val validFakeHeadRequest = FakeRequest("HEAD", storeUrl)
 
       val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.saveRecords(any())) thenReturn Future.successful(true)
+      when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
       when(mockRecordsRepository.deleteInactive(any())) thenReturn Future.successful(0)
       when(mockRecordsRepository.getLatest(any())) thenReturn Future.successful(Some(getGoodsItemRecords(requestEori)))
       val mockRouterConnector   = mock[RouterConnector]
@@ -140,7 +140,7 @@ class StoreRecordsControllerSpec extends SpecBase with MockitoSugar with GetReco
         status(result) shouldBe Status.NO_CONTENT
         verify(mockRecordsRepository, times(1)).getLatest(any())
         verify(mockRouterConnector, times(1)).getRecords(any(), any(), any(), any())(any())
-        verify(mockRecordsRepository, times(1)).saveRecords(any())
+        verify(mockRecordsRepository, times(1)).saveRecords(any(), any())
         verify(mockRecordsRepository, times(1)).deleteInactive(any())
       }
     }

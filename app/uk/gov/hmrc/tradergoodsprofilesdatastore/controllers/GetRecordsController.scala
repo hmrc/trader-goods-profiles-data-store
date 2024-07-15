@@ -52,7 +52,7 @@ class GetRecordsController @Inject() (
   }
 
   def getRecord(eori: String, recordId: String): Action[AnyContent] = identify.async { implicit request =>
-    recordsRepository.get(recordId).map {
+    recordsRepository.get(eori, recordId).map {
       case Some(goodsItemRecords) =>
         Ok(Json.toJson(goodsItemRecords))
       case None                   =>
