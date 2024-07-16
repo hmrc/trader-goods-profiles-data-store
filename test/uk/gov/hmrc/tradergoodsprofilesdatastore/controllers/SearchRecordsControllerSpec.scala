@@ -131,31 +131,4 @@ class SearchRecordsControllerSpec extends SpecBase with MockitoSugar with GetRec
       }
     }
   }
-
-  "getRecordsCount" - {
-    "return 200 and the total number of records" in {
-      val totalRecordsNum = 10000
-      val requestEori     = "GB123456789099"
-      val checkUrl        = routes.SearchRecordsController
-        .getRecordsCount(requestEori, searchString)
-        .url
-
-      val validFakeGetRequest = FakeRequest("GET", checkUrl)
-
-      val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.getCount(any(), any())) thenReturn Future.successful(totalRecordsNum)
-
-      val application = applicationBuilder()
-        .overrides(
-          bind[RecordsRepository].toInstance(mockRecordsRepository)
-        )
-        .build()
-      running(application) {
-        val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.OK
-        contentAsString(result) mustBe Json.toJson(totalRecordsNum).toString
-
-      }
-    }
-  }
 }

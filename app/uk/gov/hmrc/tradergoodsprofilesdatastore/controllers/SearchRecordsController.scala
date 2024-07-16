@@ -50,15 +50,6 @@ class SearchRecordsController @Inject() (
     }
   }
 
-  def getRecordsCount(
-    eori: String,
-    searchString: String
-  ): Action[AnyContent] = identify.async { implicit request =>
-    recordsRepository.getCount(eori, searchString).map { recordsResponse =>
-      Ok(Json.toJson(recordsResponse))
-    }
-  }
-
   private def buildPagination(sizeOpt: Option[Int], pageOpt: Option[Int], totalRecords: Long): Pagination = {
     val size                 = sizeOpt.getOrElse(config.pageSize)
     val page                 = pageOpt.getOrElse(config.startingPage)
