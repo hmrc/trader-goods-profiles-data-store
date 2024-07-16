@@ -43,5 +43,4 @@ object Pagination {
     val prevPage             = if (page <= 1 || page > totalPages) None else Some(page - 1)
     Pagination(totalRecords.toInt, page, totalPages, nextPage, prevPage)
   }
-
 }
