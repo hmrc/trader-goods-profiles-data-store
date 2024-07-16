@@ -37,17 +37,6 @@ class StoreRecordsController @Inject() (
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
-  def storeLatestRecords(
-    eori: String
-  ): Action[AnyContent] = identify.async { implicit request =>
-    recordsRepository.getLatest(eori).flatMap {
-      case Some(record) =>
-        storeRecordsRecursively(eori, recursiveStartingPage, Some(record.updatedDateTime.toString))
-          .map(_ => NoContent)
-      case _            => Future.successful(NotFound)
-    }
-  }
-
   def storeAllRecords(
     eori: String
   ): Action[AnyContent] = identify.async { implicit request =>

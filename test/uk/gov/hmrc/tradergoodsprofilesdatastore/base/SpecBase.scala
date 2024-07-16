@@ -22,8 +22,8 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.{OptionValues, TryValues}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeIdentifierAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
+import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeIdentifierAction, FakeStoreLatestAction}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, StoreLatestAction}
 
 trait SpecBase
     extends AnyFreeSpec
@@ -36,6 +36,7 @@ trait SpecBase
   protected def applicationBuilder(): GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
       .overrides(
-        bind[IdentifierAction].to[FakeIdentifierAction]
+        bind[IdentifierAction].to[FakeIdentifierAction],
+        bind[StoreLatestAction].to[FakeStoreLatestAction]
       )
 }

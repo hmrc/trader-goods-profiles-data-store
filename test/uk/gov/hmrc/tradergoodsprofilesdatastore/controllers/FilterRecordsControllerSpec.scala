@@ -52,7 +52,6 @@ class FilterRecordsControllerSpec
   override def beforeEach(): Unit = {
     super.beforeEach()
     mockRecordsRepository = mock[RecordsRepository]
-    mockStoreRecordsController = mock[StoreRecordsController]
     mockRouterConnector = mock[RouterConnector]
     mockAction = mock[Action[AnyContent]]
 
@@ -70,8 +69,6 @@ class FilterRecordsControllerSpec
         )
       )
 
-    when(mockStoreRecordsController.storeLatestRecords(anyString()))
-      .thenReturn(mockAction)
     when(mockAction.apply(any[Request[AnyContent]]))
       .thenReturn(Future.successful(NoContent))
   }
