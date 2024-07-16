@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
-import org.mockito.Mockito.when
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Filters
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
@@ -25,7 +24,6 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
-import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.UpdateRecordRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GoodsItemRecord}
 
@@ -122,12 +120,12 @@ class RecordsRepositorySpec
     updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
   )
 
-  private val traderRefSearchTerm  = "BAN001002"
-  private val traderRefSearchField = "traderRef"
-  private val goodsDescriptionRefSearchTerm = "Tomatoes"
+  private val traderRefSearchTerm            = "BAN001002"
+  private val traderRefSearchField           = "traderRef"
+  private val goodsDescriptionRefSearchTerm  = "Tomatoes"
   private val goodsDescriptionRefSearchField = "goodsDescription"
-  private val countryOfOriginSearchTerm = "AU"
-  private val countryOfOriginSearchField = "countryOfOrigin"
+  private val countryOfOriginSearchTerm      = "AU"
+  private val countryOfOriginSearchField     = "countryOfOrigin"
 
   private val latestRecordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204p"
 
@@ -187,16 +185,8 @@ class RecordsRepositorySpec
     updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
   )
 
-  private val mockConfig = mock[DataStoreAppConfig]
-
-  when(mockConfig.startingPage) thenReturn 1
-  when(mockConfig.pageSize) thenReturn 10
-
   protected override val repository =
-    new RecordsRepository(
-      mongoComponent = mongoComponent,
-      config = mockConfig
-    )
+    new RecordsRepository(mongoComponent = mongoComponent)
 
   private def byRecordId(recordId: String): Bson = Filters.equal("_id", recordId)
 
@@ -248,6 +238,20 @@ class RecordsRepositorySpec
       repository.getCount(sampleGoodsItemRecords.eori).futureValue mustEqual 0
     }
 
+    "when there are 8 records for this eori it must return the records and it asks for page 1 of size 5" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "3")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "4")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "6")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "7")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "8")).futureValue
+
+      val result = repository.getMany(sampleGoodsItemRecords.eori, Some(1), Some(5)).futureValue
+      result.size mustEqual 5
+    }
+
     "when there are 8 records for this eori it must return the records and it asks for page 2 of size 5" in {
       insert(sampleGoodsItemRecords).futureValue
       insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
@@ -259,7 +263,7 @@ class RecordsRepositorySpec
       insert(sampleGoodsItemRecords.copy(recordId = "8")).futureValue
 
       val result = repository.getMany(sampleGoodsItemRecords.eori, Some(2), Some(5)).futureValue
-      result.size mustEqual 4
+      result.size mustEqual 3
     }
 
     "when there are 8 records for this eori it must return empty Array and it asks for page 3 of size 5" in {
@@ -351,7 +355,11 @@ class RecordsRepositorySpec
       insert(sampleGoodsItemRecords.copy(recordId = "7")).futureValue
 
       val result = repository
-        .filterRecords(sampleGoodsItemRecords.eori, Some(goodsDescriptionRefSearchTerm), Some(goodsDescriptionRefSearchField))
+        .filterRecords(
+          sampleGoodsItemRecords.eori,
+          Some(goodsDescriptionRefSearchTerm),
+          Some(goodsDescriptionRefSearchField)
+        )
         .futureValue
       result.size mustEqual 2
       result.headOption.value.goodsDescription mustEqual goodsDescriptionRefSearchTerm

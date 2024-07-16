@@ -28,4 +28,20 @@ case class Pagination(
 
 object Pagination {
   implicit val format: OFormat[Pagination] = Json.format[Pagination]
+  val recursivePageSize                    = 10000
+  val recursiveStartingPage                = 0
+  val localStartingPage                    = 1
+  val localPageSize                        = 10
+
+  def buildPagination(sizeOpt: Option[Int], pageOpt: Option[Int], totalRecords: Long): Pagination = {
+    val size                 = sizeOpt.getOrElse(localPageSize)
+    val page                 = pageOpt.getOrElse(localStartingPage)
+    val mod                  = totalRecords % size
+    val totalRecordsMinusMod = totalRecords - mod
+    val totalPages           = ((totalRecordsMinusMod / size) + 1).toInt
+    val nextPage             = if (page >= totalPages || page < 1) None else Some(page + 1)
+    val prevPage             = if (page <= 1 || page > totalPages) None else Some(page - 1)
+    Pagination(totalRecords.toInt, page, totalPages, nextPage, prevPage)
+  }
+
 }

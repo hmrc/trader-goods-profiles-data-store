@@ -26,13 +26,12 @@ import org.apache.pekko.Done
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.mvc.Request
-import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{recursivePageSize, recursiveStartingPage}
 
 class StoreRecordsController @Inject() (
   recordsRepository: RecordsRepository,
   checkRecordsRepository: CheckRecordsRepository,
   cc: ControllerComponents,
-  config: DataStoreAppConfig,
   routerConnector: RouterConnector,
   identify: IdentifierAction
 )(implicit ec: ExecutionContext)
@@ -43,7 +42,7 @@ class StoreRecordsController @Inject() (
   ): Action[AnyContent] = identify.async { implicit request =>
     recordsRepository.getLatest(eori).flatMap {
       case Some(record) =>
-        storeRecordsRecursively(eori, config.startingPage, Some(record.updatedDateTime.toString))
+        storeRecordsRecursively(eori, recursiveStartingPage, Some(record.updatedDateTime.toString))
           .map(_ => NoContent)
       case _            => Future.successful(NotFound)
     }
@@ -54,7 +53,7 @@ class StoreRecordsController @Inject() (
   ): Action[AnyContent] = identify.async { implicit request =>
     checkRecordsRepository
       .set(eori)
-      .flatMap(_ => storeRecordsRecursively(eori, config.startingPage, None).map(_ => NoContent))
+      .flatMap(_ => storeRecordsRecursively(eori, recursiveStartingPage, None).map(_ => NoContent))
   }
 
   private def storeRecordsRecursively(
@@ -62,14 +61,13 @@ class StoreRecordsController @Inject() (
     page: Int,
     lastUpdatedDate: Option[String]
   )(implicit request: Request[_]): Future[Done] =
-    routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(config.recursivePageSize)).flatMap {
-      recordsResponse =>
-        recordsRepository.saveRecords(eori, recordsResponse.goodsItemRecords).flatMap { _ =>
-          if (recordsResponse.goodsItemRecords.length == config.recursivePageSize) {
-            storeRecordsRecursively(eori, page + 1, lastUpdatedDate)
-          } else {
-            recordsRepository.deleteInactive(eori).map(_ => Done)
-          }
+    routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(recursivePageSize)).flatMap { recordsResponse =>
+      recordsRepository.saveRecords(eori, recordsResponse.goodsItemRecords).flatMap { _ =>
+        if (recordsResponse.goodsItemRecords.length == recursivePageSize) {
+          storeRecordsRecursively(eori, page + 1, lastUpdatedDate)
+        } else {
+          recordsRepository.deleteInactive(eori).map(_ => Done)
         }
+      }
     }
 }
