@@ -19,8 +19,8 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{localPageSize, localStartingPage}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
@@ -31,8 +31,7 @@ class FilterRecordsController @Inject() (
   storeRecordsController: StoreRecordsController,
   recordsRepository: RecordsRepository,
   cc: ControllerComponents,
-  identify: IdentifierAction,
-  config: DataStoreAppConfig
+  identify: IdentifierAction
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
@@ -53,23 +52,14 @@ class FilterRecordsController @Inject() (
             _               <- storeRecordsController.storeLatestRecords(eori).apply(request)
             filteredRecords <- recordsRepository.filterRecords(eori, searchTerm, field)
           } yield {
-            val size               = sizeOpt.getOrElse(config.pageSize)
-            val page               = pageOpt.getOrElse(config.startingPage)
+            val size               = sizeOpt.getOrElse(localPageSize)
+            val page               = pageOpt.getOrElse(localStartingPage)
             val skip               = page * size
             val paginatedRecords   = filteredRecords.slice(skip, skip + size)
-            val pagination         = buildPagination(size, page, filteredRecords.size.toLong)
+            val pagination         = Pagination.buildPagination(Some(size), Some(page), filteredRecords.size.toLong)
             val getRecordsResponse = GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination = pagination)
             Ok(Json.toJson(getRecordsResponse))
           }
       }
     }
-
-  private def buildPagination(size: Int, page: Int, totalRecords: Long): Pagination = {
-    val mod                  = totalRecords % size
-    val totalRecordsMinusMod = totalRecords - mod
-    val totalPages           = (totalRecordsMinusMod / size).toInt + (if (mod > 0) 1 else 0)
-    val nextPage             = if (page >= totalPages - 1 || page < 0) None else Some(page + 1)
-    val prevPage             = if (page <= 0 || page >= totalPages) None else Some(page - 1)
-    Pagination(totalRecords.toInt, page, totalPages, nextPage, prevPage)
-  }
 }

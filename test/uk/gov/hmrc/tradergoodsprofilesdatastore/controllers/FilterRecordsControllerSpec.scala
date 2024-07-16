@@ -91,7 +91,7 @@ class FilterRecordsControllerSpec
       val validFakeGetRequest = FakeRequest("GET", getUrl)
       val records             = getTestRecords(requestEori, recordsSize)
       val paginatedRecords    = records.slice(page * size, (page + 1) * size)
-      val pagination          = Pagination(recordsSize, page, 3, Some(page + 1), Some(page - 1))
+      val pagination          = Pagination(recordsSize, page, 3, Some(page + 1), None)
 
       when(mockRecordsRepository.filterRecords(any(), any(), any())) thenReturn Future.successful(records)
 
