@@ -21,10 +21,13 @@ import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.Application
+import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
+import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeIdentifierAction, FakeStoreLatestAction}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, StoreLatestAction}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.{ProfileRequest, UpdateRecordRequest}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
 
@@ -40,6 +43,9 @@ class RouterConnectorSpec
   private lazy val app: Application =
     new GuiceApplicationBuilder()
       .configure("microservice.services.trader-goods-profiles-router.port" -> wireMockPort)
+      .overrides(
+        bind[StoreLatestAction].to[FakeStoreLatestAction]
+      )
       .build()
 
   private lazy val connector = app.injector.instanceOf[RouterConnector]

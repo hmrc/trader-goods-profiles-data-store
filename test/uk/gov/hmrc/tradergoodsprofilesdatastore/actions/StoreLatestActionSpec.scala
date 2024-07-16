@@ -14,48 +14,45 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
+package uk.gov.hmrc.tradergoodsprofilesdatastore.actions
 
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{times, verify, when}
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
-import org.scalatestplus.mockito.MockitoSugar
-import play.api.http.Status
-import play.api.inject.bind
+import org.scalatestplus.mockito.MockitoSugar.mock
+import play.api.mvc.Result
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestActionImpl
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.IdentifierRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{CheckRecordsRepository, RecordsRepository}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-class StoreRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecordsResponseUtil {
+class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
 
-  implicit val ec: ExecutionContext = ExecutionContext.global
+  class Harness(recordsRepository: RecordsRepository, routerConnector: RouterConnector)
+      extends StoreLatestActionImpl(recordsRepository, routerConnector) {
+    def callFilter[A](request: IdentifierRequest[A]): Future[Option[Result]] = filter(request)
+  }
 
-  "storeAllRecords" - {
+  "StoreLatestAction" - {
 
-    "return 204 and store all records in db" in {
+    "must store latest records" in {
+
       val totalRecordsNum = 29
-
-      val requestEori = "GB123456789099"
-      val storeUrl    = routes.StoreRecordsController
-        .storeAllRecords(requestEori)
-        .url
-
-      val recordsPerPage       = 10
-      val validFakeHeadRequest = FakeRequest("HEAD", storeUrl)
+      val requestEori     = "GB123456789099"
+      val recordsPerPage  = 10
 
       val mockRecordsRepository = mock[RecordsRepository]
       when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
       when(mockRecordsRepository.deleteInactive(any())) thenReturn Future.successful(0)
-
-      val mockCheckRecordsRepository = mock[CheckRecordsRepository]
-      when(mockCheckRecordsRepository.set(any())) thenReturn Future.successful(true)
-      val mockRouterConnector        = mock[RouterConnector]
+      when(mockRecordsRepository.getLatest(any())) thenReturn Future.successful(Some(getGoodsItemRecords(requestEori)))
+      val mockRouterConnector   = mock[RouterConnector]
       when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
         Future.successful(
           GetRecordsResponse(
@@ -77,18 +74,17 @@ class StoreRecordsControllerSpec extends SpecBase with MockitoSugar with GetReco
         )
       )
 
-      val application = applicationBuilder()
-        .overrides(
-          bind[RouterConnector].toInstance(mockRouterConnector),
-          bind[RecordsRepository].toInstance(mockRecordsRepository),
-          bind[CheckRecordsRepository].toInstance(mockCheckRecordsRepository)
-        )
-        .build()
-      running(application) {
-        val result = route(application, validFakeHeadRequest).value
-        status(result) shouldBe Status.NO_CONTENT
-      }
+      val action = new Harness(mockRecordsRepository, mockRouterConnector)
+
+      action
+        .callFilter(IdentifierRequest(FakeRequest(), "testUserId", requestEori, AffinityGroup.Individual))
+        .futureValue
+
+      verify(mockRecordsRepository, times(1)).getLatest(any())
+      verify(mockRouterConnector, times(1)).getRecords(any(), any(), any(), any())(any())
+      verify(mockRecordsRepository, times(1)).saveRecords(any(), any())
+      verify(mockRecordsRepository, times(1)).deleteInactive(any())
+
     }
   }
-
 }

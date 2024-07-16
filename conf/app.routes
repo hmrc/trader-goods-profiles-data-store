@@ -7,7 +7,6 @@ GET        /traders/:eori/records                   uk.gov.hmrc.tradergoodsprofi
 POST       /traders/:eori/records                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.CreateRecordController.createRecord(eori: String)
 GET        /traders/:eori/records/filter            uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.FilterRecordsController.filterLocalRecords(eori: String, searchTerm: Option[String], field: Option[String], page: Option[Int], size: Option[Int])
 HEAD       /traders/:eori/checkRecords              uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.CheckRecordsController.checkRecords(eori: String)
-HEAD       /traders/:eori/records/storeLatest       uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.StoreRecordsController.storeLatestRecords(eori: String)
 HEAD       /traders/:eori/records/store             uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.StoreRecordsController.storeAllRecords(eori: String)
 GET        /traders/:eori/records/count             uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.GetRecordsController.getRecordsCount(eori: String)
 GET        /traders/:eori/records/:recordId         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.GetRecordsController.getRecord(eori: String, recordId: String)
