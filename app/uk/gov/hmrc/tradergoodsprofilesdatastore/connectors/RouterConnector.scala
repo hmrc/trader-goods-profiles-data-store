@@ -23,7 +23,7 @@ import play.api.http.Status.{NO_CONTENT, OK}
 import play.api.libs.json.Json
 import sttp.model.Uri.UriContext
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.{CreateRecordRequest, ProfileRequest, UpdateRecordRequest}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, GoodsItemRecord}
@@ -38,12 +38,6 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   private def traderProfileUrl(eori: String) =
     url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori"
 
-  private def tgpUpdateRecordUrl(
-    eori: String,
-    recordId: String
-  ) =
-    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records/$recordId"
-
   private def tgpRecordsUri(
     eori: String,
     lastUpdatedDate: Option[String] = None,
@@ -54,9 +48,16 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
 
   private def tgpDeleteRecordUrl(
     eori: String,
+    recordId: String,
+    actorId: String
+  ) =
+    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records/$recordId?actorId=$actorId"
+
+  private def tgpUpdateRecordUrl(
+    eori: String,
     recordId: String
   ) =
-    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records/$recordId?actorId=$eori"
+    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records/$recordId"
 
   private def createGoodsRecordUrl(eori: String) =
     url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records"
@@ -67,10 +68,9 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
       .setHeader(clientIdHeader)
       .withBody(Json.toJson(traderProfile))
       .execute[HttpResponse]
-      .flatMap { response =>
+      .map { response =>
         response.status match {
-          case OK => Future.successful(Done)
-          case _  => Future.failed(UpstreamErrorResponse(response.body, response.status))
+          case OK => Done
         }
       }
 
@@ -100,16 +100,16 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
 
   def deleteRecord(
     eori: String,
-    recordId: String
+    recordId: String,
+    actorId: String
   )(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
-      .delete(tgpDeleteRecordUrl(eori, recordId))
+      .delete(tgpDeleteRecordUrl(eori, recordId, actorId))
       .setHeader(clientIdHeader)
       .execute[HttpResponse]
-      .flatMap { response =>
+      .map { response =>
         response.status match {
-          case NO_CONTENT => Future.successful(Done)
-          case _          => Future.failed(UpstreamErrorResponse(response.body, response.status))
+          case NO_CONTENT => Done
         }
       }
 
@@ -123,10 +123,9 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
       .setHeader(clientIdHeader)
       .withBody(Json.toJson(updateRecord))
       .execute[HttpResponse]
-      .flatMap { response =>
+      .map { response =>
         response.status match {
-          case OK => Future.successful(Done)
-          case _  => Future.failed(UpstreamErrorResponse(response.body, response.status))
+          case OK => Done
         }
       }
 }
