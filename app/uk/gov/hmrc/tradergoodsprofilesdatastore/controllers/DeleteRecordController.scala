@@ -16,32 +16,35 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
-import play.api.Logging
+import org.apache.pekko.Done
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import uk.gov.hmrc.http.{NotFoundException, UpstreamErrorResponse}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
-import scala.util.{Failure, Success}
+import scala.concurrent.{ExecutionContext, Future}
 
 class DeleteRecordController @Inject() (
+  recordsRepository: RecordsRepository,
   cc: ControllerComponents,
   routerConnector: RouterConnector,
   identify: IdentifierAction
 )(implicit ec: ExecutionContext)
-    extends BackendController(cc)
-    with Logging {
+    extends BackendController(cc) {
 
   def deleteRecord(eori: String, recordId: String): Action[AnyContent] = identify.async { implicit request =>
-    routerConnector.deleteRecord(eori, recordId).map(response => response) transform {
-      case Success(_)                                                             => Success(NoContent)
-      case Failure(cause: UpstreamErrorResponse) if cause.statusCode == NOT_FOUND => Success(NotFound)
-      case Failure(cause: UpstreamErrorResponse)                                  =>
-        logger.error(s"Deleted record failed with ${cause.statusCode} with message: ${cause.message}")
-        Success(InternalServerError)
+    recordsRepository.get(eori, recordId).flatMap {
+      case Some(goodsItemRecords) =>
+        routerConnector.deleteRecord(eori, recordId, goodsItemRecords.actorId).flatMap { case Done =>
+          recordsRepository.delete(eori, recordId).map {
+            case true  => NoContent
+            case false => InternalServerError("Failed to delete the record from db")
+          }
+        }
+      case None                   =>
+        Future.successful(NotFound)
     }
   }
 }
