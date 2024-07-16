@@ -122,12 +122,12 @@ class RecordsRepositorySpec
     updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
   )
 
-  private val traderRefSearchTerm  = "BAN001002"
-  private val traderRefSearchField = "traderRef"
-  private val goodsDescriptionRefSearchTerm = "Tomatoes"
+  private val traderRefSearchTerm            = "BAN001002"
+  private val traderRefSearchField           = "traderRef"
+  private val goodsDescriptionRefSearchTerm  = "Tomatoes"
   private val goodsDescriptionRefSearchField = "goodsDescription"
-  private val countryOfOriginSearchTerm = "AU"
-  private val countryOfOriginSearchField = "countryOfOrigin"
+  private val countryOfOriginSearchTerm      = "AU"
+  private val countryOfOriginSearchField     = "countryOfOrigin"
 
   private val latestRecordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204p"
 
@@ -296,6 +296,118 @@ class RecordsRepositorySpec
     "when there are no records for this eori it must return None" in {
       repository.getLatest(sampleGoodsItemRecords.eori).futureValue mustEqual None
     }
+
+    "when there are records for this eori and for search term in trader reference it must return the count" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "3")).futureValue
+
+      val result = repository.getCount(sampleGoodsItemRecords.eori, "BAN001001").futureValue
+      result mustEqual 3
+
+      val partialSearchResult = repository.getCount(sampleGoodsItemRecords.eori, "BAN00").futureValue
+      partialSearchResult mustEqual 3
+    }
+
+    "when there are records for this eori and for search term in commodity code it must return the count" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "3")).futureValue
+
+      val result = repository.getCount(sampleGoodsItemRecords.eori, "10410100").futureValue
+      result mustEqual 3
+
+      val partialSearchResult = repository.getCount(sampleGoodsItemRecords.eori, "104101").futureValue
+      partialSearchResult mustEqual 3
+    }
+
+    "when there are records for this eori and for search term in goods description it must return the count" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "3")).futureValue
+
+      val result = repository.getCount(sampleGoodsItemRecords.eori, "Organic bananas").futureValue
+      result mustEqual 3
+
+      val partialSearchResult = repository.getCount(sampleGoodsItemRecords.eori, "bananas").futureValue
+      partialSearchResult mustEqual 3
+    }
+
+    "when there are no records for this eori and for search term it must return 0" in {
+      repository
+        .getCount(sampleGoodsItemRecords.eori, "value not match with trader ref, comCode or goods description")
+        .futureValue mustEqual 0
+    }
+
+    "when there are 8 records for this eori and for search term in trader reference it must return the records and it asks for page 2 of size 5" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "3")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "4")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "6")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "7")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "8")).futureValue
+
+      val result = repository.getMany(sampleGoodsItemRecords.eori, "BAN001001", Some(2), Some(5)).futureValue
+      result.size mustEqual 4
+
+      val partialSearchResult = repository.getMany(sampleGoodsItemRecords.eori, "BAN00", Some(2), Some(5)).futureValue
+      partialSearchResult.size mustEqual 4
+    }
+
+    "when there are 8 records for this eori and for search term in commodity code it must return the records and it asks for page 2 of size 5" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "3")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "4")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "6")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "7")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "8")).futureValue
+
+      val result = repository.getMany(sampleGoodsItemRecords.eori, "10410100", Some(2), Some(5)).futureValue
+      result.size mustEqual 4
+
+      val partialSearchResult = repository.getMany(sampleGoodsItemRecords.eori, "104101", Some(2), Some(5)).futureValue
+      partialSearchResult.size mustEqual 4
+    }
+
+    "when there are 8 records for this eori and for search term in goods description it must return the records and it asks for page 2 of size 5" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "3")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "4")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "6")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "7")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "8")).futureValue
+
+      val result = repository.getMany(sampleGoodsItemRecords.eori, "Organic bananas", Some(2), Some(5)).futureValue
+      result.size mustEqual 4
+
+      val partialSearchResult = repository.getMany(sampleGoodsItemRecords.eori, "bananas", Some(2), Some(5)).futureValue
+      partialSearchResult.size mustEqual 4
+    }
+
+    "when there are 8 records for this eori and for search term it must return empty Array and it asks for page 3 of size 5" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "3")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "4")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "6")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "7")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "8")).futureValue
+
+      val result = repository.getMany(sampleGoodsItemRecords.eori, "Organic bananas", Some(3), Some(5)).futureValue
+      result.size mustEqual 0
+    }
+
+    "when there are no records for this eori and for search term it must return empty Array" in {
+      val result = repository.getMany(sampleGoodsItemRecords.eori, None, None).futureValue
+      result.size mustEqual 0
+    }
   }
 
   ".filter" - {
@@ -351,7 +463,11 @@ class RecordsRepositorySpec
       insert(sampleGoodsItemRecords.copy(recordId = "7")).futureValue
 
       val result = repository
-        .filterRecords(sampleGoodsItemRecords.eori, Some(goodsDescriptionRefSearchTerm), Some(goodsDescriptionRefSearchField))
+        .filterRecords(
+          sampleGoodsItemRecords.eori,
+          Some(goodsDescriptionRefSearchTerm),
+          Some(goodsDescriptionRefSearchField)
+        )
         .futureValue
       result.size mustEqual 2
       result.headOption.value.goodsDescription mustEqual goodsDescriptionRefSearchTerm
