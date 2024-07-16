@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 
+import com.typesafe.config.ConfigFactory
 import play.api.libs.json.{Json, OFormat}
 
 case class Pagination(
@@ -27,11 +28,13 @@ case class Pagination(
 )
 
 object Pagination {
+
   implicit val format: OFormat[Pagination] = Json.format[Pagination]
-  val recursivePageSize                    = 10000
-  val recursiveStartingPage                = 0
-  val localStartingPage                    = 1
-  val localPageSize                        = 10
+
+  val recursivePageSize: Int     = ConfigFactory.load().getInt("pagination-config.recursive-page-size")
+  val recursiveStartingPage: Int = ConfigFactory.load().getInt("pagination-config.recursive-starting-page")
+  val localPageSize: Int         = ConfigFactory.load().getInt("pagination-config.local-page-size")
+  val localStartingPage: Int     = ConfigFactory.load().getInt("pagination-config.local-starting-page")
 
   def buildPagination(sizeOpt: Option[Int], pageOpt: Option[Int], totalRecords: Long): Pagination = {
     val size                 = sizeOpt.getOrElse(localPageSize)
