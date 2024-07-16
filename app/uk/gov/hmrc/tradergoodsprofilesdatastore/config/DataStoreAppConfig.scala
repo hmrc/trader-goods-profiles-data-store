@@ -21,13 +21,6 @@ import play.api.Configuration
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.EnrolmentConfig
 @Singleton
 class DataStoreAppConfig @Inject() (configuration: Configuration) {
-
-  val host: String = configuration.get[String]("host")
-
-  val recursivePageSize: Int = configuration.get[String]("pagination-config.recursive-page-size").toInt
-  val startingPage: Int      = configuration.get[String]("pagination-config.starting-page").toInt
-  val pageSize: Int          = configuration.get[String]("pagination-config.page-size").toInt
-
+  val host: String                            = configuration.get[String]("host")
   val tgpEnrolmentIdentifier: EnrolmentConfig = configuration.get[EnrolmentConfig]("enrolment-config")
-
 }

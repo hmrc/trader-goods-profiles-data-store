@@ -18,8 +18,6 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 
 import play.api.libs.json._
 
-import java.time.Instant
-
 case class CreateRecordResponse(
   recordId: String
 )
