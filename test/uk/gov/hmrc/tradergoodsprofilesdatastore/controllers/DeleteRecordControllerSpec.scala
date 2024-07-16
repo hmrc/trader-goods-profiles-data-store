@@ -24,12 +24,12 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeIdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GoodsItemRecord}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
 import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
@@ -90,18 +90,13 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
 
     "return 204 when record is deleted from data store" in {
 
-      val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.get(any(), any())) thenReturn Future.successful(Some(sampleGoodsItemRecord))
-      when(mockRecordsRepository.delete(any(), any())) thenReturn Future.successful(true)
-
       val mockRouterConnector = mock[RouterConnector]
       when(
-        mockRouterConnector.deleteRecord(any(), any(), any())(any())
+        mockRouterConnector.deleteRecord(any(), any())(any())
       ) thenReturn Future.successful(Done)
 
       val application = applicationBuilder()
         .overrides(
-          inject.bind[RecordsRepository].toInstance(mockRecordsRepository),
           inject.bind[IdentifierAction].to[FakeIdentifierAction],
           inject.bind[RouterConnector].toInstance(mockRouterConnector)
         )
@@ -112,28 +107,21 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
         status(result) shouldBe NO_CONTENT
 
         withClue("must call the relevant services with the correct details") {
-          verify(mockRecordsRepository, times(1)).get(eqTo(testEori), eqTo(testRecordId))
-          verify(mockRecordsRepository, times(1)).delete(eqTo(testEori), eqTo(testRecordId))
           verify(mockRouterConnector, times(1))
-            .deleteRecord(eqTo(testEori), eqTo(testRecordId), eqTo(sampleGoodsItemRecord.actorId))(any())
+            .deleteRecord(eqTo(testEori), eqTo(testRecordId))(any())
         }
       }
     }
 
-    "return an eroor when record is failed delete from data store" in {
-
-      val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.get(any(), any())) thenReturn Future.successful(Some(sampleGoodsItemRecord))
-      when(mockRecordsRepository.delete(any(), any())) thenReturn Future.successful(false)
+    "return 404 when record does not exists" in {
 
       val mockRouterConnector = mock[RouterConnector]
       when(
-        mockRouterConnector.deleteRecord(any(), any(), any())(any())
-      ) thenReturn Future.successful(Done)
+        mockRouterConnector.deleteRecord(any(), any())(any())
+      ) thenReturn Future.failed(UpstreamErrorResponse("could not delete", 404))
 
       val application = applicationBuilder()
         .overrides(
-          inject.bind[RecordsRepository].toInstance(mockRecordsRepository),
           inject.bind[IdentifierAction].to[FakeIdentifierAction],
           inject.bind[RouterConnector].toInstance(mockRouterConnector)
         )
@@ -141,39 +129,29 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
 
       running(application) {
         val result = route(application, validFakeGetRequest).value
-        status(result) mustBe INTERNAL_SERVER_ERROR
-
-        withClue("must call the relevant services with the correct details") {
-          verify(mockRecordsRepository, times(1)).get(eqTo(testEori), eqTo(testRecordId))
-          verify(mockRecordsRepository, times(1)).delete(eqTo(testEori), eqTo(testRecordId))
-          verify(mockRouterConnector, times(1))
-            .deleteRecord(eqTo(testEori), eqTo(testRecordId), eqTo(sampleGoodsItemRecord.actorId))(any())
-        }
+        status(result) shouldBe NOT_FOUND
       }
     }
 
-    "return 404 when record does not exists" in {
+    "return 500 when there is an error" in {
 
-      val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.get(any(), any())) thenReturn Future.successful(None)
+      val mockRouterConnector = mock[RouterConnector]
+      when(
+        mockRouterConnector.deleteRecord(any(), any())(any())
+      ) thenReturn Future.failed(UpstreamErrorResponse("Internal server error", 500))
 
       val application = applicationBuilder()
         .overrides(
-          inject.bind[RecordsRepository].toInstance(mockRecordsRepository),
-          inject.bind[IdentifierAction].to[FakeIdentifierAction]
+          inject.bind[IdentifierAction].to[FakeIdentifierAction],
+          inject.bind[RouterConnector].toInstance(mockRouterConnector)
         )
         .build()
 
       running(application) {
         val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe NOT_FOUND
-
-        withClue("must call the repository with the correct details") {
-          verify(mockRecordsRepository, times(1)).get(eqTo(testEori), eqTo(testRecordId))
-        }
+        status(result) shouldBe INTERNAL_SERVER_ERROR
       }
     }
 
   }
-
 }
