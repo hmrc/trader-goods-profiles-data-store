@@ -75,14 +75,20 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
       }
 
   def createRecord(
-    createRecordRequest: CreateRecordRequest
-  )(implicit hc: HeaderCarrier): Future[GoodsItemRecord] =
+    createRecordRequest: CreateRecordRequest,
+    eori: String
+  )(implicit hc: HeaderCarrier): Future[String] =
     httpClient
-      .post(createGoodsRecordUrl(createRecordRequest.eori))
+      .post(createGoodsRecordUrl(eori))
       .setHeader(clientIdHeader)
       .withBody(Json.toJson(createRecordRequest))
       .execute[HttpResponse]
-      .map(response => response.json.as[GoodsItemRecord])
+      .flatMap { response =>
+        response.status match {
+          case OK => Future.successful(response.json.as[GoodsItemRecord].recordId)
+          case _  => Future.failed(UpstreamErrorResponse(response.body, response.status))
+        }
+      }
 
   def getRecords(
     eori: String,
@@ -95,7 +101,12 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
       .get(url"$uri")
       .setHeader(clientIdHeader)
       .execute[HttpResponse]
-      .map(response => response.json.as[GetRecordsResponse])
+      .flatMap { response =>
+        response.status match {
+          case OK => Future.successful(response.json.as[GetRecordsResponse])
+          case _  => Future.failed(UpstreamErrorResponse(response.body, response.status))
+        }
+      }
   }
 
   def deleteRecord(
