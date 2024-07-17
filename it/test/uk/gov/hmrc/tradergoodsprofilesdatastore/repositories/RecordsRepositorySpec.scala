@@ -510,30 +510,5 @@ class RecordsRepositorySpec
       result.size mustEqual 4
       result.headOption.value.countryOfOrigin mustEqual countryOfOriginSearchTerm
     }
-
-  }
-
-  ".deleteInactive" - {
-
-    "when there are inactive records for this eori it must delete them and return num of records deleted" in {
-
-      insert(sampleGoodsItemRecords).futureValue
-      insert(inactiveGoodsItemRecords).futureValue
-
-      val result = repository.deleteInactive(sampleGoodsItemRecords.eori).futureValue
-      result mustEqual 1
-
-      // Making sure record is deleted
-      withClue("make sure record is deleted")(
-        repository.get(testEori, inactiveRecordId).futureValue must not be defined
-      )
-    }
-
-    "when there are no inactive records for this eori it must return 0" in {
-      insert(sampleGoodsItemRecords).futureValue
-
-      repository.deleteInactive(sampleGoodsItemRecords.eori).futureValue mustEqual 0
-    }
-
   }
 }

@@ -50,7 +50,6 @@ class StoreRecordsServiceSpec extends SpecBase with MockitoSugar with GetRecords
         val requestEori     = "GB123456789099"
 
         when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
-        when(mockRecordsRepository.deleteInactive(any())) thenReturn Future.successful(0)
         when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
           Future.successful(
             GetRecordsResponse(
@@ -101,7 +100,6 @@ class StoreRecordsServiceSpec extends SpecBase with MockitoSugar with GetRecords
         result.value shouldBe Done
         verify(mockRouterConnector, times(6)).getRecords(any(), any(), any(), any())(any())
         verify(mockRecordsRepository, times(6)).saveRecords(any(), any())
-        verify(mockRecordsRepository, times(1)).deleteInactive(any())
       }
 
       "must store latest records in data-store" in {
@@ -113,7 +111,6 @@ class StoreRecordsServiceSpec extends SpecBase with MockitoSugar with GetRecords
         val requestEori     = "GB123456789099"
 
         when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
-        when(mockRecordsRepository.deleteInactive(any())) thenReturn Future.successful(0)
         when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn
           Future.successful(
             GetRecordsResponse(
@@ -126,7 +123,6 @@ class StoreRecordsServiceSpec extends SpecBase with MockitoSugar with GetRecords
         result.value shouldBe Done
         verify(mockRouterConnector, times(1)).getRecords(any(), any(), any(), any())(any())
         verify(mockRecordsRepository, times(1)).saveRecords(any(), any())
-        verify(mockRecordsRepository, times(1)).deleteInactive(any())
       }
     }
   }

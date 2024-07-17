@@ -45,13 +45,9 @@ class StoreRecordsService @Inject() (routerConnector: RouterConnector, recordsRe
     routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(recursivePageSize)).flatMap { recordsResponse =>
       recordsRepository.saveRecords(eori, recordsResponse.goodsItemRecords).flatMap { _ =>
         if (recordsResponse.pagination.nextPage.isDefined) {
-          println("page")
-          println(page)
-
           storeRecordsRecursively(eori, page + 1, lastUpdatedDate)
         } else {
-          println("deleted")
-          recordsRepository.deleteInactive(eori).map(_ => Done)
+          Future.successful(Done)
         }
       }
     }

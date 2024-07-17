@@ -56,7 +56,6 @@ class FilterRecordsControllerSpec
     mockAction = mock[Action[AnyContent]]
 
     when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
-    when(mockRecordsRepository.deleteInactive(any())) thenReturn Future.successful(0)
     when(mockRecordsRepository.getLatest(any())) thenReturn Future.successful(
       Some(getGoodsItemRecord("GB123456789099"))
     )
