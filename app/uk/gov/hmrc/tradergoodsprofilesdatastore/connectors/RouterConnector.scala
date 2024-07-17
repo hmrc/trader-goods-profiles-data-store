@@ -19,7 +19,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
 import org.apache.pekko.Done
 import play.api.Configuration
-import play.api.http.Status.{NO_CONTENT, OK}
+import play.api.http.Status.{CREATED, NO_CONTENT, OK}
 import play.api.libs.json.Json
 import sttp.model.Uri.UriContext
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -85,8 +85,8 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
-          case OK => Future.successful(response.json.as[GoodsItemRecord].recordId)
-          case _  => Future.failed(UpstreamErrorResponse(response.body, response.status))
+          case CREATED => Future.successful(response.json.as[GoodsItemRecord].recordId)
+          case _       => Future.failed(UpstreamErrorResponse(response.body, response.status))
         }
       }
 
