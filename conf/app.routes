@@ -10,6 +10,5 @@ HEAD       /traders/:eori/checkRecords              uk.gov.hmrc.tradergoodsprofi
 HEAD       /traders/:eori/records/storeLatest       uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.StoreRecordsController.storeLatestRecords(eori: String)
 HEAD       /traders/:eori/records/store             uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.StoreRecordsController.storeAllRecords(eori: String)
 GET        /traders/:eori/records/count             uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.GetRecordsController.getRecordsCount(eori: String)
-GET        /traders/:eori/records/search            uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.SearchRecordsController.getLocalRecords(eori: String, searchString: String, page: Option[Int], size: Option[Int])
 GET        /traders/:eori/records/:recordId         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.GetRecordsController.getRecord(eori: String, recordId: String)
 PATCH      /traders/:eori/records/:recordId         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.UpdateRecordController.updateRecord(eori: String, recordId: String)

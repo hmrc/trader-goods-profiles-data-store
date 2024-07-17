@@ -191,44 +191,4 @@ class RecordsRepository @Inject() (
         }
       case None        => Future.successful(Seq.empty)
     }
-
-  def getMany(
-    eori: String,
-    searchString: String,
-    pageOpt: Option[Int],
-    sizeOpt: Option[Int]
-  ): Future[Seq[GoodsItemRecord]] = {
-    val size = sizeOpt.map(size => if (size > 0) size - 1 else size).getOrElse(config.pageSize)
-    val page = pageOpt.getOrElse(config.startingPage)
-    val skip = (page - 1) * size
-    collection
-      .find[GoodsItemRecord](
-        Filters.and(
-          byEori(eori),
-          Filters.or(
-            Filters.regex("comcode", searchString, "i"),
-            Filters.regex("traderRef", searchString, "i"),
-            Filters.regex("goodsDescription", searchString, "i")
-          )
-        )
-      )
-      .sort(byLatest)
-      .limit(size)
-      .skip(skip)
-      .toFuture()
-  }
-
-  def getCount(eori: String, searchString: String): Future[Long] =
-    collection
-      .countDocuments(
-        Filters.and(
-          byEori(eori),
-          Filters.or(
-            Filters.regex("comcode", searchString, "i"),
-            Filters.regex("traderRef", searchString, "i"),
-            Filters.regex("goodsDescription", searchString, "i")
-          )
-        )
-      )
-      .toFuture()
 }
