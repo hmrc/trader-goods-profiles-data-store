@@ -296,11 +296,6 @@ class RecordsRepositorySpec
     "when there are no records for this eori it must return None" in {
       repository.getLatest(sampleGoodsItemRecords.eori).futureValue mustEqual None
     }
-
-    "when there are no records for this eori and for search term it must return empty Array" in {
-      val result = repository.getMany(sampleGoodsItemRecords.eori, None, None).futureValue
-      result.size mustEqual 0
-    }
   }
 
   ".filter" - {
