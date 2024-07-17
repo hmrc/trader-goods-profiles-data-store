@@ -42,21 +42,21 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
 
   val requestEori = "GB123456789099"
 
-  val profileRequest = ProfileRequest(
+  private val profileRequest = ProfileRequest(
     actorId = "GB123456789099",
     ukimsNumber = "XIUKIM47699357400020231115081800",
     nirmsNumber = Some("RMS-GB-123456"),
     niphlNumber = Some("6 S12345")
   )
 
-  private val setUrl                 = routes.ProfileController.setProfile(requestEori).url
-  private val getUrl                 = routes.ProfileController.getProfile(requestEori).url
-  private val doesExistUrl           = routes.ProfileController.doesProfileExist(requestEori).url
-  private val validFakePostRequest   =
-    FakeRequest("POST", setUrl, FakeHeaders(Seq(CONTENT_TYPE -> JSON)), Json.toJson(profileRequest))
-  private val invalidFakePostRequest = FakeRequest("POST", setUrl, FakeHeaders(Seq(CONTENT_TYPE -> JSON)), "{}")
-  private val validFakeGetRequest    = FakeRequest("GET", getUrl)
-  private val validDoesExistRequest  = FakeRequest("HEAD", doesExistUrl)
+  private val setUrl                = routes.ProfileController.setProfile(requestEori).url
+  private val getUrl                = routes.ProfileController.getProfile(requestEori).url
+  private val doesExistUrl          = routes.ProfileController.doesProfileExist(requestEori).url
+  private val validFakePutRequest   =
+    FakeRequest("PUT", setUrl, FakeHeaders(Seq(CONTENT_TYPE -> JSON)), Json.toJson(profileRequest))
+  private val invalidFakePutRequest = FakeRequest("PUT", setUrl, FakeHeaders(Seq(CONTENT_TYPE -> JSON)), "{}")
+  private val validFakeGetRequest   = FakeRequest("GET", getUrl)
+  private val validDoesExistRequest = FakeRequest("HEAD", doesExistUrl)
 
   private val expectedProfileResponse = ProfileResponse(
     eori = "1234567890",
@@ -66,7 +66,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
     niphlNumber = Some("123456")
   )
 
-  s"POST $setUrl" - {
+  s"PUT $setUrl" - {
 
     "return 200 when valid data is posted" in {
 
@@ -84,7 +84,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
         .build()
 
       running(application) {
-        val result = route(application, validFakePostRequest).value
+        val result = route(application, validFakePutRequest).value
         status(result) shouldBe Status.OK
       }
     }
@@ -105,7 +105,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
         .build()
 
       running(application) {
-        val result = route(application, invalidFakePostRequest).value
+        val result = route(application, invalidFakePutRequest).value
         status(result) shouldBe Status.BAD_REQUEST
       }
     }
