@@ -39,19 +39,23 @@ class FilterRecordsController @Inject() (
   def filterLocalRecords(
     eori: String,
     searchTerm: Option[String],
+    exactMatch: Option[Boolean],
     field: Option[String],
     pageOpt: Option[Int],
     sizeOpt: Option[Int]
   ): Action[AnyContent] =
     identify.async { implicit request =>
-      val validFields = Set("traderRef", "goodsDescription", "countryOfOrigin")
+      val validFields = Set("traderRef", "goodsDescription", "comcode")
+
+      val isExactMatch = exactMatch.getOrElse(true)
+
       field match {
         case Some(value) if !validFields.contains(value) =>
           Future.successful(BadRequest("Invalid field parameter"))
         case _                                           =>
           for {
             _               <- storeRecordsController.storeLatestRecords(eori).apply(request)
-            filteredRecords <- recordsRepository.filterRecords(eori, searchTerm, field)
+            filteredRecords <- recordsRepository.filterRecords(eori, searchTerm, field, isExactMatch)
           } yield {
             val size               = sizeOpt.getOrElse(config.pageSize)
             val page               = pageOpt.getOrElse(config.startingPage)

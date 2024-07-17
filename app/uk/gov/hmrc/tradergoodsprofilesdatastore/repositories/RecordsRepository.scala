@@ -55,14 +55,25 @@ class RecordsRepository @Inject() (
 
   private def byLatest: Bson = Sorts.descending("updatedDateTime")
 
-  private def byField(field: String, searchTerm: String): Bson = Filters.equal(field, searchTerm)
+  private def byField(field: String, searchTerm: String, exactMatch: Boolean): Bson =
+    if (exactMatch)
+      Filters.equal(field, searchTerm)
+    else
+      Filters.regex(field, searchTerm, "i")
 
-  private def byCountryOfOriginOrGoodsDescriptionOrTraderRef(value: String): Bson =
-    Filters.or(
-      Filters.equal("traderRef", value),
-      Filters.equal("goodsDescription", value),
-      Filters.equal("countryOfOrigin", value)
-    )
+  private def byComCodeOrGoodsDescriptionOrTraderRef(value: String, exactMatch: Boolean): Bson =
+    if (exactMatch)
+      Filters.or(
+        Filters.equal("traderRef", value),
+        Filters.equal("goodsDescription", value),
+        Filters.equal("comcode", value)
+      )
+    else
+      Filters.or(
+        Filters.regex("traderRef", value, "i"),
+        Filters.regex("goodsDescription", value),
+        Filters.regex("comcode", value)
+      )
 
   def saveRecords(eori: String, records: Seq[GoodsItemRecord]): Future[Boolean] =
     Future
@@ -164,7 +175,12 @@ class RecordsRepository @Inject() (
       case None => Future.successful(None)
     }
 
-  def filterRecords(eori: String, searchTerm: Option[String], field: Option[String]): Future[Seq[GoodsItemRecord]] =
+  def filterRecords(
+    eori: String,
+    searchTerm: Option[String],
+    field: Option[String],
+    exactMatch: Boolean
+  ): Future[Seq[GoodsItemRecord]] =
     searchTerm match {
       case Some(value) =>
         field match {
@@ -173,7 +189,7 @@ class RecordsRepository @Inject() (
               .find[GoodsItemRecord](
                 Filters.and(
                   byEori(eori),
-                  byField(searchField, value)
+                  byField(searchField, value, exactMatch)
                 )
               )
               .sort(byLatest)
@@ -183,7 +199,7 @@ class RecordsRepository @Inject() (
               .find[GoodsItemRecord](
                 Filters.and(
                   byEori(eori),
-                  byCountryOfOriginOrGoodsDescriptionOrTraderRef(value)
+                  byComCodeOrGoodsDescriptionOrTraderRef(value, exactMatch)
                 )
               )
               .sort(byLatest)

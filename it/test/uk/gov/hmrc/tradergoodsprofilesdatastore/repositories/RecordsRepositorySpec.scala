@@ -122,12 +122,15 @@ class RecordsRepositorySpec
     updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
   )
 
-  private val traderRefSearchTerm            = "BAN001002"
-  private val traderRefSearchField           = "traderRef"
-  private val goodsDescriptionRefSearchTerm  = "Tomatoes"
-  private val goodsDescriptionRefSearchField = "goodsDescription"
-  private val countryOfOriginSearchTerm      = "AU"
-  private val countryOfOriginSearchField     = "countryOfOrigin"
+  private val traderRefSearchTerm               = "BAN001002"
+  private val traderRefPartialSearchTerm        = "BAN001"
+  private val traderRefSearchField              = "traderRef"
+  private val goodsDescriptionSearchTerm        = "Tomatoes"
+  private val goodsDescriptionPartialSearchTerm = "Tom"
+  private val goodsDescriptionSearchField       = "goodsDescription"
+  private val comCodeSearchTerm                 = "10410100"
+  private val comCodePartialSearchTerm          = "10410"
+  private val comCodeSearchField                = "comcode"
 
   private val latestRecordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204p"
 
@@ -299,102 +302,233 @@ class RecordsRepositorySpec
   }
 
   ".filter" - {
-    "when there are records for this eori but no searchTerm and field is passed it must return an empty sequence" in {
-      insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
-      insert(sampleGoodsItemRecords.copy(recordId = "3")).futureValue
-      insert(sampleGoodsItemRecords.copy(recordId = "4")).futureValue
-      insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
-      insert(latestGoodsItemRecords).futureValue
 
-      val result = repository.filterRecords(sampleGoodsItemRecords.eori, None, None).futureValue
-      result mustEqual Seq.empty
+    ".exactMatch is true" - {
+
+      "when there are records for this eori but no searchTerm and field is passed it must return an empty sequence" in {
+        insert(sampleGoodsItemRecords).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "3")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "4")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
+        insert(latestGoodsItemRecords).futureValue
+
+        val result = repository.filterRecords(sampleGoodsItemRecords.eori, None, None, exactMatch = true).futureValue
+        result mustEqual Seq.empty
+      }
+
+      "when there are records for this eori but no searchTerm is passed, but field is passed it must return an empty sequence" in {
+        insert(sampleGoodsItemRecords).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "3")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "4")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
+        insert(latestGoodsItemRecords).futureValue
+
+        val result =
+          repository
+            .filterRecords(sampleGoodsItemRecords.eori, None, Some(traderRefSearchField), exactMatch = true)
+            .futureValue
+        result mustEqual Seq.empty
+      }
+
+      "when there are 8 records and 2 matching traderRef searchTerm for this eori and the field is passed it must return a record of size 2" in {
+        insert(sampleGoodsItemRecords).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+        insert(sampleGoodsItemRecords2.copy(recordId = "3")).futureValue
+        insert(sampleGoodsItemRecords2.copy(recordId = "4")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
+        insert(latestGoodsItemRecords).futureValue
+        insert(latestGoodsItemRecords.copy(recordId = "6")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "7")).futureValue
+
+        val result = repository
+          .filterRecords(
+            sampleGoodsItemRecords.eori,
+            Some(traderRefSearchTerm),
+            Some(traderRefSearchField),
+            exactMatch = true
+          )
+          .futureValue
+        result.size mustEqual 2
+        result.headOption.value.traderRef mustEqual traderRefSearchTerm
+      }
+
+      "when there are 8 records and 2 matching goodsDescription searchTerm for this eori and the field is passed it must return a record of size 2" in {
+        insert(sampleGoodsItemRecords).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+        insert(sampleGoodsItemRecords2.copy(recordId = "3")).futureValue
+        insert(sampleGoodsItemRecords2.copy(recordId = "4")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
+        insert(latestGoodsItemRecords).futureValue
+        insert(latestGoodsItemRecords.copy(recordId = "6")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "7")).futureValue
+
+        val result = repository
+          .filterRecords(
+            sampleGoodsItemRecords.eori,
+            Some(goodsDescriptionSearchTerm),
+            Some(goodsDescriptionSearchField),
+            exactMatch = true
+          )
+          .futureValue
+        result.size mustEqual 2
+        result.headOption.value.goodsDescription mustEqual goodsDescriptionSearchTerm
+      }
+
+      "when there are 8 records and 8 matching com code searchTerm for this eori and the field is passed it must return a record of size 8" in {
+        insert(sampleGoodsItemRecords).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+        insert(sampleGoodsItemRecords2.copy(recordId = "3")).futureValue
+        insert(sampleGoodsItemRecords2.copy(recordId = "4")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
+        insert(latestGoodsItemRecords).futureValue
+        insert(latestGoodsItemRecords.copy(recordId = "6")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "7")).futureValue
+
+        val result = repository
+          .filterRecords(
+            sampleGoodsItemRecords.eori,
+            Some(comCodeSearchTerm),
+            Some(comCodeSearchField),
+            exactMatch = true
+          )
+          .futureValue
+        result.size mustEqual 8
+        result.headOption.value.comcode mustEqual comCodeSearchTerm
+      }
+
+      "when there are 8 records and 8 matching com code searchTerm for this eori and the field is not passed it must return a record of size 8" in {
+        insert(sampleGoodsItemRecords).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+        insert(sampleGoodsItemRecords2.copy(recordId = "3")).futureValue
+        insert(sampleGoodsItemRecords2.copy(recordId = "4")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
+        insert(latestGoodsItemRecords).futureValue
+        insert(latestGoodsItemRecords.copy(recordId = "6")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "7")).futureValue
+
+        val result = repository
+          .filterRecords(sampleGoodsItemRecords.eori, Some(comCodeSearchTerm), None, exactMatch = true)
+          .futureValue
+        result.size mustEqual 8
+        result.headOption.value.comcode mustEqual comCodeSearchTerm
+      }
+
     }
 
-    "when there are records for this eori but no searchTerm is passed, but field is passed it must return an empty sequence" in {
-      insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
-      insert(sampleGoodsItemRecords.copy(recordId = "3")).futureValue
-      insert(sampleGoodsItemRecords.copy(recordId = "4")).futureValue
-      insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
-      insert(latestGoodsItemRecords).futureValue
+    ".exactMatch is false" - {
 
-      val result = repository.filterRecords(sampleGoodsItemRecords.eori, None, Some(traderRefSearchField)).futureValue
-      result mustEqual Seq.empty
+      "when there are records for this eori but no searchTerm and field is passed it must return an empty sequence" in {
+        insert(sampleGoodsItemRecords).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "3")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "4")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
+        insert(latestGoodsItemRecords).futureValue
+
+        val result = repository.filterRecords(sampleGoodsItemRecords.eori, None, None, exactMatch = false).futureValue
+        result mustEqual Seq.empty
+      }
+
+      "when there are records for this eori but no searchTerm is passed, but field is passed it must return an empty sequence" in {
+        insert(sampleGoodsItemRecords).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "3")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "4")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
+        insert(latestGoodsItemRecords).futureValue
+
+        val result =
+          repository
+            .filterRecords(sampleGoodsItemRecords.eori, None, Some(traderRefSearchField), exactMatch = false)
+            .futureValue
+        result mustEqual Seq.empty
+      }
+
+      "when there are 8 records and 8 matching traderRef searchTerm for this eori and the field is passed it must return a record of size 8" in {
+        insert(sampleGoodsItemRecords).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+        insert(sampleGoodsItemRecords2.copy(recordId = "3")).futureValue
+        insert(sampleGoodsItemRecords2.copy(recordId = "4")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
+        insert(latestGoodsItemRecords).futureValue
+        insert(latestGoodsItemRecords.copy(recordId = "6")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "7")).futureValue
+
+        val result = repository
+          .filterRecords(
+            sampleGoodsItemRecords.eori,
+            Some(traderRefPartialSearchTerm),
+            Some(traderRefSearchField),
+            exactMatch = false
+          )
+          .futureValue
+        result.size mustEqual 8
+        result.headOption.value.traderRef.contains(traderRefPartialSearchTerm)
+      }
+
+      "when there are 8 records and 2 matching goodsDescription searchTerm for this eori and the field is passed it must return a record of size 2" in {
+        insert(sampleGoodsItemRecords).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+        insert(sampleGoodsItemRecords2.copy(recordId = "3")).futureValue
+        insert(sampleGoodsItemRecords2.copy(recordId = "4")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
+        insert(latestGoodsItemRecords).futureValue
+        insert(latestGoodsItemRecords.copy(recordId = "6")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "7")).futureValue
+
+        val result = repository
+          .filterRecords(
+            sampleGoodsItemRecords.eori,
+            Some(goodsDescriptionPartialSearchTerm),
+            Some(goodsDescriptionSearchField),
+            exactMatch = false
+          )
+          .futureValue
+        result.size mustEqual 2
+        result.headOption.value.goodsDescription.contains(goodsDescriptionSearchTerm)
+      }
+
+      "when there are 8 records and 8 matching com code searchTerm for this eori and the field is passed it must return a record of size 8" in {
+        insert(sampleGoodsItemRecords).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+        insert(sampleGoodsItemRecords2.copy(recordId = "3")).futureValue
+        insert(sampleGoodsItemRecords2.copy(recordId = "4")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
+        insert(latestGoodsItemRecords).futureValue
+        insert(latestGoodsItemRecords.copy(recordId = "6")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "7")).futureValue
+
+        val result = repository
+          .filterRecords(
+            sampleGoodsItemRecords.eori,
+            Some(comCodePartialSearchTerm),
+            Some(comCodeSearchField),
+            exactMatch = false
+          )
+          .futureValue
+        result.size mustEqual 8
+        result.headOption.value.comcode.contains(comCodePartialSearchTerm)
+      }
+
+      "when there are 8 records and 8 matching com code searchTerm for this eori and the field is not passed it must return a record of size 8" in {
+        insert(sampleGoodsItemRecords).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+        insert(sampleGoodsItemRecords2.copy(recordId = "3")).futureValue
+        insert(sampleGoodsItemRecords2.copy(recordId = "4")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
+        insert(latestGoodsItemRecords).futureValue
+        insert(latestGoodsItemRecords.copy(recordId = "6")).futureValue
+        insert(sampleGoodsItemRecords.copy(recordId = "7")).futureValue
+
+        val result = repository
+          .filterRecords(sampleGoodsItemRecords.eori, Some(comCodePartialSearchTerm), None, exactMatch = false)
+          .futureValue
+        result.size mustEqual 8
+        result.headOption.value.comcode.contains(comCodePartialSearchTerm)
+      }
     }
-
-    "when there are 8 records and 2 matching traderRef searchTerm for this eori and the field is passed it must return a record of size 2" in {
-      insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
-      insert(sampleGoodsItemRecords2.copy(recordId = "3")).futureValue
-      insert(sampleGoodsItemRecords2.copy(recordId = "4")).futureValue
-      insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
-      insert(latestGoodsItemRecords).futureValue
-      insert(latestGoodsItemRecords.copy(recordId = "6")).futureValue
-      insert(sampleGoodsItemRecords.copy(recordId = "7")).futureValue
-
-      val result = repository
-        .filterRecords(sampleGoodsItemRecords.eori, Some(traderRefSearchTerm), Some(traderRefSearchField))
-        .futureValue
-      result.size mustEqual 2
-      result.headOption.value.traderRef mustEqual traderRefSearchTerm
-    }
-
-    "when there are 8 records and 2 matching goodsDescription searchTerm for this eori and the field is passed it must return a record of size 2" in {
-      insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
-      insert(sampleGoodsItemRecords2.copy(recordId = "3")).futureValue
-      insert(sampleGoodsItemRecords2.copy(recordId = "4")).futureValue
-      insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
-      insert(latestGoodsItemRecords).futureValue
-      insert(latestGoodsItemRecords.copy(recordId = "6")).futureValue
-      insert(sampleGoodsItemRecords.copy(recordId = "7")).futureValue
-
-      val result = repository
-        .filterRecords(
-          sampleGoodsItemRecords.eori,
-          Some(goodsDescriptionRefSearchTerm),
-          Some(goodsDescriptionRefSearchField)
-        )
-        .futureValue
-      result.size mustEqual 2
-      result.headOption.value.goodsDescription mustEqual goodsDescriptionRefSearchTerm
-    }
-
-    "when there are 8 records and 4 matching countryOfOrigin searchTerm for this eori and the field is passed it must return a record of size 4" in {
-      insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
-      insert(sampleGoodsItemRecords2.copy(recordId = "3")).futureValue
-      insert(sampleGoodsItemRecords2.copy(recordId = "4")).futureValue
-      insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
-      insert(latestGoodsItemRecords).futureValue
-      insert(latestGoodsItemRecords.copy(recordId = "6")).futureValue
-      insert(sampleGoodsItemRecords.copy(recordId = "7")).futureValue
-
-      val result = repository
-        .filterRecords(sampleGoodsItemRecords.eori, Some(countryOfOriginSearchTerm), Some(countryOfOriginSearchField))
-        .futureValue
-      result.size mustEqual 4
-      result.headOption.value.countryOfOrigin mustEqual countryOfOriginSearchTerm
-    }
-
-    "when there are 8 records and 4 matching countryOfOrigin searchTerm for this eori and the field is not passed it must return a record of size 4" in {
-      insert(sampleGoodsItemRecords).futureValue
-      insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
-      insert(sampleGoodsItemRecords2.copy(recordId = "3")).futureValue
-      insert(sampleGoodsItemRecords2.copy(recordId = "4")).futureValue
-      insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
-      insert(latestGoodsItemRecords).futureValue
-      insert(latestGoodsItemRecords.copy(recordId = "6")).futureValue
-      insert(sampleGoodsItemRecords.copy(recordId = "7")).futureValue
-
-      val result = repository
-        .filterRecords(sampleGoodsItemRecords.eori, Some(countryOfOriginSearchTerm), None)
-        .futureValue
-      result.size mustEqual 4
-      result.headOption.value.countryOfOrigin mustEqual countryOfOriginSearchTerm
-    }
-
   }
 
   ".delete" - {

@@ -85,7 +85,7 @@ class FilterRecordsControllerSpec
       val searchTerm  = "BAN001002"
       val requestEori = "GB123456789099"
       val getUrl      = routes.FilterRecordsController
-        .filterLocalRecords(requestEori, Some(searchTerm), Some(field), Some(page), Some(size))
+        .filterLocalRecords(requestEori, Some(searchTerm), Some(true), Some(field), Some(page), Some(size))
         .url
 
       val validFakeGetRequest = FakeRequest("GET", getUrl)
@@ -93,7 +93,7 @@ class FilterRecordsControllerSpec
       val paginatedRecords    = records.slice(page * size, (page + 1) * size)
       val pagination          = Pagination(recordsSize, page, 3, Some(page + 1), Some(page - 1))
 
-      when(mockRecordsRepository.filterRecords(any(), any(), any())) thenReturn Future.successful(records)
+      when(mockRecordsRepository.filterRecords(any(), any(), any(), any())) thenReturn Future.successful(records)
 
       val application = applicationBuilder()
         .overrides(
@@ -118,14 +118,14 @@ class FilterRecordsControllerSpec
       val searchTerm  = "BAN001002"
       val requestEori = "GB123456789099"
       val getUrl      = routes.FilterRecordsController
-        .filterLocalRecords(requestEori, Some(searchTerm), Some(field), Some(page), Some(size))
+        .filterLocalRecords(requestEori, Some(searchTerm), Some(true), Some(field), Some(page), Some(size))
         .url
 
       val validFakeGetRequest = FakeRequest("GET", getUrl)
 
       val records = getTestRecords(requestEori, 25)
 
-      when(mockRecordsRepository.filterRecords(any(), any(), any())) thenReturn Future.successful(records)
+      when(mockRecordsRepository.filterRecords(any(), any(), any(), any())) thenReturn Future.successful(records)
 
       val application = applicationBuilder()
         .overrides(
