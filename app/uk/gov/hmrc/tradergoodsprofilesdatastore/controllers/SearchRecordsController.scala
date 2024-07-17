@@ -19,9 +19,9 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, StoreLatestAction}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.buildPagination
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
 import javax.inject.Inject
@@ -29,9 +29,9 @@ import scala.concurrent.ExecutionContext
 
 class SearchRecordsController @Inject() (
   recordsRepository: RecordsRepository,
-  config: DataStoreAppConfig,
   cc: ControllerComponents,
-  identify: IdentifierAction
+  identify: IdentifierAction,
+  storeLatest: StoreLatestAction
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
@@ -40,7 +40,7 @@ class SearchRecordsController @Inject() (
     searchString: String,
     pageOpt: Option[Int],
     sizeOpt: Option[Int]
-  ): Action[AnyContent] = identify.async { implicit request =>
+  ): Action[AnyContent] = (identify andThen storeLatest).async { implicit request =>
     recordsRepository.getCount(eori, searchString).flatMap { totalRecords =>
       recordsRepository.getMany(eori, searchString, pageOpt, sizeOpt).map { records =>
         val getRecordsResponse =
@@ -49,16 +49,4 @@ class SearchRecordsController @Inject() (
       }
     }
   }
-
-  private def buildPagination(sizeOpt: Option[Int], pageOpt: Option[Int], totalRecords: Long): Pagination = {
-    val size                 = sizeOpt.getOrElse(config.pageSize)
-    val page                 = pageOpt.getOrElse(config.startingPage)
-    val mod                  = totalRecords % size
-    val totalRecordsMinusMod = totalRecords - mod
-    val totalPages           = ((totalRecordsMinusMod / size) + 1).toInt
-    val nextPage             = if (page >= totalPages || page < 1) None else Some(page + 1)
-    val prevPage             = if (page <= 1 || page > totalPages) None else Some(page - 1)
-    Pagination(totalRecords.toInt, page, totalPages, nextPage, prevPage)
-  }
-
 }

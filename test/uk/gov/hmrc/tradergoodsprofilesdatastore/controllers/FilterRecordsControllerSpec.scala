@@ -58,7 +58,7 @@ class FilterRecordsControllerSpec
     when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
     when(mockRecordsRepository.deleteInactive(any())) thenReturn Future.successful(0)
     when(mockRecordsRepository.getLatest(any())) thenReturn Future.successful(
-      Some(getGoodsItemRecords("GB123456789099"))
+      Some(getGoodsItemRecord("GB123456789099"))
     )
 
     when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn

@@ -45,5 +45,4 @@ class CreateRecordController @Inject() (
           Success(InternalServerError)
       }
     }
-
 }

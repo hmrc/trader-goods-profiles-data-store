@@ -20,8 +20,8 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, StoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{localPageSize, localStartingPage}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{buildPagination, localPageSize, localStartingPage}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
 import javax.inject.Inject
@@ -55,7 +55,7 @@ class FilterRecordsController @Inject() (
             val page               = pageOpt.getOrElse(localStartingPage)
             val skip               = page * size
             val paginatedRecords   = filteredRecords.slice(skip, skip + size)
-            val pagination         = Pagination.buildPagination(Some(size), Some(page), filteredRecords.size.toLong)
+            val pagination         = buildPagination(Some(size), Some(page), filteredRecords.size.toLong)
             val getRecordsResponse = GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination = pagination)
             Ok(Json.toJson(getRecordsResponse))
           }

@@ -72,11 +72,9 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
 
       val mockProfileRepository = mock[ProfileRepository]
       when(mockProfileRepository.set(any(), any())) thenReturn Future.successful(true)
-
-      val mockRouterConnector = mock[RouterConnector]
+      val mockRouterConnector   = mock[RouterConnector]
       when(mockRouterConnector.submitTraderProfile(any(), any())(any())) thenReturn Future.successful(Done)
-
-      val application = applicationBuilder()
+      val application           = applicationBuilder()
         .overrides(
           inject.bind[ProfileRepository].toInstance(mockProfileRepository),
           inject.bind[RouterConnector].toInstance(mockRouterConnector)
@@ -88,16 +86,12 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
         status(result) shouldBe Status.OK
       }
     }
-
     "return 400 when invalid data is posted" in {
-
       val mockProfileRepository = mock[ProfileRepository]
       when(mockProfileRepository.set(any(), any())) thenReturn Future.successful(true)
-
-      val mockRouterConnector = mock[RouterConnector]
+      val mockRouterConnector   = mock[RouterConnector]
       when(mockRouterConnector.submitTraderProfile(any(), any())(any())) thenReturn Future.successful(Done)
-
-      val application = applicationBuilder()
+      val application           = applicationBuilder()
         .overrides(
           inject.bind[ProfileRepository].toInstance(mockProfileRepository),
           inject.bind[IdentifierAction].to[FakeIdentifierAction]
@@ -109,7 +103,6 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
         status(result) shouldBe Status.BAD_REQUEST
       }
     }
-
   }
 
   s"GET $getUrl" - {

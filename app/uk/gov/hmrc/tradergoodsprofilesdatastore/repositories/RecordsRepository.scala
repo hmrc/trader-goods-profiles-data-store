@@ -16,13 +16,10 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
-import org.apache.pekko.Done
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
-import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.UpdateRecordRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GoodsItemRecord
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{localPageSize, localStartingPage}
 
@@ -106,14 +103,6 @@ class RecordsRepository @Inject() (
       .limit(1)
       .headOption()
 
-  def delete(eori: String, recordId: String): Future[Boolean] =
-    collection
-      .deleteOne(
-        filter = byEoriAndRecordId(eori, recordId)
-      )
-      .toFuture()
-      .map(_.getDeletedCount > 0)
-
   def deleteInactive(eori: String): Future[Long] =
     collection
       .deleteMany(
@@ -121,14 +110,6 @@ class RecordsRepository @Inject() (
       )
       .toFuture()
       .map(_.getDeletedCount)
-
-  def insert(record: GoodsItemRecord): Future[Done] =
-    collection
-      .insertOne(
-        record
-      )
-      .toFuture()
-      .map(_ => Done)
 
   def saveRecord(eori: String, record: GoodsItemRecord): Future[Boolean] =
     collection
@@ -139,30 +120,6 @@ class RecordsRepository @Inject() (
       )
       .toFuture()
       .map(_ => true)
-
-  def update(eori: String, recordId: String, updateRequest: UpdateRecordRequest): Future[Option[GoodsItemRecord]] =
-    get(eori, recordId).flatMap {
-      case Some(existingRecord) =>
-        val updatedRecord = existingRecord.copy(
-          traderRef = updateRequest.traderRef.getOrElse(existingRecord.traderRef),
-          comcode = updateRequest.comcode.getOrElse(existingRecord.comcode),
-          goodsDescription = updateRequest.goodsDescription.getOrElse(existingRecord.goodsDescription),
-          countryOfOrigin = updateRequest.countryOfOrigin.getOrElse(existingRecord.countryOfOrigin),
-          category = updateRequest.category.getOrElse(existingRecord.category),
-          assessments = updateRequest.assessments.orElse(existingRecord.assessments),
-          supplementaryUnit = updateRequest.supplementaryUnit.orElse(existingRecord.supplementaryUnit),
-          measurementUnit = updateRequest.measurementUnit.orElse(existingRecord.measurementUnit),
-          comcodeEffectiveFromDate =
-            updateRequest.comcodeEffectiveFromDate.getOrElse(existingRecord.comcodeEffectiveFromDate),
-          comcodeEffectiveToDate = updateRequest.comcodeEffectiveToDate.orElse(existingRecord.comcodeEffectiveToDate)
-        )
-
-        saveRecord(eori, updatedRecord).map { _ =>
-          Some(updatedRecord)
-        }
-
-      case None => Future.successful(None)
-    }
 
   def filterRecords(eori: String, searchTerm: Option[String], field: Option[String]): Future[Seq[GoodsItemRecord]] =
     searchTerm match {
@@ -198,8 +155,8 @@ class RecordsRepository @Inject() (
     pageOpt: Option[Int],
     sizeOpt: Option[Int]
   ): Future[Seq[GoodsItemRecord]] = {
-    val size = sizeOpt.map(size => if (size > 0) size - 1 else size).getOrElse(config.pageSize)
-    val page = pageOpt.getOrElse(config.startingPage)
+    val size = sizeOpt.map(size => if (size > 0) size - 1 else size).getOrElse(localPageSize)
+    val page = pageOpt.getOrElse(localStartingPage)
     val skip = (page - 1) * size
     collection
       .find[GoodsItemRecord](

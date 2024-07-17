@@ -23,7 +23,7 @@ import play.api.http.Status.{CREATED, NO_CONTENT, OK}
 import play.api.libs.json.Json
 import sttp.model.Uri.UriContext
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps, UpstreamErrorResponse}
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.{CreateRecordRequest, ProfileRequest, UpdateRecordRequest}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, GoodsItemRecord}
@@ -48,10 +48,9 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
 
   private def tgpDeleteRecordUrl(
     eori: String,
-    recordId: String,
-    actorId: String
+    recordId: String
   ) =
-    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records/$recordId?actorId=$actorId"
+    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records/$recordId?actorId=$eori"
 
   private def tgpUpdateRecordUrl(
     eori: String,
@@ -68,9 +67,10 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
       .setHeader(clientIdHeader)
       .withBody(Json.toJson(traderProfile))
       .execute[HttpResponse]
-      .map { response =>
+      .flatMap { response =>
         response.status match {
-          case OK => Done
+          case OK => Future.successful(Done)
+          case _  => Future.failed(UpstreamErrorResponse(response.body, response.status))
         }
       }
 
@@ -111,16 +111,16 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
 
   def deleteRecord(
     eori: String,
-    recordId: String,
-    actorId: String
+    recordId: String
   )(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
-      .delete(tgpDeleteRecordUrl(eori, recordId, actorId))
+      .delete(tgpDeleteRecordUrl(eori, recordId))
       .setHeader(clientIdHeader)
       .execute[HttpResponse]
-      .map { response =>
+      .flatMap { response =>
         response.status match {
-          case NO_CONTENT => Done
+          case NO_CONTENT => Future.successful(Done)
+          case _          => Future.failed(UpstreamErrorResponse(response.body, response.status))
         }
       }
 
@@ -134,9 +134,10 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
       .setHeader(clientIdHeader)
       .withBody(Json.toJson(updateRecord))
       .execute[HttpResponse]
-      .map { response =>
+      .flatMap { response =>
         response.status match {
-          case OK => Done
+          case OK => Future.successful(Done)
+          case _  => Future.failed(UpstreamErrorResponse(response.body, response.status))
         }
       }
 }

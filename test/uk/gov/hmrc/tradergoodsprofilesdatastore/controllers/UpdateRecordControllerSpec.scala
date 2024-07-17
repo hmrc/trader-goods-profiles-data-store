@@ -31,7 +31,6 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.UpdateRecordRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GoodsItemRecord}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
 import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
@@ -107,7 +106,6 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
           inject.bind[RouterConnector].toInstance(mockRouterConnector)
         )
         .build()
-
       running(application) {
         val request = validFakeUpdateRequest
           .withHeaders("Content-Type" -> "application/json")

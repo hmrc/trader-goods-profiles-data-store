@@ -513,26 +513,7 @@ class RecordsRepositorySpec
 
   }
 
-  ".delete" - {
-
-    "when there is a record for this recordId it must delete the record and return true" in {
-
-      insert(sampleGoodsItemRecords).futureValue
-
-      val result = repository.delete(testEori, testrecordId).futureValue
-      result mustEqual true
-
-      // Making sure record is deleted
-      withClue("make sure record is deleted")(repository.get(testEori, testrecordId).futureValue must not be defined)
-    }
-
-    "when there is no record for this recordId it must return false" in {
-
-      // Making sure record does not exist
-      repository.get(testEori, "recordId that does not exist").futureValue must not be defined
-
-      repository.delete(testEori, "recordId that does not exist").futureValue mustEqual false
-    }
+  ".deleteInactive" - {
 
     "when there are inactive records for this eori it must delete them and return num of records deleted" in {
 
@@ -555,19 +536,4 @@ class RecordsRepositorySpec
     }
 
   }
-
-  ".update" - {
-
-    "when there is a record for this recordId it must update the record" in {
-      insert(sampleGoodsItemRecords).futureValue
-      val expectedGoodsItemRecords = sampleGoodsItemRecords.copy(traderRef = "updated-reference")
-      val result                   = repository.update(testEori, testrecordId, sampleUpdateRequest).futureValue
-      result.value mustEqual expectedGoodsItemRecords
-    }
-    "when there is no record for this recordId it must return None" in {
-      repository.update(testEori, "recordId that does not exist", sampleUpdateRequest).futureValue must not be defined
-    }
-
-  }
-
 }

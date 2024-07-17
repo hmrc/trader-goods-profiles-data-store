@@ -23,8 +23,8 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, StoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{localPageSize, localStartingPage, recursiveStartingPage}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{buildPagination, recursiveStartingPage}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
 import javax.inject.Inject
@@ -49,7 +49,7 @@ class GetRecordsController @Inject() (
     recordsRepository.getCount(eori).flatMap { totalRecords =>
       recordsRepository.getMany(eori, pageOpt, sizeOpt).map { records =>
         val getRecordsResponse =
-          GetRecordsResponse(goodsItemRecords = records, Pagination.buildPagination(sizeOpt, pageOpt, totalRecords))
+          GetRecordsResponse(goodsItemRecords = records, buildPagination(sizeOpt, pageOpt, totalRecords))
         Ok(Json.toJson(getRecordsResponse))
       }
     }

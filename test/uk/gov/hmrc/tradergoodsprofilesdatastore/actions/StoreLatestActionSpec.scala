@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.actions
 
+import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar.mock
@@ -28,6 +29,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestA
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.IdentifierRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.services.StoreRecordsService
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -35,8 +37,8 @@ import scala.concurrent.Future
 
 class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
 
-  class Harness(recordsRepository: RecordsRepository, routerConnector: RouterConnector)
-      extends StoreLatestActionImpl(recordsRepository, routerConnector) {
+  class Harness(recordsRepository: RecordsRepository, storeRecordsService: StoreRecordsService)
+      extends StoreLatestActionImpl(recordsRepository, storeRecordsService) {
     def callFilter[A](request: IdentifierRequest[A]): Future[Option[Result]] = filter(request)
   }
 
@@ -44,47 +46,21 @@ class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
 
     "must store latest records" in {
 
-      val totalRecordsNum = 29
-      val requestEori     = "GB123456789099"
-      val recordsPerPage  = 10
+      val requestEori = "GB123456789099"
 
-      val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
-      when(mockRecordsRepository.deleteInactive(any())) thenReturn Future.successful(0)
-      when(mockRecordsRepository.getLatest(any())) thenReturn Future.successful(Some(getGoodsItemRecords(requestEori)))
-      val mockRouterConnector   = mock[RouterConnector]
-      when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
-        Future.successful(
-          GetRecordsResponse(
-            goodsItemRecords = getTestRecords(requestEori, recordsPerPage),
-            Pagination(totalRecordsNum, 1, 3, Some(2), None)
-          )
-        ),
-        Future.successful(
-          GetRecordsResponse(
-            goodsItemRecords = getTestRecords(requestEori, recordsPerPage),
-            Pagination(totalRecordsNum, 2, 3, Some(3), Some(1))
-          )
-        ),
-        Future.successful(
-          GetRecordsResponse(
-            goodsItemRecords = getTestRecords(requestEori, 9),
-            Pagination(totalRecordsNum, 3, 3, None, Some(2))
-          )
-        )
-      )
+      val mockRecordsRepository   = mock[RecordsRepository]
+      when(mockRecordsRepository.getLatest(any())) thenReturn Future.successful(Some(getGoodsItemRecord(requestEori)))
+      val mockStoreRecordsService = mock[StoreRecordsService]
+      when(mockStoreRecordsService.storeRecords(any(), any())(any(), any())) thenReturn Future.successful(Done)
 
-      val action = new Harness(mockRecordsRepository, mockRouterConnector)
+      val action = new Harness(mockRecordsRepository, mockStoreRecordsService)
 
       action
         .callFilter(IdentifierRequest(FakeRequest(), "testUserId", requestEori, AffinityGroup.Individual))
         .futureValue
 
       verify(mockRecordsRepository, times(1)).getLatest(any())
-      verify(mockRouterConnector, times(1)).getRecords(any(), any(), any(), any())(any())
-      verify(mockRecordsRepository, times(1)).saveRecords(any(), any())
-      verify(mockRecordsRepository, times(1)).deleteInactive(any())
-
+      verify(mockStoreRecordsService, times(1)).storeRecords(any(), any())(any(), any())
     }
   }
 }

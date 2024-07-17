@@ -58,7 +58,6 @@ class RouterConnectorSpec
   private val eori            = "GB123456789001"
   private val recordsize      = 20
   private val page            = 1
-  private val actorId         = "1122334412"
 
   ".submitTraderProfile" - {
 
@@ -144,14 +143,14 @@ class RouterConnectorSpec
       wireMockServer.stubFor(
         delete(
           urlEqualTo(
-            s"/trader-goods-profiles-router/traders/$eori/records/$recordId?actorId=$actorId"
+            s"/trader-goods-profiles-router/traders/$eori/records/$recordId?actorId=$eori"
           )
         )
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
           .willReturn(noContent())
       )
 
-      connector.deleteRecord(eori, recordId, actorId).futureValue
+      connector.deleteRecord(eori, recordId).futureValue
     }
 
     "must return a failed future when the server returns an error" in {
@@ -159,14 +158,14 @@ class RouterConnectorSpec
       wireMockServer.stubFor(
         delete(
           urlEqualTo(
-            s"/trader-goods-profiles-router/traders/invalid-eori/records/invalid-recordId?actorId=$actorId"
+            s"/trader-goods-profiles-router/traders/invalid-eori/records/invalid-recordId?actorId=invalid-eori"
           )
         )
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
           .willReturn(serverError())
       )
 
-      connector.deleteRecord(eori, recordId, actorId).failed.futureValue
+      connector.deleteRecord(eori, recordId).failed.futureValue
     }
   }
 

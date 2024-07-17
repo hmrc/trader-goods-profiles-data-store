@@ -16,8 +16,9 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{times, verify, when}
+import org.apache.pekko.Done
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.Mockito.when
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
@@ -25,9 +26,8 @@ import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
-import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{CheckRecordsRepository, RecordsRepository}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.CheckRecordsRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.services.StoreRecordsService
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -39,48 +39,22 @@ class StoreRecordsControllerSpec extends SpecBase with MockitoSugar with GetReco
   "storeAllRecords" - {
 
     "return 204 and store all records in db" in {
-      val totalRecordsNum = 29
-
       val requestEori = "GB123456789099"
       val storeUrl    = routes.StoreRecordsController
         .storeAllRecords(requestEori)
         .url
 
-      val recordsPerPage       = 10
       val validFakeHeadRequest = FakeRequest("HEAD", storeUrl)
-
-      val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
-      when(mockRecordsRepository.deleteInactive(any())) thenReturn Future.successful(0)
 
       val mockCheckRecordsRepository = mock[CheckRecordsRepository]
       when(mockCheckRecordsRepository.set(any())) thenReturn Future.successful(true)
-      val mockRouterConnector        = mock[RouterConnector]
-      when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
-        Future.successful(
-          GetRecordsResponse(
-            goodsItemRecords = getTestRecords(requestEori, recordsPerPage),
-            Pagination(totalRecordsNum, 1, 3, Some(2), None)
-          )
-        ),
-        Future.successful(
-          GetRecordsResponse(
-            goodsItemRecords = getTestRecords(requestEori, recordsPerPage),
-            Pagination(totalRecordsNum, 2, 3, Some(3), Some(1))
-          )
-        ),
-        Future.successful(
-          GetRecordsResponse(
-            goodsItemRecords = getTestRecords(requestEori, 9),
-            Pagination(totalRecordsNum, 3, 3, None, Some(2))
-          )
-        )
-      )
+      val mockStoreRecordsService    = mock[StoreRecordsService]
+      when(mockStoreRecordsService.storeRecords(eqTo(requestEori), eqTo(None))(any(), any())) thenReturn Future
+        .successful(Done)
 
       val application = applicationBuilder()
         .overrides(
-          bind[RouterConnector].toInstance(mockRouterConnector),
-          bind[RecordsRepository].toInstance(mockRecordsRepository),
+          bind[StoreRecordsService].toInstance(mockStoreRecordsService),
           bind[CheckRecordsRepository].toInstance(mockCheckRecordsRepository)
         )
         .build()
@@ -90,5 +64,4 @@ class StoreRecordsControllerSpec extends SpecBase with MockitoSugar with GetReco
       }
     }
   }
-
 }

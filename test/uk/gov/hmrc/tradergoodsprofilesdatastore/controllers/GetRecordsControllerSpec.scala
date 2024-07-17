@@ -163,7 +163,7 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
   "getRecord" - {
     "return Ok with record in body when it is found" in {
       val requestEori = "GB123456789099"
-      val record      = getGoodsItemRecords(requestEori)
+      val record      = getGoodsItemRecord(requestEori)
       val checkUrl    = routes.GetRecordsController
         .getRecord(requestEori, record.recordId)
         .url
@@ -188,7 +188,7 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
 
     "return Not found when the record does not exist in our database" in {
       val requestEori = "GB123456789099"
-      val record      = getGoodsItemRecords(requestEori)
+      val record      = getGoodsItemRecord(requestEori)
       val checkUrl    = routes.GetRecordsController
         .getRecord(requestEori, record.recordId)
         .url

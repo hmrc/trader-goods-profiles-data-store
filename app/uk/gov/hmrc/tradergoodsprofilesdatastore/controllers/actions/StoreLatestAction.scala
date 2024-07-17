@@ -16,23 +16,19 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions
 
-import org.apache.pekko.Done
-import play.api.mvc.Results.{NoContent, NotFound}
-
 import javax.inject.Inject
-import play.api.mvc.{ActionFilter, Request, Result}
+import play.api.mvc.{ActionFilter, Result}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
-import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.IdentifierRequest
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{recursivePageSize, recursiveStartingPage}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.services.StoreRecordsService
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class StoreLatestActionImpl @Inject() (
   recordsRepository: RecordsRepository,
-  routerConnector: RouterConnector
+  storeRecordsService: StoreRecordsService
 )(implicit val executionContext: ExecutionContext)
     extends StoreLatestAction {
 
@@ -44,26 +40,15 @@ class StoreLatestActionImpl @Inject() (
 
     recordsRepository.getLatest(identifierRequest.eori).flatMap {
       case Some(record) =>
-        storeRecordsRecursively(identifierRequest.eori, recursiveStartingPage, Some(record.updatedDateTime.toString))
+        storeRecordsService
+          .storeRecords(identifierRequest.eori, Some(record.updatedDateTime.toString))
           .map(_ => None)
-      case _            => Future.successful(Some(NotFound))
+      case None         =>
+        storeRecordsService
+          .storeRecords(identifierRequest.eori, None)
+          .map(_ => None)
     }
   }
-
-  private def storeRecordsRecursively(
-    eori: String,
-    page: Int,
-    lastUpdatedDate: Option[String]
-  )(implicit request: Request[_], hc: HeaderCarrier): Future[Done] =
-    routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(recursivePageSize)).flatMap { recordsResponse =>
-      recordsRepository.saveRecords(eori, recordsResponse.goodsItemRecords).flatMap { _ =>
-        if (recordsResponse.goodsItemRecords.length == recursivePageSize) {
-          storeRecordsRecursively(eori, page + 1, lastUpdatedDate)
-        } else {
-          recordsRepository.deleteInactive(eori).map(_ => Done)
-        }
-      }
-    }
 }
 
 trait StoreLatestAction extends ActionFilter[IdentifierRequest]

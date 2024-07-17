@@ -24,9 +24,9 @@ trait GetRecordsResponseUtil {
   private val timestamp = Instant.parse("2024-10-12T16:12:34Z")
 
   def getTestRecords(eori: String, numRecords: Int): Seq[GoodsItemRecord] =
-    (0 until numRecords).map(_ => getGoodsItemRecords(eori))
+    (0 until numRecords).map(_ => getGoodsItemRecord(eori))
 
-  def getGoodsItemRecords(eori: String): GoodsItemRecord = GoodsItemRecord(
+  def getGoodsItemRecord(eori: String): GoodsItemRecord = GoodsItemRecord(
     eori,
     "GB098765432112",
     java.util.UUID.randomUUID.toString,
