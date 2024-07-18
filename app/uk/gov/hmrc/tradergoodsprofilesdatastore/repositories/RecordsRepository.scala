@@ -105,16 +105,6 @@ class RecordsRepository @Inject() (
       .limit(1)
       .headOption()
 
-  def saveRecord(eori: String, record: GoodsItemRecord): Future[Boolean] =
-    collection
-      .replaceOne(
-        filter = byEoriAndRecordId(eori, record.recordId),
-        replacement = record,
-        options = ReplaceOptions().upsert(true)
-      )
-      .toFuture()
-      .map(_ => true)
-
   def filterRecords(eori: String, searchTerm: Option[String], field: Option[String]): Future[Seq[GoodsItemRecord]] =
     searchTerm match {
       case Some(value) =>

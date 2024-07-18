@@ -41,11 +41,13 @@ object Pagination {
     val page                 = pageOpt.getOrElse(localStartingPage)
     val mod                  = totalRecords % size
     val totalRecordsMinusMod = totalRecords - mod
-    val totalPages           = (if (mod == 0 && totalRecords != 0) {
-                        totalRecordsMinusMod / size
-                      } else {
-                        (totalRecordsMinusMod / size) + 1
-                      }).toInt
+    val totalPages           = {
+      if (mod == 0 && totalRecords != 0) {
+        totalRecordsMinusMod / size
+      } else {
+        (totalRecordsMinusMod / size) + 1
+      }
+    }.toInt
     val nextPage             = if (page >= totalPages || page < 1) None else Some(page + 1)
     val prevPage             = if (page <= 1 || page > totalPages) None else Some(page - 1)
     Pagination(totalRecords.toInt, page, totalPages, nextPage, prevPage)

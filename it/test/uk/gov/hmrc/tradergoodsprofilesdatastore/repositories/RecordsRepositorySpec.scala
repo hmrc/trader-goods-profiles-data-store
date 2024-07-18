@@ -158,7 +158,7 @@ class RecordsRepositorySpec
 
   private val inactiveRecordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204g"
 
-  val inactiveGoodsItemRecords: GoodsItemRecord = GoodsItemRecord(
+  val inactiveGoodsItemRecord: GoodsItemRecord = GoodsItemRecord(
     eori = testEori,
     actorId = "GB098765432112",
     recordId = inactiveRecordId,
@@ -221,17 +221,22 @@ class RecordsRepositorySpec
       result.value mustEqual sampleGoodsItemRecords
     }
 
+    "when there is no active record for this recordId it must return None" in {
+      insert(inactiveGoodsItemRecord).futureValue
+      repository.get(testEori, testrecordId).futureValue must not be defined
+    }
+
     "when there is no record for this recordId it must return None" in {
       repository.get(testEori, "recordId that does not exist").futureValue must not be defined
     }
 
-    "when there are records for this eori it must return the count" in {
+    "when there are records for this eori it must return the active count" in {
       insert(sampleGoodsItemRecords).futureValue
       insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
-      insert(sampleGoodsItemRecords.copy(recordId = "3")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "3", active = false)).futureValue
 
       val result = repository.getCount(sampleGoodsItemRecords.eori).futureValue
-      result mustEqual 3
+      result mustEqual 2
     }
 
     "when there are no records for this eori it must return 0" in {
@@ -278,6 +283,20 @@ class RecordsRepositorySpec
 
       val result = repository.getMany(sampleGoodsItemRecords.eori, Some(3), Some(5)).futureValue
       result.size mustEqual 0
+    }
+
+    "when there are 8 records for this eori but only 2 of them are active: false it must return 2 records and it asks for page 1 of size 5" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "3", active = false)).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "4", active = false)).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "5", active = false)).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "6", active = false)).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "7", active = false)).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "8", active = false)).futureValue
+
+      val result = repository.getMany(sampleGoodsItemRecords.eori, Some(1), Some(5)).futureValue
+      result.size mustEqual 2
     }
 
     "when there are no records for this eori it must return empty Array" in {
@@ -341,6 +360,23 @@ class RecordsRepositorySpec
         .filterRecords(sampleGoodsItemRecords.eori, Some(traderRefSearchTerm), Some(traderRefSearchField))
         .futureValue
       result.size mustEqual 2
+      result.headOption.value.traderRef mustEqual traderRefSearchTerm
+    }
+
+    "when there are 8 records and 2 matching traderRef searchTerm for this eori and the field is passed but only 1 is active it must return a record of size 2" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+      insert(sampleGoodsItemRecords2.copy(recordId = "3")).futureValue
+      insert(sampleGoodsItemRecords2.copy(recordId = "4", active = false)).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
+      insert(latestGoodsItemRecords).futureValue
+      insert(latestGoodsItemRecords.copy(recordId = "6", active = false)).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "7")).futureValue
+
+      val result = repository
+        .filterRecords(sampleGoodsItemRecords.eori, Some(traderRefSearchTerm), Some(traderRefSearchField))
+        .futureValue
+      result.size mustEqual 1
       result.headOption.value.traderRef mustEqual traderRefSearchTerm
     }
 
