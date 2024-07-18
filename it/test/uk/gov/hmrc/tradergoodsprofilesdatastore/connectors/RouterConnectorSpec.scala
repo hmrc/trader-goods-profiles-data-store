@@ -26,10 +26,10 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
-import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeIdentifierAction, FakeStoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, StoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.{ProfileRequest, UpdateRecordRequest}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeStoreLatestAction
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestAction
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.{CreateRecordRequest, ProfileRequest, UpdateRecordRequest}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, GoodsItemRecord, Pagination}
 
 import java.time.Instant
 
@@ -198,4 +198,71 @@ class RouterConnectorSpec
     }
   }
 
+  ".createRecord" - {
+
+    "must create a record in B&T database" in {
+
+      val createRecordRequest =
+        CreateRecordRequest(
+          testEori,
+          testEori,
+          "BAN001001",
+          "10410100",
+          "Organic bananas",
+          "EC",
+          Instant.parse("2024-10-12T16:12:34Z"),
+          comcodeEffectiveToDate = Some(Instant.parse("2024-10-12T16:12:34Z")),
+          3
+        )
+
+      val goodsItemRecord = GoodsItemRecord(
+        eori = testEori,
+        actorId = testEori,
+        recordId = "testRecordId",
+        traderRef = "BAN001001",
+        comcode = "10410100",
+        adviceStatus = "Not requested",
+        goodsDescription = "Organic bananas",
+        countryOfOrigin = "EC",
+        category = 3,
+        assessments = None,
+        supplementaryUnit = Some(500),
+        measurementUnit = Some("square meters(m^2)"),
+        comcodeEffectiveFromDate = Instant.parse("2024-10-12T16:12:34Z"),
+        comcodeEffectiveToDate = Some(Instant.parse("2024-10-12T16:12:34Z")),
+        version = 1,
+        active = true,
+        toReview = false,
+        reviewReason = Some("no reason"),
+        declarable = "IMMI ready",
+        ukimsNumber = Some("XIUKIM47699357400020231115081800"),
+        nirmsNumber = Some("RMS-GB-123456"),
+        niphlNumber = Some("6 S12345"),
+        createdDateTime = Instant.parse("2024-10-12T16:12:34Z"),
+        updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
+      )
+
+      wireMockServer.stubFor(
+        post(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .willReturn(created().withBody(Json.toJson(goodsItemRecord).toString()))
+      )
+
+      connector.createRecord(createRecordRequest, testEori).futureValue mustEqual "testRecordId"
+    }
+
+    "must return a failed future when the server returns an error" in {
+
+      val createRecordRequest =
+        CreateRecordRequest(testEori, testEori, "test", "test", "test", "test", Instant.now, Some(Instant.now), 1)
+
+      wireMockServer.stubFor(
+        post(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .willReturn(serverError())
+      )
+
+      connector.createRecord(createRecordRequest, testEori).failed.futureValue
+    }
+  }
 }
