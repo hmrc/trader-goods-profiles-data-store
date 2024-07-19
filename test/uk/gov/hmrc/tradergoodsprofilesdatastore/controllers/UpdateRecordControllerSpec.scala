@@ -31,7 +31,6 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.UpdateRecordRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GoodsItemRecord}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
 import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
@@ -96,13 +95,6 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
 
     "return 200 when record is successfully updated" in {
 
-      val mockRecordsRepository    = mock[RecordsRepository]
-      val expectedGoodsItemRecords = sampleGoodsItemRecord.copy(traderRef = "updated-reference")
-      when(mockRecordsRepository.get(any(), any())) thenReturn Future.successful(Some(sampleGoodsItemRecord))
-      when(mockRecordsRepository.update(any(), any(), any())) thenReturn Future.successful(
-        Some(expectedGoodsItemRecords)
-      )
-
       val mockRouterConnector = mock[RouterConnector]
       when(
         mockRouterConnector.updateRecord(any(), any(), any())(any())
@@ -110,12 +102,10 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
 
       val application = applicationBuilder()
         .overrides(
-          inject.bind[RecordsRepository].toInstance(mockRecordsRepository),
           inject.bind[IdentifierAction].to[FakeIdentifierAction],
           inject.bind[RouterConnector].toInstance(mockRouterConnector)
         )
         .build()
-
       running(application) {
         val request = validFakeUpdateRequest
           .withHeaders("Content-Type" -> "application/json")
@@ -124,13 +114,10 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
         status(result) shouldBe OK
 
         withClue("must call the relevant services with the correct details") {
-          verify(mockRecordsRepository, times(1)).update(any(), any(), any())
           verify(mockRouterConnector, times(1))
             .updateRecord(eqTo(sampleUpdateRequest), eqTo(testEori), eqTo(testRecordId))(any())
         }
       }
     }
-
   }
-
 }

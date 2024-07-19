@@ -17,10 +17,13 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.config
 
 import com.google.inject.AbstractModule
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{AuthenticatedIdentifierAction, IdentifierAction}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{AuthenticatedIdentifierAction, IdentifierAction, StoreLatestAction, StoreLatestActionImpl}
 
 class Module extends AbstractModule {
 
-  override def configure(): Unit =
+  override def configure(): Unit = {
+    bind(classOf[StoreLatestAction]).to(classOf[StoreLatestActionImpl]).asEagerSingleton()
     bind(classOf[IdentifierAction]).to(classOf[AuthenticatedIdentifierAction]).asEagerSingleton()
+  }
+
 }
