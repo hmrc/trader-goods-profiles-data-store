@@ -7,6 +7,7 @@ PlayKeys.playDefaultPort := 10906
 
 lazy val microservice = Project("trader-goods-profiles-data-store", file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
+  .disablePlugins(JUnitXmlReportPlugin)
   .settings(
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
     // https://www.scala-lang.org/2021/01/12/configuring-and-suppressing-warnings.html
