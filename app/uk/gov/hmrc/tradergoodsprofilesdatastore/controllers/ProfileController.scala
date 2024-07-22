@@ -62,4 +62,8 @@ class ProfileController @Inject() (
       }
   }
 
+  def deleteAll(): Action[AnyContent] = identify.async {
+    profileRepository.deleteAll.map(_ => Ok)
+  }
+
 }
