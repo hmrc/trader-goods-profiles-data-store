@@ -39,23 +39,27 @@ class FilterRecordsController @Inject() (
   def filterLocalRecords(
     eori: String,
     searchTerm: Option[String],
+    exactMatch: Option[Boolean],
     field: Option[String],
     pageOpt: Option[Int],
     sizeOpt: Option[Int]
   ): Action[AnyContent] =
     (identify andThen storeLatest).async { implicit request =>
-      val validFields = Set("traderRef", "goodsDescription", "countryOfOrigin")
+      val validFields  = Set("traderRef", "goodsDescription", "comcode")
+      val isExactMatch = exactMatch.getOrElse(true)
+
       field match {
         case Some(value) if !validFields.contains(value) =>
           Future.successful(BadRequest("Invalid field parameter"))
         case _                                           =>
           for {
-            filteredRecords <- recordsRepository.filterRecords(eori, searchTerm, field)
+            filteredRecords <- recordsRepository.filterRecords(eori, searchTerm, field, isExactMatch)
           } yield {
-            val size               = sizeOpt.getOrElse(localPageSize)
-            val page               = pageOpt.getOrElse(localStartingPage)
-            val skip               = page * size
-            val paginatedRecords   = filteredRecords.slice(skip, skip + size)
+            val size             = sizeOpt.getOrElse(localPageSize)
+            val page             = pageOpt.getOrElse(localStartingPage)
+            val skip             = (page - 1) * size
+            val paginatedRecords = filteredRecords.slice(skip, skip + size)
+
             val pagination         = buildPagination(Some(size), Some(page), filteredRecords.size.toLong)
             val getRecordsResponse = GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination = pagination)
             Ok(Json.toJson(getRecordsResponse))
