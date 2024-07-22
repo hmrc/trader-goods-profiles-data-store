@@ -189,7 +189,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
 
   }
 
-  s"PUT $deleteAllUrl" - {
+  s"DELETE $deleteAllUrl" - {
 
     "return 200" in {
 
