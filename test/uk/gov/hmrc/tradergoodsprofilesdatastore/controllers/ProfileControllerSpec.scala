@@ -52,11 +52,13 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
   private val setUrl                = routes.ProfileController.setProfile(requestEori).url
   private val getUrl                = routes.ProfileController.getProfile(requestEori).url
   private val doesExistUrl          = routes.ProfileController.doesProfileExist(requestEori).url
+  private val deleteAllUrl          = routes.ProfileController.deleteAll().url
   private val validFakePutRequest   =
     FakeRequest("PUT", setUrl, FakeHeaders(Seq(CONTENT_TYPE -> JSON)), Json.toJson(profileRequest))
   private val invalidFakePutRequest = FakeRequest("PUT", setUrl, FakeHeaders(Seq(CONTENT_TYPE -> JSON)), "{}")
   private val validFakeGetRequest   = FakeRequest("GET", getUrl)
   private val validDoesExistRequest = FakeRequest("HEAD", doesExistUrl)
+  private val deleteAllRequest      = FakeRequest("DELETE", deleteAllUrl)
 
   private val expectedProfileResponse = ProfileResponse(
     eori = "1234567890",
@@ -185,5 +187,24 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
       }
     }
 
+  }
+
+  s"PUT $deleteAllUrl" - {
+
+    "return 200" in {
+
+      val mockProfileRepository = mock[ProfileRepository]
+      when(mockProfileRepository.deleteAll) thenReturn Future.successful(true)
+      val application           = applicationBuilder()
+        .overrides(
+          inject.bind[ProfileRepository].toInstance(mockProfileRepository)
+        )
+        .build()
+
+      running(application) {
+        val result = route(application, deleteAllRequest).value
+        status(result) shouldBe Status.OK
+      }
+    }
   }
 }
