@@ -61,4 +61,7 @@ class ProfileRepository @Inject() (
       .map(_ => true)
   }
 
+  def deleteAll: Future[Boolean] =
+    collection.drop().toFuture().map(_ => true)
+
 }
