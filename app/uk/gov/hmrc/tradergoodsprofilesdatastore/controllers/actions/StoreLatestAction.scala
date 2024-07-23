@@ -16,21 +16,26 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions
 
+import play.api.Logging
+import play.api.mvc.Results.InternalServerError
+
 import javax.inject.Inject
 import play.api.mvc.{ActionFilter, Result}
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.IdentifierRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.services.StoreRecordsService
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 class StoreLatestActionImpl @Inject() (
   recordsRepository: RecordsRepository,
   storeRecordsService: StoreRecordsService
 )(implicit val executionContext: ExecutionContext)
-    extends StoreLatestAction {
+    extends StoreLatestAction
+    with Logging {
 
   override protected def filter[A](
     identifierRequest: IdentifierRequest[A]
@@ -38,15 +43,21 @@ class StoreLatestActionImpl @Inject() (
     implicit val hc: HeaderCarrier             = HeaderCarrierConverter.fromRequest(identifierRequest)
     implicit val request: IdentifierRequest[A] = identifierRequest
 
-    recordsRepository.getLatest(identifierRequest.eori).flatMap {
-      case Some(record) =>
-        storeRecordsService
-          .storeRecords(identifierRequest.eori, Some(record.updatedDateTime.toString))
-          .map(_ => None)
-      case None         =>
-        storeRecordsService
-          .deleteAndStoreRecords(identifierRequest.eori)
-          .map(_ => None)
+    recordsRepository.getLatest(identifierRequest.eori).flatMap { response =>
+      storeRecordsService
+        .storeRecords(
+          identifierRequest.eori,
+          response match {
+            case Some(record) => Some(record.updatedDateTime.toString)
+            case None         => None
+          }
+        )
+        .map(_ => None) transform {
+        case s @ Success(_)                   => s
+        case Failure(cause: RuntimeException) =>
+          logger.error(cause.getMessage)
+          Success(Some(InternalServerError))
+      }
     }
   }
 }
