@@ -109,6 +109,11 @@ class RecordsRepository @Inject() (
       .countDocuments(byEoriAndActive(eori))
       .toFuture()
 
+  def getCountWithInactive(eori: String): Future[Long] =
+    collection
+      .countDocuments(byEori(eori))
+      .toFuture()
+
   def getLatest(eori: String): Future[Option[GoodsItemRecord]] =
     collection
       .find[GoodsItemRecord](byEori(eori))
@@ -148,4 +153,7 @@ class RecordsRepository @Inject() (
         }
       case None        => Future.successful(Seq.empty)
     }
+
+  def deleteMany(eori: String): Future[Long] =
+    collection.deleteMany(byEori(eori)).toFuture().map(result => result.getDeletedCount)
 }

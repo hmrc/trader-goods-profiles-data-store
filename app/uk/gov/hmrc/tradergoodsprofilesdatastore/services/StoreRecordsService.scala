@@ -35,19 +35,39 @@ class StoreRecordsService @Inject() (routerConnector: RouterConnector, recordsRe
     eori: String,
     lastUpdatedDate: Option[String]
   )(implicit request: Request[_], hc: HeaderCarrier): Future[Done] =
-    storeRecordsRecursively(eori, recursiveStartingPage, lastUpdatedDate)
+    storeRecordsRecursively(eori, recursiveStartingPage, lastUpdatedDate).flatMap { totalRouterRecords =>
+      isRecordCountEqual(eori, totalRouterRecords).flatMap {
+        case true  => Future.successful(Done)
+        case false => deleteAndStoreAllAgain(eori)
+      }
+    }
+
+  private def deleteAndStoreAllAgain(
+    eori: String
+  )(implicit request: Request[_], hc: HeaderCarrier): Future[Done] =
+    recordsRepository.deleteMany(eori).flatMap { _ =>
+      storeRecordsRecursively(eori, recursiveStartingPage, None).map(_ => Done)
+    }
+
+  private def isRecordCountEqual(
+    eori: String,
+    totalRouterRecords: Long
+  )(implicit hc: HeaderCarrier): Future[Boolean] =
+    recordsRepository.getCountWithInactive(eori).map { totalDataStoreRecords =>
+      totalRouterRecords == totalDataStoreRecords
+    }
 
   private def storeRecordsRecursively(
     eori: String,
     page: Int,
     lastUpdatedDate: Option[String]
-  )(implicit request: Request[_], hc: HeaderCarrier): Future[Done] =
+  )(implicit request: Request[_], hc: HeaderCarrier): Future[Long] =
     routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(recursivePageSize)).flatMap { recordsResponse =>
       recordsRepository.saveRecords(eori, recordsResponse.goodsItemRecords).flatMap { _ =>
         if (recordsResponse.pagination.nextPage.isDefined) {
           storeRecordsRecursively(eori, page + 1, lastUpdatedDate)
         } else {
-          Future.successful(Done)
+          Future.successful(recordsResponse.pagination.totalRecords)
         }
       }
     }

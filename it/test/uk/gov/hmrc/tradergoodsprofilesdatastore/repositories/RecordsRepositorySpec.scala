@@ -246,6 +246,15 @@ class RecordsRepositorySpec
       repository.getCount(sampleGoodsItemRecords.eori).futureValue mustEqual 0
     }
 
+    "when there are records for this eori it must return the total count including inactive" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "3", active = false)).futureValue
+
+      val result = repository.getCountWithInactive(sampleGoodsItemRecords.eori).futureValue
+      result mustEqual 3
+    }
+
     "when there are 8 records for this eori it must return the records and it asks for page 1 of size 5" in {
       insert(sampleGoodsItemRecords).futureValue
       insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
@@ -600,6 +609,20 @@ class RecordsRepositorySpec
         .futureValue
       result.size mustEqual 4
       result.headOption.value.comcode.contains(comCodePartialSearchTerm)
+    }
+  }
+
+  ".deleteMany" - {
+    "must delete all records with matching eori" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "2", eori = "test")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "3")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "4")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
+      insert(latestGoodsItemRecords).futureValue
+
+      val result = repository.deleteMany(sampleGoodsItemRecords.eori).futureValue
+      result mustEqual 5
     }
   }
 }
