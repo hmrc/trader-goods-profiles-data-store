@@ -59,6 +59,33 @@ class RouterConnectorSpec
   private val recordsize      = 20
   private val page            = 1
 
+  private val goodsItemRecord = GoodsItemRecord(
+    eori = testEori,
+    actorId = testEori,
+    recordId = recordId,
+    traderRef = "BAN001001",
+    comcode = "10410100",
+    adviceStatus = "Not requested",
+    goodsDescription = "Organic bananas",
+    countryOfOrigin = "EC",
+    category = 3,
+    assessments = None,
+    supplementaryUnit = Some(500),
+    measurementUnit = Some("square meters(m^2)"),
+    comcodeEffectiveFromDate = Instant.parse("2024-10-12T16:12:34Z"),
+    comcodeEffectiveToDate = Some(Instant.parse("2024-10-12T16:12:34Z")),
+    version = 1,
+    active = true,
+    toReview = false,
+    reviewReason = Some("no reason"),
+    declarable = "IMMI ready",
+    ukimsNumber = Some("XIUKIM47699357400020231115081800"),
+    nirmsNumber = Some("RMS-GB-123456"),
+    niphlNumber = Some("6 S12345"),
+    createdDateTime = Instant.parse("2024-10-12T16:12:34Z"),
+    updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
+  )
+
   ".submitTraderProfile" - {
 
     "must submit a trader profile" in {
@@ -169,6 +196,31 @@ class RouterConnectorSpec
     }
   }
 
+  ".getRecord" - {
+
+    "must get a record from B&T database" in {
+
+      wireMockServer.stubFor(
+        get(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .willReturn(ok().withBody(Json.toJson(goodsItemRecord).toString()))
+      )
+
+      connector.getRecord(testEori, recordId).futureValue
+    }
+
+    "must return a failed future when the server returns an error" in {
+
+      wireMockServer.stubFor(
+        get(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .willReturn(serverError())
+      )
+
+      connector.getRecord(testEori, recordId).failed.futureValue
+    }
+  }
+
   ".updateRecord" - {
 
     "must update a record in B&T database" in {
@@ -215,40 +267,13 @@ class RouterConnectorSpec
           3
         )
 
-      val goodsItemRecord = GoodsItemRecord(
-        eori = testEori,
-        actorId = testEori,
-        recordId = "testRecordId",
-        traderRef = "BAN001001",
-        comcode = "10410100",
-        adviceStatus = "Not requested",
-        goodsDescription = "Organic bananas",
-        countryOfOrigin = "EC",
-        category = 3,
-        assessments = None,
-        supplementaryUnit = Some(500),
-        measurementUnit = Some("square meters(m^2)"),
-        comcodeEffectiveFromDate = Instant.parse("2024-10-12T16:12:34Z"),
-        comcodeEffectiveToDate = Some(Instant.parse("2024-10-12T16:12:34Z")),
-        version = 1,
-        active = true,
-        toReview = false,
-        reviewReason = Some("no reason"),
-        declarable = "IMMI ready",
-        ukimsNumber = Some("XIUKIM47699357400020231115081800"),
-        nirmsNumber = Some("RMS-GB-123456"),
-        niphlNumber = Some("6 S12345"),
-        createdDateTime = Instant.parse("2024-10-12T16:12:34Z"),
-        updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
-      )
-
       wireMockServer.stubFor(
         post(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records"))
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
           .willReturn(created().withBody(Json.toJson(goodsItemRecord).toString()))
       )
 
-      connector.createRecord(createRecordRequest, testEori).futureValue mustEqual "testRecordId"
+      connector.createRecord(createRecordRequest, testEori).futureValue mustEqual goodsItemRecord
     }
 
     "must return a failed future when the server returns an error" in {

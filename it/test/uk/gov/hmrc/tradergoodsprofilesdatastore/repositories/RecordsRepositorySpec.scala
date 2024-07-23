@@ -218,21 +218,6 @@ class RecordsRepositorySpec
 
   ".get" - {
 
-    "when there is a record for this recordId it must get the record" in {
-      insert(sampleGoodsItemRecords).futureValue
-      val result = repository.get(testEori, testrecordId).futureValue
-      result.value mustEqual sampleGoodsItemRecords
-    }
-
-    "when there is no active record for this recordId it must return None" in {
-      insert(inactiveGoodsItemRecord).futureValue
-      repository.get(testEori, testrecordId).futureValue must not be defined
-    }
-
-    "when there is no record for this recordId it must return None" in {
-      repository.get(testEori, "recordId that does not exist").futureValue must not be defined
-    }
-
     "when there are records for this eori it must return the active count" in {
       insert(sampleGoodsItemRecords).futureValue
       insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue

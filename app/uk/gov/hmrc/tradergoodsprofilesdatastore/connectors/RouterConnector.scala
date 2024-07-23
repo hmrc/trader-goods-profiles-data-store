@@ -52,7 +52,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   ) =
     url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records/$recordId?actorId=$eori"
 
-  private def tgpUpdateRecordUrl(
+  private def tgpGetOrUpdateRecordUrl(
     eori: String,
     recordId: String
   ) =
@@ -77,7 +77,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   def createRecord(
     createRecordRequest: CreateRecordRequest,
     eori: String
-  )(implicit hc: HeaderCarrier): Future[String] =
+  )(implicit hc: HeaderCarrier): Future[GoodsItemRecord] =
     httpClient
       .post(createGoodsRecordUrl(eori))
       .setHeader(clientIdHeader)
@@ -85,7 +85,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
-          case CREATED => Future.successful(response.json.as[GoodsItemRecord].recordId)
+          case CREATED => Future.successful(response.json.as[GoodsItemRecord])
           case _       => Future.failed(UpstreamErrorResponse(response.body, response.status))
         }
       }
@@ -109,6 +109,21 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
       }
   }
 
+  def getRecord(
+    eori: String,
+    recordId: String
+  )(implicit hc: HeaderCarrier): Future[GoodsItemRecord] =
+    httpClient
+      .get(tgpGetOrUpdateRecordUrl(eori, recordId))
+      .setHeader(clientIdHeader)
+      .execute[HttpResponse]
+      .flatMap { response =>
+        response.status match {
+          case OK => Future.successful(response.json.as[GoodsItemRecord])
+          case _  => Future.failed(UpstreamErrorResponse(response.body, response.status))
+        }
+      }
+
   def deleteRecord(
     eori: String,
     recordId: String
@@ -130,7 +145,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
     recordId: String
   )(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
-      .patch(tgpUpdateRecordUrl(eori, recordId))
+      .patch(tgpGetOrUpdateRecordUrl(eori, recordId))
       .setHeader(clientIdHeader)
       .withBody(Json.toJson(updateRecord))
       .execute[HttpResponse]

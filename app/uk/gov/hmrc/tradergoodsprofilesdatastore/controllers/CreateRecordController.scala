@@ -38,7 +38,7 @@ class CreateRecordController @Inject() (
 
   def createRecord(eori: String): Action[CreateRecordRequest] =
     identify.async(parse.json[CreateRecordRequest]) { implicit request =>
-      routerConnector.createRecord(request.body, eori).map(recordId => Ok(recordId)) transform {
+      routerConnector.createRecord(request.body, eori).map(record => Ok(record.recordId)) transform {
         case s @ Success(_)                        => s
         case Failure(cause: UpstreamErrorResponse) =>
           logger.error(s"Create record failed with ${cause.statusCode} with message: ${cause.message}")

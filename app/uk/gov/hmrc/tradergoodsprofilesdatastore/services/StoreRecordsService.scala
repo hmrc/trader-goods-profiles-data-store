@@ -20,7 +20,7 @@ import com.google.inject.Inject
 import org.apache.pekko.Done
 import play.api.Logging
 import play.api.mvc.Request
-import uk.gov.hmrc.http.{HeaderCarrier, PreconditionFailedException}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{recursivePageSize, recursiveStartingPage}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
@@ -35,16 +35,19 @@ class StoreRecordsService @Inject() (routerConnector: RouterConnector, recordsRe
     eori: String,
     lastUpdatedDate: Option[String]
   )(implicit request: Request[_], hc: HeaderCarrier): Future[Done] =
-    storeRecordsRecursively(eori, recursiveStartingPage, lastUpdatedDate).flatMap { totalRouterRecords =>
-      recordsRepository.getCountWithInactive(eori).flatMap { totalDataStoreRecords =>
-        if (totalRouterRecords == totalDataStoreRecords) {
-          Future.successful(Done)
-        } else {
-          Future.failed(
-            new RuntimeException(
-              s"Data Store and B&T Database are out of sync: There are $totalDataStoreRecords data store records and $totalRouterRecords B&T records."
+    storeRecordsRecursively(eori, recursiveStartingPage, lastUpdatedDate).flatMap { _ =>
+      routerConnector.getRecords(eori, None, Some(recursiveStartingPage), Some(1)).flatMap { recordsResponse =>
+        val totalRouterRecords = recordsResponse.pagination.totalRecords
+        recordsRepository.getCountWithInactive(eori).flatMap { totalDataStoreRecords =>
+          if (totalRouterRecords == totalDataStoreRecords) {
+            Future.successful(Done)
+          } else {
+            Future.failed(
+              new RuntimeException(
+                s"Data Store and B&T Database are out of sync: There are $totalDataStoreRecords data store records and $totalRouterRecords B&T records."
+              )
             )
-          )
+          }
         }
       }
     }
@@ -60,13 +63,13 @@ class StoreRecordsService @Inject() (routerConnector: RouterConnector, recordsRe
     eori: String,
     page: Int,
     lastUpdatedDate: Option[String]
-  )(implicit request: Request[_], hc: HeaderCarrier): Future[Long] =
+  )(implicit request: Request[_], hc: HeaderCarrier): Future[Done] =
     routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(recursivePageSize)).flatMap { recordsResponse =>
       recordsRepository.saveRecords(eori, recordsResponse.goodsItemRecords).flatMap { _ =>
         if (recordsResponse.pagination.nextPage.isDefined) {
           storeRecordsRecursively(eori, page + 1, lastUpdatedDate)
         } else {
-          Future.successful(recordsResponse.pagination.totalRecords)
+          Future.successful(Done)
         }
       }
     }

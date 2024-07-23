@@ -39,7 +39,7 @@ class UpdateRecordController @Inject() (
 
   def updateRecord(eori: String, recordId: String): Action[UpdateRecordRequest] =
     identify.async(parse.json[UpdateRecordRequest]) { implicit request =>
-      routerConnector.updateRecord(request.body, eori, recordId).map(response => response) transform {
+      routerConnector.updateRecord(request.body, eori, recordId) transform {
         case Success(_)                                                             => Success(Ok)
         case Failure(cause: UpstreamErrorResponse) if cause.statusCode == NOT_FOUND => Success(NotFound)
         case Failure(cause: UpstreamErrorResponse)                                  =>

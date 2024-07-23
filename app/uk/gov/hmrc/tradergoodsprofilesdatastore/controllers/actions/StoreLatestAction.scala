@@ -21,7 +21,7 @@ import play.api.mvc.Results.InternalServerError
 
 import javax.inject.Inject
 import play.api.mvc.{ActionFilter, Result}
-import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.IdentifierRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository

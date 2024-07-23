@@ -29,6 +29,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.CreateRecordRequest
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GoodsItemRecord
 
 import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
@@ -38,7 +39,7 @@ class CreateRecordControllerSpec extends SpecBase with MockitoSugar {
   implicit val ec: ExecutionContext = ExecutionContext.global
   val testEori                      = "GB123456789099"
 
-  private val goodsRecord  =
+  private val goodsRecord =
     CreateRecordRequest(
       testEori,
       testEori,
@@ -50,11 +51,39 @@ class CreateRecordControllerSpec extends SpecBase with MockitoSugar {
       comcodeEffectiveToDate = Some(Instant.parse("2024-10-12T16:12:34Z")),
       3
     )
+
   private val testRecordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f"
 
   private val createUrl = routes.CreateRecordController.createRecord(testEori).url
 
   private val validFakeCreateRequest = FakeRequest("POST", createUrl)
+
+  val goodsItemRecord: GoodsItemRecord = GoodsItemRecord(
+    eori = testEori,
+    actorId = testEori,
+    recordId = testRecordId,
+    traderRef = "BAN001001",
+    comcode = "10410100",
+    adviceStatus = "Not requested",
+    goodsDescription = "Organic bananas",
+    countryOfOrigin = "EC",
+    category = 3,
+    assessments = None,
+    supplementaryUnit = None,
+    measurementUnit = None,
+    comcodeEffectiveFromDate = Instant.parse("2024-10-12T16:12:34Z"),
+    comcodeEffectiveToDate = Some(Instant.parse("2024-10-12T16:12:34Z")),
+    version = 1,
+    active = true,
+    toReview = false,
+    reviewReason = None,
+    declarable = "IMMI ready",
+    ukimsNumber = Some("XIUKIM47699357400020231115081800"),
+    nirmsNumber = None,
+    niphlNumber = None,
+    createdDateTime = Instant.parse("2024-11-12T16:12:34Z"),
+    updatedDateTime = Instant.parse("2024-11-12T16:12:34Z")
+  )
 
   s"POST $createUrl" - {
 
@@ -63,7 +92,7 @@ class CreateRecordControllerSpec extends SpecBase with MockitoSugar {
       val mockRouterConnector = mock[RouterConnector]
       when(
         mockRouterConnector.createRecord(any(), any())(any())
-      ) thenReturn Future.successful(testRecordId)
+      ) thenReturn Future.successful(goodsItemRecord)
 
       val application = applicationBuilder()
         .overrides(

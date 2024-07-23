@@ -16,10 +16,9 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
-import org.apache.pekko.Done
 import play.api.Logging
-import play.api.mvc.{Action, AnyContent, ControllerComponents, Request}
-import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, StoreLatestAction}
@@ -41,37 +40,27 @@ class DeleteRecordController @Inject() (
 
   def deleteRecord(eori: String, recordId: String): Action[AnyContent] = (identify andThen storeLatestAction).async {
     implicit request =>
-      isRecordActive(eori, recordId).flatMap {
-        case true  =>
-          makeRecordInactive(eori, recordId) transform {
+      routerConnector.getRecord(eori, recordId).flatMap { record =>
+        if (record.active) {
+          routerConnector.deleteRecord(eori, recordId) transform {
             case Success(_)                            => Success(NoContent)
             case Failure(cause: UpstreamErrorResponse) =>
               logger.error(
-                s"Record is present in data store and deleted record failed with ${cause.statusCode} with message: ${cause.message}"
+                s"Delete record failed with ${cause.statusCode} with message: ${cause.message}"
               )
               Success(InternalServerError)
           }
-        case false =>
-          makeRecordInactive(eori, recordId) transform {
-            case Success(_)                                                               => Success(NotFound)
-            case Failure(cause: UpstreamErrorResponse) if cause.statusCode == BAD_REQUEST => Success(NotFound)
-            case Failure(cause: UpstreamErrorResponse)                                    =>
-              logger.error(
-                s"Record is no present in data store and deleted record failed with ${cause.statusCode} with message: ${cause.message}"
-              )
-              Success(InternalServerError)
-          }
+        } else {
+          Future.successful(NotFound)
+        }
+      } transform {
+        case s @ Success(_)                        => s
+        case Failure(cause: UpstreamErrorResponse)
+            if cause.statusCode == NOT_FOUND || cause.statusCode == BAD_REQUEST =>
+          Success(NotFound)
+        case Failure(cause: UpstreamErrorResponse) =>
+          logger.error(s"Get record failed with ${cause.statusCode} with message: ${cause.message}")
+          Success(InternalServerError)
       }
   }
-
-  private def makeRecordInactive(eori: String, recordId: String)(implicit
-    hc: HeaderCarrier
-  ): Future[Done] =
-    routerConnector.deleteRecord(eori, recordId).map(response => response)
-
-  private def isRecordActive(eori: String, recordId: String): Future[Boolean] =
-    recordsRepository.get(eori, recordId).map {
-      case Some(record) => record.active
-      case None         => false
-    }
 }

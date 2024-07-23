@@ -88,13 +88,19 @@ class StoreRecordsServiceSpec extends SpecBase with MockitoSugar with GetRecords
               goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
               Pagination(totalRecordsNum, 6, 6, None, Some(5))
             )
+          ),
+          Future.successful(
+            GetRecordsResponse(
+              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
+              Pagination(totalRecordsNum, 1, totalRecordsNum, Some(2), None)
+            )
           )
         )
 
         val result = await(service.storeRecords(requestEori, None)(FakeRequest(), hc))
 
         result.value shouldBe Done
-        verify(mockRouterConnector, times(6)).getRecords(any(), any(), any(), any())(any())
+        verify(mockRouterConnector, times(7)).getRecords(any(), any(), any(), any())(any())
         verify(mockRecordsRepository, times(6)).saveRecords(any(), any())
         verify(mockRecordsRepository).getCountWithInactive(any())
       }
@@ -110,17 +116,24 @@ class StoreRecordsServiceSpec extends SpecBase with MockitoSugar with GetRecords
         when(mockRecordsRepository.getCountWithInactive(any())) thenReturn Future.successful(11)
 
         when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
-        when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn
+        when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
           Future.successful(
             GetRecordsResponse(
               goodsItemRecords = getTestRecords(requestEori, totalRecordsNum),
               Pagination(totalRecordsNum, 1, 1, None, None)
             )
+          ),
+          Future.successful(
+            GetRecordsResponse(
+              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
+              Pagination(totalRecordsNum, 1, totalRecordsNum, Some(2), None)
+            )
           )
+        )
         val result = await(service.storeRecords(requestEori, Some("2024-10-12T16:12:34Z"))(FakeRequest(), hc))
 
         result.value shouldBe Done
-        verify(mockRouterConnector).getRecords(any(), any(), any(), any())(any())
+        verify(mockRouterConnector, times(2)).getRecords(any(), any(), any(), any())(any())
         verify(mockRecordsRepository).saveRecords(any(), any())
         verify(mockRecordsRepository).getCountWithInactive(any())
       }
@@ -172,13 +185,19 @@ class StoreRecordsServiceSpec extends SpecBase with MockitoSugar with GetRecords
               goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
               Pagination(totalRecordsNum, 6, 6, None, Some(5))
             )
+          ),
+          Future.successful(
+            GetRecordsResponse(
+              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
+              Pagination(totalRecordsNum, 1, totalRecordsNum, Some(2), None)
+            )
           )
         )
         intercept[RuntimeException] {
           await(service.storeRecords(requestEori, None)(FakeRequest(), hc))
         }
 
-        verify(mockRouterConnector, times(6)).getRecords(any(), any(), any(), any())(any())
+        verify(mockRouterConnector, times(7)).getRecords(any(), any(), any(), any())(any())
         verify(mockRecordsRepository, times(6)).saveRecords(any(), any())
         verify(mockRecordsRepository).getCountWithInactive(any())
       }

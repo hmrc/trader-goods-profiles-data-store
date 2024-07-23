@@ -87,11 +87,6 @@ class RecordsRepository @Inject() (
       })
       .map(_ => true)
 
-  def get(eori: String, recordId: String): Future[Option[GoodsItemRecord]] =
-    collection
-      .find[GoodsItemRecord](byEoriAndRecordIdAndActive(eori, recordId))
-      .headOption()
-
   def getMany(eori: String, pageOpt: Option[Int], sizeOpt: Option[Int]): Future[Seq[GoodsItemRecord]] = {
     val size = sizeOpt.getOrElse(localPageSize)
     val page = pageOpt.getOrElse(localStartingPage)

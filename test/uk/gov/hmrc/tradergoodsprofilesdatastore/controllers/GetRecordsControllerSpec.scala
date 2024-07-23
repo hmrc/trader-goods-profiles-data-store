@@ -17,7 +17,8 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
+import org.mockito.Mockito.{verify, when}
+import org.openqa.selenium.remote.tracing.HttpTracing.inject
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
@@ -25,12 +26,16 @@ import play.api.inject.bind
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeIdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, GoodsItemRecord, Pagination}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
 
+import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 
 class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecordsResponseUtil {
@@ -378,6 +383,7 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
   }
 
   "getRecord" - {
+
     "return Ok with record in body when it is found" in {
       val requestEori = "GB123456789099"
       val record      = getGoodsItemRecord(requestEori)
@@ -387,12 +393,13 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
 
       val validFakeGetRequest = FakeRequest("GET", checkUrl)
 
-      val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.get(any(), any())) thenReturn Future.successful(Some(record))
+      val mockRouterConnector = mock[RouterConnector]
+
+      when(mockRouterConnector.getRecord(any(), any())(any())) thenReturn Future.successful(record)
 
       val application = applicationBuilder()
         .overrides(
-          bind[RecordsRepository].toInstance(mockRecordsRepository)
+          bind[RouterConnector].toInstance(mockRouterConnector)
         )
         .build()
 
@@ -403,21 +410,22 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
       }
     }
 
-    "return Not found when the record does not exist in our database" in {
+    "return 404 when the record is inactive" in {
       val requestEori = "GB123456789099"
-      val record      = getGoodsItemRecord(requestEori)
+      val record      = getGoodsInactiveItemRecord(requestEori)
       val checkUrl    = routes.GetRecordsController
         .getRecord(requestEori, record.recordId)
         .url
 
       val validFakeGetRequest = FakeRequest("GET", checkUrl)
 
-      val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.get(any(), any())) thenReturn Future.successful(None)
+      val mockRouterConnector = mock[RouterConnector]
+
+      when(mockRouterConnector.getRecord(any(), any())(any())) thenReturn Future.successful(record)
 
       val application = applicationBuilder()
         .overrides(
-          bind[RecordsRepository].toInstance(mockRecordsRepository)
+          bind[RouterConnector].toInstance(mockRouterConnector)
         )
         .build()
 
@@ -426,6 +434,88 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
         status(result) shouldBe Status.NOT_FOUND
       }
     }
-  }
 
+    "return 500 when there is an error when getting the record" in {
+      val requestEori = "GB123456789099"
+      val record      = getGoodsInactiveItemRecord(requestEori)
+      val checkUrl    = routes.GetRecordsController
+        .getRecord(requestEori, record.recordId)
+        .url
+
+      val validFakeGetRequest = FakeRequest("GET", checkUrl)
+
+      val mockRouterConnector = mock[RouterConnector]
+
+      when(
+        mockRouterConnector.getRecord(any(), any())(any())
+      ) thenReturn Future.failed(UpstreamErrorResponse("Internal server error", INTERNAL_SERVER_ERROR))
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[IdentifierAction].to[FakeIdentifierAction],
+          bind[RouterConnector].toInstance(mockRouterConnector)
+        )
+        .build()
+
+      running(application) {
+        val result = route(application, validFakeGetRequest).value
+        status(result) shouldBe INTERNAL_SERVER_ERROR
+      }
+    }
+
+    "return 404 when record does not exist because it has never existed (400)" in {
+      val requestEori = "GB123456789099"
+      val record      = getGoodsInactiveItemRecord(requestEori)
+      val checkUrl    = routes.GetRecordsController
+        .getRecord(requestEori, record.recordId)
+        .url
+
+      val validFakeGetRequest = FakeRequest("GET", checkUrl)
+      val mockRouterConnector = mock[RouterConnector]
+
+      when(
+        mockRouterConnector.getRecord(any(), any())(any())
+      ) thenReturn Future.failed(UpstreamErrorResponse("could not get", BAD_REQUEST))
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[IdentifierAction].to[FakeIdentifierAction],
+          bind[RouterConnector].toInstance(mockRouterConnector)
+        )
+        .build()
+
+      running(application) {
+        val result = route(application, validFakeGetRequest).value
+        status(result) shouldBe NOT_FOUND
+      }
+    }
+
+    "return 404 when record does not exist because it has never existed (404)" in {
+      val requestEori = "GB123456789099"
+      val record      = getGoodsInactiveItemRecord(requestEori)
+      val checkUrl    = routes.GetRecordsController
+        .getRecord(requestEori, record.recordId)
+        .url
+
+      val validFakeGetRequest = FakeRequest("GET", checkUrl)
+
+      val mockRouterConnector = mock[RouterConnector]
+
+      when(
+        mockRouterConnector.getRecord(any(), any())(any())
+      ) thenReturn Future.failed(UpstreamErrorResponse("could not get", NOT_FOUND))
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[IdentifierAction].to[FakeIdentifierAction],
+          bind[RouterConnector].toInstance(mockRouterConnector)
+        )
+        .build()
+
+      running(application) {
+        val result = route(application, validFakeGetRequest).value
+        status(result) shouldBe NOT_FOUND
+      }
+    }
+  }
 }
