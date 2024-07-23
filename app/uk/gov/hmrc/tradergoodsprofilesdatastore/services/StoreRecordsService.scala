@@ -36,25 +36,20 @@ class StoreRecordsService @Inject() (routerConnector: RouterConnector, recordsRe
     lastUpdatedDate: Option[String]
   )(implicit request: Request[_], hc: HeaderCarrier): Future[Done] =
     storeRecordsRecursively(eori, recursiveStartingPage, lastUpdatedDate).flatMap { totalRouterRecords =>
-      isRecordCountEqual(eori, totalRouterRecords).flatMap {
-        case true  => Future.successful(Done)
-        case false => deleteAndStoreAllAgain(eori)
+      recordsRepository.getCountWithInactive(eori).flatMap { totalDataStoreRecords =>
+        if (totalRouterRecords == totalDataStoreRecords) {
+          Future.successful(Done)
+        } else {
+          deleteAndStoreRecords(eori)
+        }
       }
     }
 
-  private def deleteAndStoreAllAgain(
+  def deleteAndStoreRecords(
     eori: String
   )(implicit request: Request[_], hc: HeaderCarrier): Future[Done] =
     recordsRepository.deleteMany(eori).flatMap { _ =>
       storeRecordsRecursively(eori, recursiveStartingPage, None).map(_ => Done)
-    }
-
-  private def isRecordCountEqual(
-    eori: String,
-    totalRouterRecords: Long
-  )(implicit hc: HeaderCarrier): Future[Boolean] =
-    recordsRepository.getCountWithInactive(eori).map { totalDataStoreRecords =>
-      totalRouterRecords == totalDataStoreRecords
     }
 
   private def storeRecordsRecursively(

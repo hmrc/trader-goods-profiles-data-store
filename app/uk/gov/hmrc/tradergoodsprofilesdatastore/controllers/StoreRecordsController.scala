@@ -36,7 +36,7 @@ class StoreRecordsController @Inject() (
   def storeAllRecords(
     eori: String
   ): Action[AnyContent] = identify.async { implicit request =>
-    storeRecordsService.storeRecords(eori, None).flatMap { _ =>
+    storeRecordsService.deleteAndStoreRecords(eori).flatMap { _ =>
       checkRecordsRepository
         .set(eori)
         .map(_ => NoContent)

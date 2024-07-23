@@ -45,7 +45,7 @@ class StoreLatestActionImpl @Inject() (
           .map(_ => None)
       case None         =>
         storeRecordsService
-          .storeRecords(identifierRequest.eori, None)
+          .deleteAndStoreRecords(identifierRequest.eori)
           .map(_ => None)
     }
   }

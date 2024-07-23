@@ -18,16 +18,14 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.actions
 
 import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.Mockito.{verify, when}
 import org.scalatestplus.mockito.MockitoSugar.mock
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
-import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestActionImpl
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.IdentifierRequest
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.services.StoreRecordsService
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
@@ -59,8 +57,27 @@ class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
         .callFilter(IdentifierRequest(FakeRequest(), "testUserId", requestEori, AffinityGroup.Individual))
         .futureValue
 
-      verify(mockRecordsRepository, times(1)).getLatest(any())
-      verify(mockStoreRecordsService, times(1)).storeRecords(any(), any())(any(), any())
+      verify(mockRecordsRepository).getLatest(any())
+      verify(mockStoreRecordsService).storeRecords(any(), any())(any(), any())
+    }
+
+    "must delete data store records and store all when there is no latest" in {
+
+      val requestEori = "GB123456789099"
+
+      val mockRecordsRepository   = mock[RecordsRepository]
+      when(mockRecordsRepository.getLatest(any())) thenReturn Future.successful(None)
+      val mockStoreRecordsService = mock[StoreRecordsService]
+      when(mockStoreRecordsService.deleteAndStoreRecords(any())(any(), any())) thenReturn Future.successful(Done)
+
+      val action = new Harness(mockRecordsRepository, mockStoreRecordsService)
+
+      action
+        .callFilter(IdentifierRequest(FakeRequest(), "testUserId", requestEori, AffinityGroup.Individual))
+        .futureValue
+
+      verify(mockRecordsRepository).getLatest(any())
+      verify(mockStoreRecordsService).deleteAndStoreRecords(any())(any(), any())
     }
   }
 }
