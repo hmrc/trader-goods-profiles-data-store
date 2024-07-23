@@ -20,19 +20,21 @@ import org.apache.pekko.Done
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.ProfileRepository
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton()
 class ProfileController @Inject() (
   profileRepository: ProfileRepository,
   cc: ControllerComponents,
   routerConnector: RouterConnector,
+  config: DataStoreAppConfig,
   identify: IdentifierAction
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
@@ -63,7 +65,10 @@ class ProfileController @Inject() (
   }
 
   def deleteAll(): Action[AnyContent] = identify.async {
-    profileRepository.deleteAll.map(_ => Ok)
+    if (config.droppingProfileCollection)
+      profileRepository.deleteAll.map(_ => Ok)
+    else
+      Future.successful(NotFound)
   }
 
 }
