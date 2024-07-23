@@ -20,7 +20,7 @@ import com.google.inject.Inject
 import org.apache.pekko.Done
 import play.api.Logging
 import play.api.mvc.Request
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, PreconditionFailedException}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{recursivePageSize, recursiveStartingPage}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
@@ -40,7 +40,11 @@ class StoreRecordsService @Inject() (routerConnector: RouterConnector, recordsRe
         if (totalRouterRecords == totalDataStoreRecords) {
           Future.successful(Done)
         } else {
-          deleteAndStoreRecords(eori)
+          Future.failed(
+            new RuntimeException(
+              s"Data Store and B&T Database are out of sync: There are $totalDataStoreRecords data store records and $totalRouterRecords B&T records."
+            )
+          )
         }
       }
     }
