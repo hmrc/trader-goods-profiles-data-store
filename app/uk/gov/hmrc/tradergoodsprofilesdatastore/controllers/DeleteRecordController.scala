@@ -46,7 +46,9 @@ class DeleteRecordController @Inject() (
           makeRecordInactive(eori, recordId) transform {
             case Success(_)                            => Success(NoContent)
             case Failure(cause: UpstreamErrorResponse) =>
-              logger.error(s"Deleted record failed with ${cause.statusCode} with message: ${cause.message}")
+              logger.error(
+                s"Record is present in data store and deleted record failed with ${cause.statusCode} with message: ${cause.message}"
+              )
               Success(InternalServerError)
           }
         case false =>
@@ -54,7 +56,9 @@ class DeleteRecordController @Inject() (
             case Success(_)                                                               => Success(NotFound)
             case Failure(cause: UpstreamErrorResponse) if cause.statusCode == BAD_REQUEST => Success(NotFound)
             case Failure(cause: UpstreamErrorResponse)                                    =>
-              logger.error(s"Deleted record failed with ${cause.statusCode} with message: ${cause.message}")
+              logger.error(
+                s"Record is no present in data store and deleted record failed with ${cause.statusCode} with message: ${cause.message}"
+              )
               Success(InternalServerError)
           }
       }
