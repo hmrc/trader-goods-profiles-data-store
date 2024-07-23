@@ -120,6 +120,33 @@ class RecordsRepositorySpec
     updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
   )
 
+  val sampleGoodsItemRecordsWithSpecialCharacters: GoodsItemRecord = GoodsItemRecord(
+    eori = "GB123456789001",
+    actorId = "GB098765432112",
+    recordId = testrecordId,
+    traderRef = "BAN001002",
+    comcode = "20410101",
+    adviceStatus = "Not requested",
+    goodsDescription = "Apples with ^$*+?.(){}[]",
+    countryOfOrigin = "AU",
+    category = 3,
+    assessments = Some(Seq(sampleAssessment)),
+    supplementaryUnit = Some(500),
+    measurementUnit = Some("square meters(m^2)"),
+    comcodeEffectiveFromDate = Instant.parse("2024-10-12T16:12:34Z"),
+    comcodeEffectiveToDate = Some(Instant.parse("2024-10-12T16:12:34Z")),
+    version = 1,
+    active = true,
+    toReview = false,
+    reviewReason = Some("no reason"),
+    declarable = "IMMI ready",
+    ukimsNumber = Some("XIUKIM47699357400020231115081800"),
+    nirmsNumber = Some("RMS-GB-123456"),
+    niphlNumber = Some("6 S12345"),
+    createdDateTime = Instant.parse("2024-10-12T16:12:34Z"),
+    updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
+  )
+
   private val traderRefSearchTerm               = "BAN001002"
   private val traderRefPartialSearchTerm        = "1001"
   private val traderRefSearchField              = "traderRef"
@@ -600,6 +627,51 @@ class RecordsRepositorySpec
         .futureValue
       result.size mustEqual 4
       result.headOption.value.comcode.contains(comCodePartialSearchTerm)
+    }
+
+    "when there is 1 record with special characters and 0 matching goodsDescription searchTerm for this eori and the field is not passed it must return a record of size 0" in {
+      insert(sampleGoodsItemRecords).futureValue
+
+      val result = repository
+        .filterRecords(
+          sampleGoodsItemRecords.eori,
+          Some("*"),
+          None,
+          exactMatch = exactMatchIsFalse
+        )
+        .futureValue
+
+      result mustEqual Seq.empty
+    }
+
+    "when there is 1 record with special characters and 1 matching goodsDescription searchTerm for this eori and the field is not passed it must return a record of size 1" in {
+      insert(sampleGoodsItemRecordsWithSpecialCharacters).futureValue
+
+      val result = repository
+        .filterRecords(
+          sampleGoodsItemRecordsWithSpecialCharacters.eori,
+          Some("^$*+?.(){}[]"),
+          None,
+          exactMatch = exactMatchIsFalse
+        )
+        .futureValue
+      result.size mustEqual 1
+      result.headOption.value.goodsDescription.contains("^$*+?.(){}[]")
+    }
+
+    "when there is 1 record with special character * and 1 matching goodsDescription searchTerm for this eori and the field is not passed it must return a record of size 1" in {
+      insert(sampleGoodsItemRecordsWithSpecialCharacters).futureValue
+
+      val result = repository
+        .filterRecords(
+          sampleGoodsItemRecordsWithSpecialCharacters.eori,
+          Some("*"),
+          None,
+          exactMatch = exactMatchIsFalse
+        )
+        .futureValue
+      result.size mustEqual 1
+      result.headOption.value.goodsDescription.contains("*")
     }
   }
 }

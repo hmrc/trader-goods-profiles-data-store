@@ -22,6 +22,7 @@ import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GoodsItemRecord
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{localPageSize, localStartingPage}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.StringHelper.escapeRegexSpecialChars
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -61,18 +62,21 @@ class RecordsRepository @Inject() (
       Filters.regex(field, searchTerm, "i")
 
   private def byComCodeOrGoodsDescriptionOrTraderRef(value: String, exactMatch: Boolean): Bson =
-    if (exactMatch)
+    if (exactMatch) {
       Filters.or(
         Filters.equal("traderRef", value),
         Filters.equal("goodsDescription", value),
         Filters.equal("comcode", value)
       )
-    else
+    } else {
+      val escapedSearchString = escapeRegexSpecialChars(value)
+      val searchPattern       = s".*$escapedSearchString.*"
       Filters.or(
-        Filters.regex("traderRef", value, "i"),
-        Filters.regex("goodsDescription", value),
-        Filters.regex("comcode", value)
+        Filters.regex("traderRef", searchPattern, "i"),
+        Filters.regex("goodsDescription", searchPattern, "i"),
+        Filters.regex("comcode", searchPattern, "i")
       )
+    }
 
   def saveRecords(eori: String, records: Seq[GoodsItemRecord]): Future[Boolean] =
     Future
