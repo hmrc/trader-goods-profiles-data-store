@@ -28,7 +28,6 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class FilterRecordsController @Inject() (
-  storeRecordsController: StoreRecordsController,
   recordsRepository: RecordsRepository,
   cc: ControllerComponents,
   identify: IdentifierAction,

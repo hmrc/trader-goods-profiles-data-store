@@ -28,7 +28,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsRespon
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
 class GetRecordsController @Inject() (
@@ -55,25 +55,23 @@ class GetRecordsController @Inject() (
     }
   }
 
-  def getRecord(eori: String, recordId: String): Action[AnyContent] = (identify andThen storeLatest).async {
-    implicit request =>
-      routerConnector
-        .getRecord(eori, recordId)
-        .map(record =>
-          if (record.active) {
-            Ok(Json.toJson(record))
-          } else {
-            NotFound
-          }
-        ) transform {
-        case s @ Success(_)                        => s
-        case Failure(cause: UpstreamErrorResponse)
-            if cause.statusCode == NOT_FOUND || cause.statusCode == BAD_REQUEST =>
-          Success(NotFound)
-        case Failure(cause: UpstreamErrorResponse) =>
-          logger.error(s"Get record failed with ${cause.statusCode} with message: ${cause.message}")
-          Success(InternalServerError)
-      }
+  def getRecord(eori: String, recordId: String): Action[AnyContent] = identify.async { implicit request =>
+    routerConnector
+      .getRecord(eori, recordId)
+      .map(record =>
+        if (record.active) {
+          Ok(Json.toJson(record))
+        } else {
+          NotFound
+        }
+      ) transform {
+      case s @ Success(_)                                                                                            => s
+      case Failure(cause: UpstreamErrorResponse) if cause.statusCode == NOT_FOUND || cause.statusCode == BAD_REQUEST =>
+        Success(NotFound)
+      case Failure(cause: UpstreamErrorResponse)                                                                     =>
+        logger.error(s"Get record failed with ${cause.statusCode} with message: ${cause.message}")
+        Success(InternalServerError)
+    }
   }
 
   def getRecordsCount(

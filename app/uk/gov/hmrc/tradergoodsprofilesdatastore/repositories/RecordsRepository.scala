@@ -43,12 +43,10 @@ class RecordsRepository @Inject() (
       )
     ) {
 
-  private def byEori(eori: String): Bson          = Filters.equal("eori", eori)
+  private def byEori(eori: String): Bson = Filters.equal("eori", eori)
+
   private def byEoriAndActive(eori: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.equal("active", true))
-
-  private def byEoriAndRecordIdAndActive(eori: String, recordId: String): Bson =
-    Filters.and(Filters.equal("eori", eori), Filters.equal("_id", recordId), Filters.equal("active", true))
 
   private def byEoriAndRecordId(eori: String, recordId: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.equal("_id", recordId))
