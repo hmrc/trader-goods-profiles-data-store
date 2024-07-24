@@ -21,6 +21,7 @@ import org.apache.pekko.Done
 import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary.Update
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{recursivePageSize, recursiveStartingPage}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{RecordsRepository, RecordsSummaryRepository}
 
@@ -40,13 +41,15 @@ class StoreRecordsService @Inject() (
   )(implicit hc: HeaderCarrier): Future[Boolean] =
     storeFirstBatchOfRecords(eori, lastUpdatedDate).flatMap { recordsToStore =>
       if (recordsToStore > recursivePageSize) {
-        recordsSummaryRepository.set(eori, recordsUpdating = true, 0, recordsToStore).map { _ =>
-          storeRecordsRecursively(eori, recursiveStartingPage + 1, lastUpdatedDate, 0, recordsToStore).onComplete { _ =>
-            recordsSummaryRepository.set(eori, recordsUpdating = false, recordsToStore, 0).flatMap { _ =>
-              checkInSync(eori)
+        recordsSummaryRepository.set(eori, Some(Update(recursivePageSize, recordsToStore - recursivePageSize))).map {
+          _ =>
+            storeRecordsRecursively(eori, recursiveStartingPage + 1, lastUpdatedDate, 0, recordsToStore).onComplete {
+              _ =>
+                recordsSummaryRepository.set(eori, None).flatMap { _ =>
+                  checkInSync(eori)
+                }
             }
-          }
-          false
+            false
         }
       } else {
         checkInSync(eori).map(_ => true)
@@ -96,7 +99,7 @@ class StoreRecordsService @Inject() (
       recordsRepository.saveRecords(eori, recordsResponse.goodsItemRecords).flatMap { _ =>
         val newRecordsToStore = recordsToStore - recordsResponse.goodsItemRecords.size
         val newRecordsStored  = recordsStored + recordsResponse.goodsItemRecords.size
-        recordsSummaryRepository.set(eori, recordsUpdating = true, newRecordsToStore, newRecordsStored).flatMap { _ =>
+        recordsSummaryRepository.set(eori, Some(Update(newRecordsToStore, newRecordsStored))).flatMap { _ =>
           if (recordsResponse.pagination.nextPage.isDefined) {
             storeRecordsRecursively(eori, page + 1, lastUpdatedDate, newRecordsToStore, newRecordsStored)
           } else {

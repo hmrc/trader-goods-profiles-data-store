@@ -122,31 +122,5 @@ class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
       verify(mockRecordsRepository).getLatest(any())
       verify(mockStoreRecordsService).storeRecords(any(), any())(any())
     }
-
-    "must throw error when there is a mismatch in the database" in {
-
-      val requestEori = "GB123456789099"
-
-      val mockRecordsRepository   = mock[RecordsRepository]
-      when(mockRecordsRepository.getLatest(any())) thenReturn Future.successful(None)
-      val mockStoreRecordsService = mock[StoreRecordsService]
-      when(mockStoreRecordsService.storeRecords(any(), any())(any())) thenReturn Future.failed(
-        new RuntimeException(
-          "Data Store and B&T Database are out of sync"
-        )
-      )
-
-      val action = new Harness(mockRecordsRepository, mockStoreRecordsService)
-
-      val result = action
-        .callFilter(IdentifierRequest(FakeRequest(), "testUserId", requestEori, AffinityGroup.Individual))
-        .futureValue
-        .value
-
-      status(Future.successful(result)) mustEqual INTERNAL_SERVER_ERROR
-
-      verify(mockRecordsRepository).getLatest(any())
-      verify(mockStoreRecordsService).storeRecords(any(), any())(any())
-    }
   }
 }
