@@ -35,7 +35,29 @@ class StoreRecordsService @Inject() (routerConnector: RouterConnector, recordsRe
     eori: String,
     lastUpdatedDate: Option[String]
   )(implicit request: Request[_], hc: HeaderCarrier): Future[Done] =
-    storeRecordsRecursively(eori, recursiveStartingPage, lastUpdatedDate)
+    storeRecordsRecursively(eori, recursiveStartingPage, lastUpdatedDate).flatMap { _ =>
+      routerConnector.getRecords(eori, None, Some(recursiveStartingPage), Some(1)).flatMap { recordsResponse =>
+        val totalRouterRecords = recordsResponse.pagination.totalRecords
+        recordsRepository.getCountWithInactive(eori).flatMap { totalDataStoreRecords =>
+          if (totalRouterRecords == totalDataStoreRecords) {
+            Future.successful(Done)
+          } else {
+            Future.failed(
+              new RuntimeException(
+                s"Data Store and B&T Database are out of sync: There are $totalDataStoreRecords data store records and $totalRouterRecords B&T records."
+              )
+            )
+          }
+        }
+      }
+    }
+
+  def deleteAndStoreRecords(
+    eori: String
+  )(implicit request: Request[_], hc: HeaderCarrier): Future[Done] =
+    recordsRepository.deleteMany(eori).flatMap { _ =>
+      storeRecordsRecursively(eori, recursiveStartingPage, None).map(_ => Done)
+    }
 
   private def storeRecordsRecursively(
     eori: String,

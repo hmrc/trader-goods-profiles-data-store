@@ -26,7 +26,7 @@ trait GetRecordsResponseUtil {
   def getTestRecords(eori: String, numRecords: Int): Seq[GoodsItemRecord] =
     (0 until numRecords).map(_ => getGoodsItemRecord(eori))
 
-  def getGoodsItemRecord(eori: String): GoodsItemRecord = GoodsItemRecord(
+  def getGoodsItemRecord(eori: String): GoodsItemRecord         = GoodsItemRecord(
     eori,
     "GB098765432112",
     java.util.UUID.randomUUID.toString,
@@ -60,6 +60,49 @@ trait GetRecordsResponseUtil {
     Some(Instant.parse("2024-10-12T16:12:34Z")),
     1,
     active = true,
+    toReview = false,
+    Some("no reason"),
+    "IMMI ready",
+    Some("XIUKIM47699357400020231115081800"),
+    Some("RMS-GB-123456"),
+    Some("6 S12345"),
+    timestamp,
+    timestamp
+  )
+  def getGoodsInactiveItemRecord(eori: String): GoodsItemRecord = GoodsItemRecord(
+    eori,
+    "GB098765432112",
+    java.util.UUID.randomUUID.toString,
+    "BAN001002",
+    "10410100",
+    "Not requested",
+    "Organic bananas",
+    "EC",
+    3,
+    Some(
+      Seq(
+        Assessment(
+          Some("abc123"),
+          Some(1),
+          Some(
+            Condition(
+              Some("abc123"),
+              Some("Y923"),
+              Some(
+                "Products not considered as waste according to Regulation (EC) No 1013/2006 as retained in UK law"
+              ),
+              Some("Excluded product")
+            )
+          )
+        )
+      )
+    ),
+    Some(500),
+    Some("square meters(m^2)"),
+    timestamp,
+    Some(Instant.parse("2024-10-12T16:12:34Z")),
+    1,
+    active = false,
     toReview = false,
     Some("no reason"),
     "IMMI ready",

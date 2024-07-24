@@ -245,21 +245,6 @@ class RecordsRepositorySpec
 
   ".get" - {
 
-    "when there is a record for this recordId it must get the record" in {
-      insert(sampleGoodsItemRecords).futureValue
-      val result = repository.get(testEori, testrecordId).futureValue
-      result.value mustEqual sampleGoodsItemRecords
-    }
-
-    "when there is no active record for this recordId it must return None" in {
-      insert(inactiveGoodsItemRecord).futureValue
-      repository.get(testEori, testrecordId).futureValue must not be defined
-    }
-
-    "when there is no record for this recordId it must return None" in {
-      repository.get(testEori, "recordId that does not exist").futureValue must not be defined
-    }
-
     "when there are records for this eori it must return the active count" in {
       insert(sampleGoodsItemRecords).futureValue
       insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
@@ -271,6 +256,15 @@ class RecordsRepositorySpec
 
     "when there are no records for this eori it must return 0" in {
       repository.getCount(sampleGoodsItemRecords.eori).futureValue mustEqual 0
+    }
+
+    "when there are records for this eori it must return the total count including inactive" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "2")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "3", active = false)).futureValue
+
+      val result = repository.getCountWithInactive(sampleGoodsItemRecords.eori).futureValue
+      result mustEqual 3
     }
 
     "when there are 8 records for this eori it must return the records and it asks for page 1 of size 5" in {
@@ -672,6 +666,20 @@ class RecordsRepositorySpec
         .futureValue
       result.size mustEqual 1
       result.headOption.value.goodsDescription.contains("*")
+    }
+  }
+
+  ".deleteMany" - {
+    "must delete all records with matching eori" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "2", eori = "test")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "3")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "4")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
+      insert(latestGoodsItemRecords).futureValue
+
+      val result = repository.deleteMany(sampleGoodsItemRecords.eori).futureValue
+      result mustEqual 5
     }
   }
 }

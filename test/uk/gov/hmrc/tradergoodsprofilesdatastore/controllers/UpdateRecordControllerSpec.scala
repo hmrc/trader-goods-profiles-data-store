@@ -18,7 +18,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.Mockito.{verify, when}
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject
@@ -114,7 +114,7 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
         status(result) shouldBe OK
 
         withClue("must call the relevant services with the correct details") {
-          verify(mockRouterConnector, times(1))
+          verify(mockRouterConnector)
             .updateRecord(eqTo(sampleUpdateRequest), eqTo(testEori), eqTo(testRecordId))(any())
         }
       }

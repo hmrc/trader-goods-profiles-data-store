@@ -55,22 +55,28 @@ class GetRecordsController @Inject() (
     }
   }
 
-  def getRecord(eori: String, recordId: String): Action[AnyContent] = (identify andThen storeLatest).async {
-    implicit request =>
-      recordsRepository.get(eori, recordId).map {
-        case Some(goodsItemRecords) =>
-          Ok(Json.toJson(goodsItemRecords))
-        case None                   =>
+  def getRecord(eori: String, recordId: String): Action[AnyContent] = identify.async { implicit request =>
+    routerConnector
+      .getRecord(eori, recordId)
+      .map(record =>
+        if (record.active) {
+          Ok(Json.toJson(record))
+        } else {
           NotFound
-      }
+        }
+      ) transform {
+      case s @ Success(_)                                                                                            => s
+      case Failure(cause: UpstreamErrorResponse) if cause.statusCode == NOT_FOUND || cause.statusCode == BAD_REQUEST =>
+        Success(NotFound)
+      case Failure(cause: UpstreamErrorResponse)                                                                     =>
+        logger.error(s"Get record failed with ${cause.statusCode} with message: ${cause.message}")
+        Success(InternalServerError)
+    }
   }
 
   def getRecordsCount(
     eori: String
   ): Action[AnyContent] = identify.async { implicit request =>
-    routerConnector.getRecords(eori, page = Some(recursiveStartingPage), size = Some(1)).map { recordsResponse =>
-      Ok(Json.toJson(recordsResponse.pagination.totalRecords))
-    }
     routerConnector
       .getRecords(eori, page = Some(recursiveStartingPage), size = Some(1))
       .map(recordsResponse => Ok(Json.toJson(recordsResponse.pagination.totalRecords))) transform {

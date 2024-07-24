@@ -21,27 +21,46 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, StoreLatestAction}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 class DeleteRecordController @Inject() (
   cc: ControllerComponents,
   routerConnector: RouterConnector,
-  identify: IdentifierAction
+  recordsRepository: RecordsRepository,
+  identify: IdentifierAction,
+  storeLatestAction: StoreLatestAction
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
     with Logging {
 
-  def deleteRecord(eori: String, recordId: String): Action[AnyContent] = identify.async { implicit request =>
-    routerConnector.deleteRecord(eori, recordId).map(response => response) transform {
-      case Success(_)                                                             => Success(NoContent)
-      case Failure(cause: UpstreamErrorResponse) if cause.statusCode == NOT_FOUND => Success(NotFound)
-      case Failure(cause: UpstreamErrorResponse)                                  =>
-        logger.error(s"Deleted record failed with ${cause.statusCode} with message: ${cause.message}")
-        Success(InternalServerError)
-    }
+  def deleteRecord(eori: String, recordId: String): Action[AnyContent] = (identify andThen storeLatestAction).async {
+    implicit request =>
+      routerConnector.getRecord(eori, recordId).flatMap { record =>
+        if (record.active) {
+          routerConnector.deleteRecord(eori, recordId) transform {
+            case Success(_)                            => Success(NoContent)
+            case Failure(cause: UpstreamErrorResponse) =>
+              logger.error(
+                s"Delete record failed with ${cause.statusCode} with message: ${cause.message}"
+              )
+              Success(InternalServerError)
+          }
+        } else {
+          Future.successful(NotFound)
+        }
+      } transform {
+        case s @ Success(_)                        => s
+        case Failure(cause: UpstreamErrorResponse)
+            if cause.statusCode == NOT_FOUND || cause.statusCode == BAD_REQUEST =>
+          Success(NotFound)
+        case Failure(cause: UpstreamErrorResponse) =>
+          logger.error(s"Get record failed with ${cause.statusCode} with message: ${cause.message}")
+          Success(InternalServerError)
+      }
   }
 }
