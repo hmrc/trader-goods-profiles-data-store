@@ -18,7 +18,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.services
 
 import org.apache.pekko.Done
 import org.apache.pekko.util.Helpers.Requiring
-import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
@@ -28,8 +28,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.recursivePageSize
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{recursivePageSize, recursiveStartingPage}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{CheckRecordsRepository, RecordsRepository}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -41,75 +41,53 @@ class StoreRecordsServiceSpec extends SpecBase with MockitoSugar with GetRecords
 
   "StoreRecordsService" - {
     "storeRecords" - {
-      "must store all records in data-store" in {
-        val mockRouterConnector   = mock[RouterConnector]
-        val mockRecordsRepository = mock[RecordsRepository]
+      "must store all records in data-store with one pages" in {
+        val mockRouterConnector        = mock[RouterConnector]
+        val mockRecordsRepository      = mock[RecordsRepository]
+        val mockCheckRecordsRepository = mock[CheckRecordsRepository]
 
-        val service         = new StoreRecordsService(mockRouterConnector, mockRecordsRepository)
-        val totalRecordsNum = 60000
+        val service         = new StoreRecordsService(mockRouterConnector, mockRecordsRepository, mockCheckRecordsRepository)
+        val totalRecordsNum = 10000
         val requestEori     = "GB123456789099"
 
-        when(mockRecordsRepository.getCountWithInactive(any())) thenReturn Future.successful(60000)
+        when(mockRecordsRepository.getCountWithInactive(any())) thenReturn Future.successful(totalRecordsNum)
+
+        when(mockCheckRecordsRepository.set(any(), any())) thenReturn Future.successful(true)
 
         when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
-        when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
+
+        when(
+          mockRouterConnector.getRecords(
+            any(),
+            any(),
+            any(),
+            any()
+          )(any())
+        ) thenReturn
           Future.successful(
             GetRecordsResponse(
               goodsItemRecords = getTestRecords(requestEori, recursivePageSize),
-              Pagination(totalRecordsNum, 1, 6, Some(2), None)
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 2, 6, Some(3), Some(1))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 3, 6, Some(4), Some(2))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 4, 6, Some(5), Some(3))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 5, 6, Some(6), Some(4))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 6, 6, None, Some(5))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 1, totalRecordsNum, Some(2), None)
+              Pagination(totalRecordsNum, 0, 6, None, None)
             )
           )
-        )
 
-        val result = await(service.storeRecords(requestEori, None)(FakeRequest(), hc))
+        val result = await(service.storeRecords(requestEori, None)(hc))
 
-        result.value shouldBe Done
-        verify(mockRouterConnector, times(7)).getRecords(any(), any(), any(), any())(any())
-        verify(mockRecordsRepository, times(6)).saveRecords(any(), any())
+        result.value shouldBe true
+
+        verify(mockRouterConnector, times(2))
+          .getRecords(any(), any(), any(), any())(any())
+        verify(mockRecordsRepository, times(1)).saveRecords(any(), any())
+        verify(mockCheckRecordsRepository, times(2)).set(any(), any())
         verify(mockRecordsRepository).getCountWithInactive(any())
       }
 
       "must store latest records in data-store" in {
-        val mockRouterConnector   = mock[RouterConnector]
-        val mockRecordsRepository = mock[RecordsRepository]
+        val mockRouterConnector        = mock[RouterConnector]
+        val mockRecordsRepository      = mock[RecordsRepository]
+        val mockCheckRecordsRepository = mock[CheckRecordsRepository]
 
-        val service         = new StoreRecordsService(mockRouterConnector, mockRecordsRepository)
+        val service         = new StoreRecordsService(mockRouterConnector, mockRecordsRepository, mockCheckRecordsRepository)
         val totalRecordsNum = 11
         val requestEori     = "GB123456789099"
 
@@ -130,7 +108,7 @@ class StoreRecordsServiceSpec extends SpecBase with MockitoSugar with GetRecords
             )
           )
         )
-        val result = await(service.storeRecords(requestEori, Some("2024-10-12T16:12:34Z"))(FakeRequest(), hc))
+        val result = await(service.storeRecords(requestEori, Some("2024-10-12T16:12:34Z"))(hc))
 
         result.value shouldBe Done
         verify(mockRouterConnector, times(2)).getRecords(any(), any(), any(), any())(any())
@@ -139,10 +117,11 @@ class StoreRecordsServiceSpec extends SpecBase with MockitoSugar with GetRecords
       }
 
       "must throw error if number of records from router and on data store are mismatched" in {
-        val mockRouterConnector   = mock[RouterConnector]
-        val mockRecordsRepository = mock[RecordsRepository]
+        val mockRouterConnector        = mock[RouterConnector]
+        val mockRecordsRepository      = mock[RecordsRepository]
+        val mockCheckRecordsRepository = mock[CheckRecordsRepository]
 
-        val service         = new StoreRecordsService(mockRouterConnector, mockRecordsRepository)
+        val service         = new StoreRecordsService(mockRouterConnector, mockRecordsRepository, mockCheckRecordsRepository)
         val totalRecordsNum = 60000
         val requestEori     = "GB123456789099"
 
@@ -194,7 +173,7 @@ class StoreRecordsServiceSpec extends SpecBase with MockitoSugar with GetRecords
           )
         )
         intercept[RuntimeException] {
-          await(service.storeRecords(requestEori, None)(FakeRequest(), hc))
+          await(service.storeRecords(requestEori, None)(hc))
         }
 
         verify(mockRouterConnector, times(7)).getRecords(any(), any(), any(), any())(any())
@@ -205,10 +184,11 @@ class StoreRecordsServiceSpec extends SpecBase with MockitoSugar with GetRecords
 
     "deleteAndStoreRecords" - {
       "should wipe the db and store all records in data-store" in {
-        val mockRouterConnector   = mock[RouterConnector]
-        val mockRecordsRepository = mock[RecordsRepository]
+        val mockRouterConnector        = mock[RouterConnector]
+        val mockRecordsRepository      = mock[RecordsRepository]
+        val mockCheckRecordsRepository = mock[CheckRecordsRepository]
 
-        val service         = new StoreRecordsService(mockRouterConnector, mockRecordsRepository)
+        val service         = new StoreRecordsService(mockRouterConnector, mockRecordsRepository, mockCheckRecordsRepository)
         val totalRecordsNum = 60000
         val requestEori     = "GB123456789099"
 
@@ -254,7 +234,7 @@ class StoreRecordsServiceSpec extends SpecBase with MockitoSugar with GetRecords
           )
         )
 
-        val result = await(service.deleteAndStoreRecords(requestEori)(FakeRequest(), hc))
+        val result = await(service.deleteAndStoreRecords(requestEori)(hc))
 
         result.value shouldBe Done
         verify(mockRouterConnector, times(6)).getRecords(any(), any(), any(), any())(any())

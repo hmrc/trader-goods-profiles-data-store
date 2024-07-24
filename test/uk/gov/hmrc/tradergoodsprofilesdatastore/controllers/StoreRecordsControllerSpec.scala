@@ -50,7 +50,7 @@ class StoreRecordsControllerSpec extends SpecBase with MockitoSugar with GetReco
       when(mockCheckRecordsRepository.set(any(), any())) thenReturn Future.successful(true)
 
       val mockStoreRecordsService = mock[StoreRecordsService]
-      when(mockStoreRecordsService.deleteAndStoreRecords(eqTo(requestEori))(any(), any())) thenReturn Future
+      when(mockStoreRecordsService.deleteAndStoreRecords(eqTo(requestEori))(any())) thenReturn Future
         .successful(Done)
 
       val application = applicationBuilder()

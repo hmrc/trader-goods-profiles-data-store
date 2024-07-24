@@ -17,7 +17,7 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions
 
 import play.api.Logging
-import play.api.mvc.Results.InternalServerError
+import play.api.mvc.Results.{Accepted, InternalServerError}
 
 import javax.inject.Inject
 import play.api.mvc.{ActionFilter, Result}
@@ -52,7 +52,13 @@ class StoreLatestActionImpl @Inject() (
             case None         => None
           }
         )
-        .map(_ => None) transform {
+        .map(isDone =>
+          if (isDone) {
+            None
+          } else {
+            Some(Accepted)
+          }
+        ) transform {
         case s @ Success(_)                   => s
         case Failure(cause: RuntimeException) =>
           logger.error(cause.getMessage)
