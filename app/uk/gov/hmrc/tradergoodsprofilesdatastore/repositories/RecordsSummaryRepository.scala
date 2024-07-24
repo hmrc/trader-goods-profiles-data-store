@@ -21,6 +21,7 @@ import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary.Update
 
 import java.time.Instant
 import javax.inject.{Inject, Singleton}
@@ -49,8 +50,8 @@ class RecordsSummaryRepository @Inject() (
       .find[RecordsSummary](byEori(eori))
       .headOption()
 
-  def set(eori: String, recordsUpdating: Boolean, recordsStored: Int, recordsToStore: Int): Future[Boolean] = {
-    val recordsSummary = RecordsSummary(eori, recordsUpdating, Instant.now, recordsStored, recordsToStore)
+  def set(eori: String, update: Option[Update]): Future[Boolean] = {
+    val recordsSummary = RecordsSummary(eori, update, Instant.now)
     collection
       .replaceOne(
         filter = byEori(recordsSummary.eori),

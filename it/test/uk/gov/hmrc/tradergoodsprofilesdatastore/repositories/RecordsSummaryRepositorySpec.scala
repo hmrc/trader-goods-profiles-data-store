@@ -27,6 +27,7 @@ import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary.Update
 
 import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -50,10 +51,8 @@ class RecordsSummaryRepositorySpec
 
   val sampleRecordsSummary: RecordsSummary = RecordsSummary(
     eori = testEori,
-    recordsUpdating = false,
-    lastUpdated = Instant.now,
-    recordsStored = 0,
-    recordsToStore = 0
+    currentUpdate = Some(Update(0, 0)),
+    lastUpdated = Instant.now
   )
 
   protected override val repository = new RecordsSummaryRepository(mongoComponent = mongoComponent)
@@ -63,22 +62,24 @@ class RecordsSummaryRepositorySpec
   ".set" - {
 
     "must create a recordsSummary when there is none" in {
-      val setResult     = repository.set(testEori, recordsUpdating = false, 0, 0).futureValue
-      val updatedRecord = find(byEori(testEori)).futureValue.headOption.value
+      val eori          = "EORI"
+      val setResult     = repository.set(eori, Some(Update(0, 0))).futureValue
+      val updatedRecord = find(byEori(eori)).futureValue.headOption.value
 
       setResult mustEqual true
-      updatedRecord.eori mustEqual testEori
+      updatedRecord.eori mustEqual eori
+      updatedRecord.currentUpdate mustEqual Some(Update(0, 0))
     }
 
     "must update a recordsSummary when there is one" in {
       insert(sampleRecordsSummary).futureValue
 
-      val setResult     = repository.set(testEori, recordsUpdating = true, 0, 0).futureValue
+      val setResult     = repository.set(testEori, None).futureValue
       val updatedRecord = find(byEori(testEori)).futureValue.headOption.value
 
       setResult mustEqual true
       updatedRecord.eori mustEqual testEori
-      updatedRecord.recordsUpdating mustEqual true
+      updatedRecord.currentUpdate mustEqual None
     }
   }
 

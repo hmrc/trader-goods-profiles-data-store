@@ -20,16 +20,21 @@ import play.api.libs.json.{Json, OFormat}
 
 import java.time.Instant
 
-case class RecordsSummary(
+final case class RecordsSummary(
   eori: String,
-  recordsUpdating: Boolean,
-  lastUpdated: Instant,
-  recordsStored: Int,
-  recordsToStore: Int
-)
+  currentUpdate: Option[RecordsSummary.Update],
+  lastUpdated: Instant
+) {
+  def isUpdating: Boolean = currentUpdate.isDefined
+}
 
 object RecordsSummary {
 
-  lazy val format: OFormat[RecordsSummary] = Json.format
+  final case class Update(recordsStored: Int, recordsToStore: Int)
 
+  object Update {
+    implicit lazy val format: OFormat[Update] = Json.format
+  }
+
+  implicit lazy val format: OFormat[RecordsSummary] = Json.format
 }
