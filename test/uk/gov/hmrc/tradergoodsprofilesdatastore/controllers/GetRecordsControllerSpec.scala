@@ -357,11 +357,11 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
     "return 200 and the total number of records" in {
       val totalRecordsNum = 10000
       val requestEori     = "GB123456789099"
-      val checkUrl        = routes.GetRecordsController
+      val getRecordsUrl   = routes.GetRecordsController
         .getRecordsCount(requestEori)
         .url
 
-      val validFakeGetRequest = FakeRequest("GET", checkUrl)
+      val validFakeGetRequest = FakeRequest("GET", getRecordsUrl)
 
       val mockRouterConnector = mock[RouterConnector]
       when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn Future.successful(
@@ -385,13 +385,13 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
   "getRecord" - {
 
     "return Ok with record in body when it is found" in {
-      val requestEori = "GB123456789099"
-      val record      = getGoodsItemRecord(requestEori)
-      val checkUrl    = routes.GetRecordsController
+      val requestEori   = "GB123456789099"
+      val record        = getGoodsItemRecord(requestEori)
+      val getRecordsUrl = routes.GetRecordsController
         .getRecord(requestEori, record.recordId)
         .url
 
-      val validFakeGetRequest = FakeRequest("GET", checkUrl)
+      val validFakeGetRequest = FakeRequest("GET", getRecordsUrl)
 
       val mockRouterConnector = mock[RouterConnector]
 
@@ -411,13 +411,13 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
     }
 
     "return 404 when the record is inactive" in {
-      val requestEori = "GB123456789099"
-      val record      = getGoodsInactiveItemRecord(requestEori)
-      val checkUrl    = routes.GetRecordsController
+      val requestEori   = "GB123456789099"
+      val record        = getGoodsInactiveItemRecord(requestEori)
+      val getRecordsUrl = routes.GetRecordsController
         .getRecord(requestEori, record.recordId)
         .url
 
-      val validFakeGetRequest = FakeRequest("GET", checkUrl)
+      val validFakeGetRequest = FakeRequest("GET", getRecordsUrl)
 
       val mockRouterConnector = mock[RouterConnector]
 
@@ -436,13 +436,13 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
     }
 
     "return 500 when there is an error when getting the record" in {
-      val requestEori = "GB123456789099"
-      val record      = getGoodsInactiveItemRecord(requestEori)
-      val checkUrl    = routes.GetRecordsController
+      val requestEori   = "GB123456789099"
+      val record        = getGoodsInactiveItemRecord(requestEori)
+      val getRecordsUrl = routes.GetRecordsController
         .getRecord(requestEori, record.recordId)
         .url
 
-      val validFakeGetRequest = FakeRequest("GET", checkUrl)
+      val validFakeGetRequest = FakeRequest("GET", getRecordsUrl)
 
       val mockRouterConnector = mock[RouterConnector]
 
@@ -464,13 +464,13 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
     }
 
     "return 404 when record does not exist because it has never existed (400)" in {
-      val requestEori = "GB123456789099"
-      val record      = getGoodsInactiveItemRecord(requestEori)
-      val checkUrl    = routes.GetRecordsController
+      val requestEori   = "GB123456789099"
+      val record        = getGoodsInactiveItemRecord(requestEori)
+      val getRecordsUrl = routes.GetRecordsController
         .getRecord(requestEori, record.recordId)
         .url
 
-      val validFakeGetRequest = FakeRequest("GET", checkUrl)
+      val validFakeGetRequest = FakeRequest("GET", getRecordsUrl)
       val mockRouterConnector = mock[RouterConnector]
 
       when(
@@ -491,13 +491,13 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
     }
 
     "return 404 when record does not exist because it has never existed (404)" in {
-      val requestEori = "GB123456789099"
-      val record      = getGoodsInactiveItemRecord(requestEori)
-      val checkUrl    = routes.GetRecordsController
+      val requestEori   = "GB123456789099"
+      val record        = getGoodsInactiveItemRecord(requestEori)
+      val getRecordsUrl = routes.GetRecordsController
         .getRecord(requestEori, record.recordId)
         .url
 
-      val validFakeGetRequest = FakeRequest("GET", checkUrl)
+      val validFakeGetRequest = FakeRequest("GET", getRecordsUrl)
 
       val mockRouterConnector = mock[RouterConnector]
 

@@ -26,15 +26,15 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.CheckRecords
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary
 
 import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class CheckRecordsRepositorySpec
+class RecordsSummaryRepositorySpec
     extends AnyFreeSpec
     with Matchers
-    with PlayMongoRepositorySupport[CheckRecords]
+    with PlayMongoRepositorySupport[RecordsSummary]
     with ScalaFutures
     with IntegrationPatience
     with OptionValues
@@ -48,19 +48,19 @@ class CheckRecordsRepositorySpec
 
   val testEori = "GB123456789001"
 
-  val sampleCheckRecords: CheckRecords = CheckRecords(
+  val sampleRecordsSummary: RecordsSummary = RecordsSummary(
     eori = testEori,
     recordsUpdating = false,
     lastUpdated = Instant.now
   )
 
-  protected override val repository = new CheckRecordsRepository(mongoComponent = mongoComponent)
+  protected override val repository = new RecordsSummaryRepository(mongoComponent = mongoComponent)
 
   private def byEori(eori: String): Bson = Filters.equal("eori", eori)
 
   ".set" - {
 
-    "must create a checkRecords when there is none" in {
+    "must create a recordsSummary when there is none" in {
       val setResult     = repository.set(testEori, recordsUpdating = false).futureValue
       val updatedRecord = find(byEori(testEori)).futureValue.headOption.value
 
@@ -68,8 +68,8 @@ class CheckRecordsRepositorySpec
       updatedRecord.eori mustEqual testEori
     }
 
-    "must update a checkRecords when there is one" in {
-      insert(sampleCheckRecords).futureValue
+    "must update a recordsSummary when there is one" in {
+      insert(sampleRecordsSummary).futureValue
 
       val setResult     = repository.set(testEori, recordsUpdating = true).futureValue
       val updatedRecord = find(byEori(testEori)).futureValue.headOption.value
@@ -82,14 +82,14 @@ class CheckRecordsRepositorySpec
 
   ".get" - {
 
-    "when there is a checkRecords for this eori it must get the checkRecords" in {
-      insert(sampleCheckRecords).futureValue
-      val result = repository.get(sampleCheckRecords.eori).futureValue
-      result.value mustEqual sampleCheckRecords
+    "when there is a recordsSummary for this eori it must get the recordsSummary" in {
+      insert(sampleRecordsSummary).futureValue
+      val result = repository.get(sampleRecordsSummary.eori).futureValue
+      result.value mustEqual sampleRecordsSummary
     }
 
-    "when there is no checkRecords for this eori it must return None" in {
-      repository.get(sampleCheckRecords.eori).futureValue must not be defined
+    "when there is no recordsSummary for this eori it must return None" in {
+      repository.get(sampleRecordsSummary.eori).futureValue must not be defined
     }
 
   }
