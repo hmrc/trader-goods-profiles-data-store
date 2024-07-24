@@ -23,7 +23,9 @@ import java.time.Instant
 case class RecordsSummary(
   eori: String,
   recordsUpdating: Boolean,
-  lastUpdated: Instant
+  lastUpdated: Instant,
+  recordsStored: Int,
+  recordsToStore: Int
 )
 
 object RecordsSummary {

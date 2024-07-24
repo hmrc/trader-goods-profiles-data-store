@@ -51,7 +51,9 @@ class RecordsSummaryRepositorySpec
   val sampleRecordsSummary: RecordsSummary = RecordsSummary(
     eori = testEori,
     recordsUpdating = false,
-    lastUpdated = Instant.now
+    lastUpdated = Instant.now,
+    recordsStored = 0,
+    recordsToStore = 0
   )
 
   protected override val repository = new RecordsSummaryRepository(mongoComponent = mongoComponent)
@@ -61,7 +63,7 @@ class RecordsSummaryRepositorySpec
   ".set" - {
 
     "must create a recordsSummary when there is none" in {
-      val setResult     = repository.set(testEori, recordsUpdating = false).futureValue
+      val setResult     = repository.set(testEori, recordsUpdating = false, 0, 0).futureValue
       val updatedRecord = find(byEori(testEori)).futureValue.headOption.value
 
       setResult mustEqual true
@@ -71,7 +73,7 @@ class RecordsSummaryRepositorySpec
     "must update a recordsSummary when there is one" in {
       insert(sampleRecordsSummary).futureValue
 
-      val setResult     = repository.set(testEori, recordsUpdating = true).futureValue
+      val setResult     = repository.set(testEori, recordsUpdating = true, 0, 0).futureValue
       val updatedRecord = find(byEori(testEori)).futureValue.headOption.value
 
       setResult mustEqual true

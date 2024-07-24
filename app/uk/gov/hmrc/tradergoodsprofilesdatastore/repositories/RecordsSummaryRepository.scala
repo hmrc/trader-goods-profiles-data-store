@@ -49,8 +49,8 @@ class RecordsSummaryRepository @Inject() (
       .find[RecordsSummary](byEori(eori))
       .headOption()
 
-  def set(eori: String, recordsUpdating: Boolean): Future[Boolean] = {
-    val recordsSummary = RecordsSummary(eori, recordsUpdating, Instant.now)
+  def set(eori: String, recordsUpdating: Boolean, recordsStored: Int, recordsToStore: Int): Future[Boolean] = {
+    val recordsSummary = RecordsSummary(eori, recordsUpdating, Instant.now, recordsStored, recordsToStore)
     collection
       .replaceOne(
         filter = byEori(recordsSummary.eori),
