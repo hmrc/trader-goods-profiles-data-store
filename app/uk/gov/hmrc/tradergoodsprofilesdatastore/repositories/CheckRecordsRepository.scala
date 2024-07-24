@@ -22,6 +22,7 @@ import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.CheckRecords
 
+import java.time.Instant
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -48,8 +49,8 @@ class CheckRecordsRepository @Inject() (
       .find[CheckRecords](byEori(eori))
       .headOption()
 
-  def set(eori: String): Future[Boolean] = {
-    val checkRecords = CheckRecords(eori)
+  def set(eori: String, recordsUpdating: Boolean): Future[Boolean] = {
+    val checkRecords = CheckRecords(eori, recordsUpdating, Instant.now)
     collection
       .replaceOne(
         filter = byEori(checkRecords.eori),

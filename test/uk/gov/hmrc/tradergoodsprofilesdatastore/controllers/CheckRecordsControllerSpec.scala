@@ -29,6 +29,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.CheckRecords
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.CheckRecordsRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
 
+import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 
 class CheckRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecordsResponseUtil {
@@ -46,7 +47,9 @@ class CheckRecordsControllerSpec extends SpecBase with MockitoSugar with GetReco
       val validFakeGetRequest = FakeRequest("HEAD", checkUrl)
 
       val mockCheckRecordsRepository = mock[CheckRecordsRepository]
-      when(mockCheckRecordsRepository.get(any())) thenReturn Future.successful(Some(CheckRecords(requestEori)))
+      when(mockCheckRecordsRepository.get(any())) thenReturn Future.successful(
+        Some(CheckRecords(requestEori, recordsUpdating = false, lastUpdated = Instant.now))
+      )
 
       val application = applicationBuilder()
         .overrides(

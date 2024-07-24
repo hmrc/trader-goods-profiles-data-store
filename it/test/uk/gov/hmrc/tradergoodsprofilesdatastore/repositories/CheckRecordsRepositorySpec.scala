@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
+import org.mockito.ArgumentCaptor
+import org.mockito.Mockito.when
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Filters
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
@@ -25,6 +27,8 @@ import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.CheckRecords
+
+import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class CheckRecordsRepositorySpec
@@ -42,8 +46,12 @@ class CheckRecordsRepositorySpec
     prepareDatabase()
   }
 
+  val testEori = "GB123456789001"
+
   val sampleCheckRecords: CheckRecords = CheckRecords(
-    eori = "GB123456789001"
+    eori = testEori,
+    recordsUpdating = false,
+    lastUpdated = Instant.now
   )
 
   protected override val repository = new CheckRecordsRepository(mongoComponent = mongoComponent)
@@ -53,33 +61,34 @@ class CheckRecordsRepositorySpec
   ".set" - {
 
     "must create a checkRecords when there is none" in {
-      val setResult     = repository.set(sampleCheckRecords.eori).futureValue
-      val updatedRecord = find(byEori(sampleCheckRecords.eori)).futureValue.headOption.value
+      val setResult     = repository.set(testEori, recordsUpdating = false).futureValue
+      val updatedRecord = find(byEori(testEori)).futureValue.headOption.value
 
       setResult mustEqual true
-      updatedRecord mustEqual sampleCheckRecords
+      updatedRecord.eori mustEqual testEori
     }
 
-    "must update a record when there is one" in {
+    "must update a checkRecords when there is one" in {
       insert(sampleCheckRecords).futureValue
 
-      val setResult     = repository.set(sampleCheckRecords.eori).futureValue
-      val updatedRecord = find(byEori(sampleCheckRecords.eori)).futureValue.headOption.value
+      val setResult     = repository.set(testEori, recordsUpdating = true).futureValue
+      val updatedRecord = find(byEori(testEori)).futureValue.headOption.value
 
       setResult mustEqual true
-      updatedRecord mustEqual sampleCheckRecords
+      updatedRecord.eori mustEqual testEori
+      updatedRecord.recordsUpdating mustEqual true
     }
   }
 
   ".get" - {
 
-    "when there is a record for this eori it must get the record" in {
+    "when there is a checkRecords for this eori it must get the checkRecords" in {
       insert(sampleCheckRecords).futureValue
       val result = repository.get(sampleCheckRecords.eori).futureValue
       result.value mustEqual sampleCheckRecords
     }
 
-    "when there is no record for this eori it must return None" in {
+    "when there is no checkRecords for this eori it must return None" in {
       repository.get(sampleCheckRecords.eori).futureValue must not be defined
     }
 
