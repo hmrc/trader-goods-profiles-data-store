@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
+import org.apache.pekko.Done
 import org.mongodb.scala.model.Filters
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
@@ -95,7 +96,7 @@ class SessionRepositorySpec
       insert(profileResponse).futureValue
       val result      = repository.deleteAll.futureValue
       val recordCheck = repository.get(profileEori).futureValue
-      result mustEqual true
+      result mustEqual Done
       recordCheck mustEqual None
     }
   }

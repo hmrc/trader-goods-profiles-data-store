@@ -68,7 +68,7 @@ class ProfileController @Inject() (
     if (config.droppingProfileCollection)
       profileRepository.deleteAll.map(_ => Ok)
     else
-      Future.successful(NotFound)
+      Future.successful(InternalServerError)
   }
 
 }
