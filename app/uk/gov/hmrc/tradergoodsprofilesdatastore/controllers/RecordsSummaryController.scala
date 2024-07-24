@@ -19,20 +19,20 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.CheckRecordsRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsSummaryRepository
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
-class CheckRecordsController @Inject() (
-  checkRecordsRepository: CheckRecordsRepository,
+class RecordsSummaryController @Inject() (
+  recordsSummaryRepository: RecordsSummaryRepository,
   cc: ControllerComponents,
   identify: IdentifierAction
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
-  def checkRecords(eori: String): Action[AnyContent] = identify.async { implicit request =>
-    checkRecordsRepository
+  def recordsSummary(eori: String): Action[AnyContent] = identify.async { implicit request =>
+    recordsSummaryRepository
       .get(eori)
       .map {
         case Some(_) => NoContent

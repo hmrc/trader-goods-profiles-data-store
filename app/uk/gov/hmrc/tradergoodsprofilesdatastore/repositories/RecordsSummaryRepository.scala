@@ -20,20 +20,20 @@ import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.CheckRecords
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary
 
 import java.time.Instant
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class CheckRecordsRepository @Inject() (
+class RecordsSummaryRepository @Inject() (
   mongoComponent: MongoComponent
 )(implicit ec: ExecutionContext)
-    extends PlayMongoRepository[CheckRecords](
-      collectionName = "checkRecords",
+    extends PlayMongoRepository[RecordsSummary](
+      collectionName = "recordsSummary",
       mongoComponent = mongoComponent,
-      domainFormat = CheckRecords.format,
+      domainFormat = RecordsSummary.format,
       indexes = Seq(
         IndexModel(
           Indexes.ascending("eori"),
@@ -44,17 +44,17 @@ class CheckRecordsRepository @Inject() (
 
   private def byEori(eori: String): Bson = Filters.equal("eori", eori)
 
-  def get(eori: String): Future[Option[CheckRecords]] =
+  def get(eori: String): Future[Option[RecordsSummary]] =
     collection
-      .find[CheckRecords](byEori(eori))
+      .find[RecordsSummary](byEori(eori))
       .headOption()
 
-  def set(eori: String, recordsUpdating: Boolean): Future[Boolean] = {
-    val checkRecords = CheckRecords(eori, recordsUpdating, Instant.now)
+  def set(eori: String, recordsUpdating: Boolean, recordsStored: Int, recordsToStore: Int): Future[Boolean] = {
+    val recordsSummary = RecordsSummary(eori, recordsUpdating, Instant.now, recordsStored, recordsToStore)
     collection
       .replaceOne(
-        filter = byEori(checkRecords.eori),
-        replacement = checkRecords,
+        filter = byEori(recordsSummary.eori),
+        replacement = recordsSummary,
         options = ReplaceOptions().upsert(true)
       )
       .toFuture()

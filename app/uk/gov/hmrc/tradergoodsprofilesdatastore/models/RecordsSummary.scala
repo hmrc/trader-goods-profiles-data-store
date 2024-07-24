@@ -16,35 +16,20 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.models
 
-import play.api.libs.json.{Format, JsSuccess, JsValue, Json, Reads, Writes}
+import play.api.libs.json.{Json, OFormat}
 
 import java.time.Instant
 
-case class CheckRecords(
+case class RecordsSummary(
   eori: String,
   recordsUpdating: Boolean,
-  lastUpdated: Instant
+  lastUpdated: Instant,
+  recordsStored: Int,
+  recordsToStore: Int
 )
 
-object CheckRecords {
+object RecordsSummary {
 
-  implicit val writes: Writes[CheckRecords] = (checkRecords: CheckRecords) =>
-    Json.obj(
-      "eori"            -> checkRecords.eori,
-      "recordsUpdating" -> checkRecords.recordsUpdating,
-      "lastUpdated"     -> checkRecords.lastUpdated
-    )
-
-  implicit val reads: Reads[CheckRecords] = (json: JsValue) =>
-    JsSuccess(
-      CheckRecords(
-        (json \ "eori").as[String],
-        (json \ "recordsUpdating").as[Boolean],
-        (json \ "lastUpdated").as[Instant]
-      )
-    )
-
-  implicit val format: Format[CheckRecords] =
-    Format(reads, writes)
+  lazy val format: OFormat[RecordsSummary] = Json.format
 
 }
