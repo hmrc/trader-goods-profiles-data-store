@@ -19,18 +19,17 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.services
 import com.google.inject.Inject
 import org.apache.pekko.Done
 import play.api.Logging
-import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{recursivePageSize, recursiveStartingPage}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{CheckRecordsRepository, RecordsRepository}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{RecordsRepository, RecordsSummaryRepository}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class StoreRecordsService @Inject() (
   routerConnector: RouterConnector,
   recordsRepository: RecordsRepository,
-  checkRecordsRepository: CheckRecordsRepository
+  recordsSummaryRepository: RecordsSummaryRepository
 )(implicit
   ec: ExecutionContext
 ) extends Logging {
@@ -39,17 +38,11 @@ class StoreRecordsService @Inject() (
     eori: String,
     lastUpdatedDate: Option[String]
   )(implicit hc: HeaderCarrier): Future[Boolean] =
-    storeFirstBatchOfRecords(eori, lastUpdatedDate).flatMap { isMoreData =>
-      if (isMoreData) {
-        println("isMoreData")
-        checkRecordsRepository.set(eori, recordsUpdating = true).map { _ =>
-          println("checkRecordsRepository.set")
-          println(true)
-
-          storeRecordsRecursively(eori, recursiveStartingPage + 1, lastUpdatedDate).onComplete { _ =>
-            checkRecordsRepository.set(eori, recordsUpdating = false).flatMap { _ =>
-              println("checkRecordsRepository.set")
-              println(false)
+    storeFirstBatchOfRecords(eori, lastUpdatedDate).flatMap { recordsToStore =>
+      if (recordsToStore > recursivePageSize) {
+        recordsSummaryRepository.set(eori, recordsUpdating = true, 0, recordsToStore).map { _ =>
+          storeRecordsRecursively(eori, recursiveStartingPage + 1, lastUpdatedDate, 0, recordsToStore).onComplete { _ =>
+            recordsSummaryRepository.set(eori, recordsUpdating = false, recordsToStore, 0).flatMap { _ =>
               checkInSync(eori)
             }
           }
@@ -73,42 +66,42 @@ class StoreRecordsService @Inject() (
       }
     }
 
+  //TODO delete function
   def deleteAndStoreRecords(
     eori: String
   )(implicit hc: HeaderCarrier): Future[Done] =
     recordsRepository.deleteMany(eori).flatMap { _ =>
-      storeRecordsRecursively(eori, recursiveStartingPage, None).map(_ => Done)
+      storeRecordsRecursively(eori, recursiveStartingPage, None, 0, 0).map(_ => Done)
     }
 
   private def storeFirstBatchOfRecords(
     eori: String,
     lastUpdatedDate: Option[String]
-  )(implicit hc: HeaderCarrier): Future[Boolean] =
+  )(implicit hc: HeaderCarrier): Future[Int] =
     routerConnector.getRecords(eori, lastUpdatedDate, Some(recursiveStartingPage), Some(recursivePageSize)).flatMap {
       recordsResponse =>
         recordsRepository
           .saveRecords(eori, recordsResponse.goodsItemRecords)
-          .map(_ => recordsResponse.pagination.nextPage.isDefined)
+          .map(_ => recordsResponse.pagination.totalRecords)
     }
 
   private def storeRecordsRecursively(
     eori: String,
     page: Int,
-    lastUpdatedDate: Option[String]
+    lastUpdatedDate: Option[String],
+    recordsToStore: Int,
+    recordsStored: Int
   )(implicit hc: HeaderCarrier): Future[Done] =
     routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(recursivePageSize)).flatMap { recordsResponse =>
       recordsRepository.saveRecords(eori, recordsResponse.goodsItemRecords).flatMap { _ =>
-        println("storeRecordsRecursively")
-        println("eori")
-        println(eori)
-        println("page")
-        println(page)
-        println(recordsResponse.pagination)
-
-        if (recordsResponse.pagination.nextPage.isDefined) {
-          storeRecordsRecursively(eori, page + 1, lastUpdatedDate)
-        } else {
-          Future.successful(Done)
+        val newRecordsToStore = recordsToStore - recordsResponse.goodsItemRecords.size
+        val newRecordsStored  = recordsStored + recordsResponse.goodsItemRecords.size
+        recordsSummaryRepository.set(eori, recordsUpdating = true, newRecordsToStore, newRecordsStored).flatMap { _ =>
+          if (recordsResponse.pagination.nextPage.isDefined) {
+            storeRecordsRecursively(eori, page + 1, lastUpdatedDate, newRecordsToStore, newRecordsStored)
+          } else {
+            Future.successful(Done)
+          }
         }
       }
     }
