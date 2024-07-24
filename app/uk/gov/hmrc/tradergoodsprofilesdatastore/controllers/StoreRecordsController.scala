@@ -38,8 +38,7 @@ class StoreRecordsController @Inject() (
   ): Action[AnyContent] = identify.async { implicit request =>
     storeRecordsService.deleteAndStoreRecords(eori).flatMap { _ =>
       recordsSummaryRepository
-        // TODO remove whole file
-        .set(eori, recordsUpdating = false, 0, 0)
+        .set(eori, None)
         .map(_ => NoContent)
     }
   }
