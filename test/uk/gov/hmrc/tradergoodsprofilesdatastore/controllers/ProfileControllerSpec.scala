@@ -196,7 +196,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
 
       val mockProfileRepository = mock[ProfileRepository]
       val dataStoreAppConfig    = mock[DataStoreAppConfig]
-      when(mockProfileRepository.deleteAll) thenReturn Future.successful(true)
+      when(mockProfileRepository.deleteAll) thenReturn Future.successful(Done)
       when(dataStoreAppConfig.droppingProfileCollection) thenReturn true
       val application           = applicationBuilder()
         .overrides(
@@ -211,11 +211,11 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
       }
     }
 
-    "return 404 when the feature flag for dropping profile collection is false" in {
+    "return 500 when the feature flag for dropping profile collection is false" in {
 
       val mockProfileRepository = mock[ProfileRepository]
       val dataStoreAppConfig    = mock[DataStoreAppConfig]
-      when(mockProfileRepository.deleteAll) thenReturn Future.successful(true)
+      when(mockProfileRepository.deleteAll) thenReturn Future.successful(Done)
       when(dataStoreAppConfig.droppingProfileCollection) thenReturn false
       val application           = applicationBuilder()
         .overrides(
@@ -226,7 +226,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
 
       running(application) {
         val result = route(application, deleteAllRequest).value
-        status(result) shouldBe Status.NOT_FOUND
+        status(result) shouldBe Status.INTERNAL_SERVER_ERROR
       }
     }
   }
