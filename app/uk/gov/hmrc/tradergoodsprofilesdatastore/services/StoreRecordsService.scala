@@ -52,8 +52,9 @@ class StoreRecordsService @Inject() (
               println(false)
               checkInSync(eori)
             }
+            false
           }
-          false
+          true
         }
       } else {
         checkInSync(eori).map(_ => true)
