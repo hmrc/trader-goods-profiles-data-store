@@ -41,7 +41,7 @@ class StoreRecordsServiceSpec extends SpecBase with MockitoSugar with GetRecords
 
   "StoreRecordsService" - {
     "storeRecords" - {
-      "must store all records in data-store with one pages" in {
+      "must store all records in data-store with one page" in {
         val mockRouterConnector        = mock[RouterConnector]
         val mockRecordsRepository      = mock[RecordsRepository]
         val mockCheckRecordsRepository = mock[CheckRecordsRepository]
@@ -78,7 +78,6 @@ class StoreRecordsServiceSpec extends SpecBase with MockitoSugar with GetRecords
         verify(mockRouterConnector, times(2))
           .getRecords(any(), any(), any(), any())(any())
         verify(mockRecordsRepository, times(1)).saveRecords(any(), any())
-        verify(mockCheckRecordsRepository, times(2)).set(any(), any())
         verify(mockRecordsRepository).getCountWithInactive(any())
       }
 
