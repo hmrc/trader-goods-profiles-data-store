@@ -179,63 +179,6 @@ class StoreRecordsServiceSpec
         verify(mockRecordsRepository, times(1)).saveRecords(any(), any())
         verify(mockRecordsRepository).getCountWithInactive(any())
       }
-
-    }
-
-    "deleteAndStoreRecords" - {
-      "should wipe the db and store all records in data-store" in {
-        val totalRecordsNum = 3000
-        val requestEori     = "GB123456789099"
-
-        when(mockRecordsRepository.deleteManyByEori(any())) thenReturn Future.successful(10)
-        when(mockRecordsSummaryRepository.set(any(), any())) thenReturn Future.successful(true)
-        when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
-        when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = getTestRecords(requestEori, recursivePageSize),
-              Pagination(totalRecordsNum, 1, 6, Some(2), None)
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 2, 6, Some(3), Some(1))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 3, 6, Some(4), Some(2))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 4, 6, Some(5), Some(3))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 5, 6, Some(6), Some(4))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 6, 6, None, Some(5))
-            )
-          )
-        )
-
-        val result = await(service.deleteAndStoreRecords(requestEori)(hc))
-
-        result.value shouldBe Done
-        verify(mockRouterConnector, times(6)).getRecords(any(), any(), any(), any())(any())
-        verify(mockRecordsRepository, times(6)).saveRecords(any(), any())
-        verify(mockRecordsRepository).deleteManyByEori(any())
-      }
     }
   }
 }

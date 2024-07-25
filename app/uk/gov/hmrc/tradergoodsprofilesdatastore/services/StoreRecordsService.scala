@@ -25,10 +25,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary.Update
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{recursivePageSize, recursiveStartingPage}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{RecordsRepository, RecordsSummaryRepository}
 
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import scala.concurrent.{ExecutionContext, Future}
-import scala.math.Ordered.orderingToOrdered
 
 class StoreRecordsService @Inject() (
   routerConnector: RouterConnector,
@@ -44,20 +41,20 @@ class StoreRecordsService @Inject() (
   )(implicit hc: HeaderCarrier): Future[Boolean] =
     storeFirstBatchOfRecords(eori, lastUpdatedDate).flatMap { recordsToStore =>
       if (recordsToStore > recursivePageSize) {
-        recordsSummaryRepository.set(eori, Some(Update(recursivePageSize, recordsToStore - recursivePageSize))).map {
-          _ =>
-            storeRecordsRecursively(
-              eori,
-              recursiveStartingPage + 1,
-              lastUpdatedDate,
-              recordsToStore - recursivePageSize,
-              recursivePageSize
-            ).onComplete { _ =>
-              recordsSummaryRepository.set(eori, None).flatMap { _ =>
-                checkInSync(eori)
-              }
+        recordsSummaryRepository.set(eori, Some(Update(recursivePageSize, recordsToStore - recursivePageSize))).map { _ =>
+          storeRecordsRecursively(
+            eori,
+            recursiveStartingPage + 1,
+            lastUpdatedDate,
+            recordsToStore - recursivePageSize,
+            recursivePageSize
+          ).onComplete { _ =>
+            recordsSummaryRepository.set(eori, None).flatMap { _ =>
+              checkInSync(eori)
             }
-            false
+          }
+
+          false
         }
       } else {
         checkInSync(eori).map(_ => true)
@@ -75,14 +72,6 @@ class StoreRecordsService @Inject() (
         }
         Done
       }
-    }
-
-  //TODO delete function
-  def deleteAndStoreRecords(
-    eori: String
-  )(implicit hc: HeaderCarrier): Future[Done] =
-    recordsRepository.deleteManyByEori(eori).flatMap { _ =>
-      storeRecordsRecursively(eori, recursiveStartingPage, None, 0, 0).map(_ => Done)
     }
 
   private def storeFirstBatchOfRecords(
