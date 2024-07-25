@@ -19,7 +19,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.services
 import org.apache.pekko.Done
 import org.apache.pekko.util.Helpers.Requiring
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito.{reset, times, verify, when}
+import org.mockito.Mockito.{reset, times, verify, verifyNoInteractions, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.Eventually.eventually
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
@@ -180,6 +180,57 @@ class StoreRecordsServiceSpec
           .getRecords(any(), eqTo(None), any(), any())(any())
         verify(mockRecordsRepository, times(1)).saveRecords(any(), any())
         verify(mockRecordsRepository).getCountWithInactive(any())
+      }
+
+      "must set update to None even when the recursive call fails" in {
+        val totalRecordsNum = 2000
+        val requestEori     = "GB123456789099"
+
+        when(mockRecordsRepository.getCountWithInactive(any())) thenReturn Future.successful(totalRecordsNum)
+
+        when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
+
+        when(mockRecordsSummaryRepository.set(any(), any())) thenReturn Future.successful(true)
+
+        when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
+          Future.successful(
+            GetRecordsResponse(
+              goodsItemRecords = getTestRecords(requestEori, recursivePageSize),
+              Pagination(totalRecordsNum, 0, 4, Some(1), None)
+            )
+          ),
+          Future.successful(
+            GetRecordsResponse(
+              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
+              Pagination(totalRecordsNum, 1, 4, Some(2), Some(0))
+            )
+          ),
+          Future.successful(
+            GetRecordsResponse(
+              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
+              Pagination(totalRecordsNum, 2, 4, Some(3), Some(1))
+            )
+          ),
+          Future.successful(
+            GetRecordsResponse(
+              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
+              Pagination(totalRecordsNum, 3, 4, None, Some(2))
+            )
+          ),
+          Future.failed(
+            new RuntimeException("error")
+          )
+        )
+
+        val result = await(service.storeRecords(requestEori, None)(hc))
+
+        eventually {
+          verify(mockRouterConnector, times(4)).getRecords(any(), any(), any(), any())(any())
+          verify(mockRecordsRepository, times(4)).saveRecords(any(), any())
+          verify(mockRecordsSummaryRepository, times(5)).set(any(), any())
+          verify(mockRecordsRepository, times(0)).getCountWithInactive(any())
+          result shouldBe false
+        }
       }
     }
 
