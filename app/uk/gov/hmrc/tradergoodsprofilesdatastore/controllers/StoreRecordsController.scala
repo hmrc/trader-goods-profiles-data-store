@@ -26,20 +26,13 @@ import scala.concurrent.ExecutionContext
 import uk.gov.hmrc.tradergoodsprofilesdatastore.services.StoreRecordsService
 
 class StoreRecordsController @Inject() (
-  recordsSummaryRepository: RecordsSummaryRepository,
   cc: ControllerComponents,
   identify: IdentifierAction,
-  storeRecordsService: StoreRecordsService
-)(implicit ec: ExecutionContext)
-    extends BackendController(cc) {
+) extends BackendController(cc) {
 
   def storeAllRecords(
     eori: String
-  ): Action[AnyContent] = identify.async { implicit request =>
-    storeRecordsService.deleteAndStoreRecords(eori).flatMap { _ =>
-      recordsSummaryRepository
-        .set(eori, None)
-        .map(_ => NoContent)
-    }
+  ): Action[AnyContent] = identify {
+    NoContent
   }
 }
