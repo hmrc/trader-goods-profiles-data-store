@@ -56,11 +56,16 @@ class StoreRecordsService @Inject() (
         if (recordsToStore > recursivePageSize) {
           recordsSummaryRepository.set(eori, Some(Update(recursivePageSize, recordsToStore - recursivePageSize))).map {
             _ =>
-              storeRecordsRecursively(eori, recursiveStartingPage + 1, lastUpdatedDate, 0, recordsToStore).onComplete {
-                _ =>
-                  recordsSummaryRepository.set(eori, None).flatMap { _ =>
-                    checkInSync(eori)
-                  }
+              storeRecordsRecursively(
+                eori,
+                recursiveStartingPage + 1,
+                lastUpdatedDate,
+                recordsToStore - recursivePageSize,
+                recursivePageSize
+              ).onComplete { _ =>
+                recordsSummaryRepository.set(eori, None).flatMap { _ =>
+                  checkInSync(eori)
+                }
               }
               false
           }
@@ -117,7 +122,7 @@ class StoreRecordsService @Inject() (
       recordsRepository.saveRecords(eori, recordsResponse.goodsItemRecords).flatMap { _ =>
         val newRecordsToStore = recordsToStore - recordsResponse.goodsItemRecords.size
         val newRecordsStored  = recordsStored + recordsResponse.goodsItemRecords.size
-        recordsSummaryRepository.set(eori, Some(Update(newRecordsToStore, newRecordsStored))).flatMap { _ =>
+        recordsSummaryRepository.set(eori, Some(Update(newRecordsStored, newRecordsToStore))).flatMap { _ =>
           if (recordsResponse.pagination.nextPage.isDefined) {
             storeRecordsRecursively(eori, page + 1, lastUpdatedDate, newRecordsToStore, newRecordsStored)
           } else {
