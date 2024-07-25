@@ -38,40 +38,29 @@ class StoreRecordsService @Inject() (
   ec: ExecutionContext
 ) extends Logging {
 
-  def cleanseCache(
-    eori: String,
-    lastUpdatedDate: Option[String]
-  ): Future[Boolean] =
-    lastUpdatedDate match {
-      case Some(date) if Instant.parse(date) > Instant.now.minus(4 * 365, ChronoUnit.DAYS) => Future.successful(false)
-      case _                                                                               => recordsRepository.deleteManyByEori(eori).map(_ => true)
-    }
-
   def storeRecords(
     eori: String,
     lastUpdatedDate: Option[String]
   )(implicit hc: HeaderCarrier): Future[Boolean] =
-    cleanseCache(eori, lastUpdatedDate).flatMap { _ =>
-      storeFirstBatchOfRecords(eori, lastUpdatedDate).flatMap { recordsToStore =>
-        if (recordsToStore > recursivePageSize) {
-          recordsSummaryRepository.set(eori, Some(Update(recursivePageSize, recordsToStore - recursivePageSize))).map {
-            _ =>
-              storeRecordsRecursively(
-                eori,
-                recursiveStartingPage + 1,
-                lastUpdatedDate,
-                recordsToStore - recursivePageSize,
-                recursivePageSize
-              ).onComplete { _ =>
-                recordsSummaryRepository.set(eori, None).flatMap { _ =>
-                  checkInSync(eori)
-                }
+    storeFirstBatchOfRecords(eori, lastUpdatedDate).flatMap { recordsToStore =>
+      if (recordsToStore > recursivePageSize) {
+        recordsSummaryRepository.set(eori, Some(Update(recursivePageSize, recordsToStore - recursivePageSize))).map {
+          _ =>
+            storeRecordsRecursively(
+              eori,
+              recursiveStartingPage + 1,
+              lastUpdatedDate,
+              recordsToStore - recursivePageSize,
+              recursivePageSize
+            ).onComplete { _ =>
+              recordsSummaryRepository.set(eori, None).flatMap { _ =>
+                checkInSync(eori)
               }
-              false
-          }
-        } else {
-          checkInSync(eori).map(_ => true)
+            }
+            false
         }
+      } else {
+        checkInSync(eori).map(_ => true)
       }
     }
 
@@ -104,11 +93,7 @@ class StoreRecordsService @Inject() (
       recordsResponse =>
         recordsRepository
           .saveRecords(eori, recordsResponse.goodsItemRecords)
-          .flatMap(_ =>
-            recordsRepository
-              .deleteManyByEoriAndInactive(eori)
-              .map(_ => recordsResponse.pagination.totalRecords)
-          )
+          .map(_ => recordsResponse.pagination.totalRecords)
     }
 
   private def storeRecordsRecursively(
@@ -126,7 +111,7 @@ class StoreRecordsService @Inject() (
           if (recordsResponse.pagination.nextPage.isDefined) {
             storeRecordsRecursively(eori, page + 1, lastUpdatedDate, newRecordsToStore, newRecordsStored)
           } else {
-            recordsRepository.deleteManyByEoriAndInactive(eori).map(_ => Done)
+            Future.successful(Done)
           }
         }
       }
