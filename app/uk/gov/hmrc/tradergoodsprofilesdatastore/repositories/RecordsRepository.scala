@@ -196,12 +196,4 @@ class RecordsRepository @Inject() (
       case None        => Future.successful(Seq.empty)
     }
   }
-
-  def deleteManyByEori(eori: String): Future[Long] = Mdc.preservingMdc {
-    collection.deleteMany(byEori(eori)).toFuture().map(result => result.getDeletedCount)
-  }
-
-  def deleteManyByEoriAndInactive(eori: String): Future[Long] = Mdc.preservingMdc {
-    collection.deleteMany(byEoriAndInactive(eori)).toFuture().map(result => result.getDeletedCount)
-  }
 }

@@ -696,40 +696,6 @@ class RecordsRepositorySpec
     mustPreserveMdc(repository.filterRecords(sampleGoodsItemRecordWithSpecialCharacters.eori, Some("*"), None, exactMatch = false))
   }
 
-  ".deleteManyByEori" - {
-
-    "must delete all records with matching eori" in {
-      insert(sampleGoodsItemRecord).futureValue
-      insert(sampleGoodsItemRecord.copy(recordId = "2", eori = "test")).futureValue
-      insert(sampleGoodsItemRecord.copy(recordId = "3")).futureValue
-      insert(sampleGoodsItemRecord.copy(recordId = "4")).futureValue
-      insert(sampleGoodsItemRecord.copy(recordId = "5")).futureValue
-      insert(latestGoodsItemRecord).futureValue
-
-      val result = repository.deleteManyByEori(sampleGoodsItemRecord.eori).futureValue
-      result mustEqual 5
-    }
-
-    mustPreserveMdc(repository.deleteManyByEori(sampleGoodsItemRecord.eori))
-  }
-
-  ".deleteManyByEoriAndInactive" - {
-
-    "must delete all records with matching eori" in {
-      insert(sampleGoodsItemRecord).futureValue
-      insert(sampleGoodsItemRecord.copy(recordId = "2", eori = "test", active = false)).futureValue
-      insert(sampleGoodsItemRecord.copy(recordId = "3")).futureValue
-      insert(sampleGoodsItemRecord.copy(recordId = "4", active = false)).futureValue
-      insert(sampleGoodsItemRecord.copy(recordId = "5", active = false)).futureValue
-      insert(latestGoodsItemRecord).futureValue
-
-      val result = repository.deleteManyByEoriAndInactive(sampleGoodsItemRecord.eori).futureValue
-      result mustEqual 2
-    }
-
-    mustPreserveMdc(repository.deleteManyByEoriAndInactive(sampleGoodsItemRecord.eori))
-  }
-
   ".updateRecords" - {
 
     "must insert, update, or delete the relevant records" in {
