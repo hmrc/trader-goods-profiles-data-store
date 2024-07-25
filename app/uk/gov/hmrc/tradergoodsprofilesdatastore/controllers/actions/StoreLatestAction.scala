@@ -24,14 +24,13 @@ import play.api.mvc.{ActionFilter, Result}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.IdentifierRequest
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsSummaryRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.services.StoreRecordsService
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
 
 class StoreLatestActionImpl @Inject() (
-  recordsRepository: RecordsRepository,
+  recordsSummaryRepository: RecordsSummaryRepository,
   storeRecordsService: StoreRecordsService
 )(implicit val executionContext: ExecutionContext)
     extends StoreLatestAction
@@ -43,14 +42,11 @@ class StoreLatestActionImpl @Inject() (
     implicit val hc: HeaderCarrier             = HeaderCarrierConverter.fromRequest(identifierRequest)
     implicit val request: IdentifierRequest[A] = identifierRequest
 
-    recordsRepository.getLatest(identifierRequest.eori).flatMap { response =>
+    recordsSummaryRepository.get(identifierRequest.eori).flatMap { recordsSummaryOpt =>
       storeRecordsService
         .storeRecords(
           identifierRequest.eori,
-          response match {
-            case Some(record) => Some(record.updatedDateTime.toString)
-            case None         => None
-          }
+          recordsSummaryOpt.map(_.lastUpdated.toString)
         )
         .map(isDone =>
           if (isDone) {
@@ -58,12 +54,7 @@ class StoreLatestActionImpl @Inject() (
           } else {
             Some(Accepted)
           }
-        ) transform {
-        case s @ Success(_)                   => s
-        case Failure(cause: RuntimeException) =>
-          logger.error(cause.getMessage)
-          Success(Some(InternalServerError))
-      }
+        )
     }
   }
 }
