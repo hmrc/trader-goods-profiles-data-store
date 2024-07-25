@@ -64,7 +64,7 @@ class StoreRecordsServiceSpec
         val requestEori     = "GB123456789099"
         when(mockRecordsRepository.getCountWithInactive(any())) thenReturn Future.successful(totalRecordsNum)
         when(mockRecordsSummaryRepository.set(any(), any())) thenReturn Future.successful(true)
-        when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
+        when(mockRecordsRepository.updateRecords(any(), any())) thenReturn Future.successful(Done)
         when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
           Future.successful(
             GetRecordsResponse(
@@ -102,10 +102,9 @@ class StoreRecordsServiceSpec
         result shouldBe false
 
         val done = Promise[Done]
-
         eventually {
           verify(mockRouterConnector, times(5)).getRecords(any(), any(), any(), any())(any())
-          verify(mockRecordsRepository, times(4)).saveRecords(any(), any())
+          verify(mockRecordsRepository, times(4)).updateRecords(any(), any())
           verify(mockRecordsSummaryRepository, times(5)).set(any(), any())
           verify(mockRecordsRepository).getCountWithInactive(any())
           done.success(Done)
@@ -119,7 +118,7 @@ class StoreRecordsServiceSpec
 
         when(mockRecordsRepository.getCountWithInactive(any())) thenReturn Future.successful(totalRecordsNum)
         when(mockRecordsSummaryRepository.set(any(), any())) thenReturn Future.successful(true)
-        when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
+        when(mockRecordsRepository.updateRecords(any(), any())) thenReturn Future.successful(Done)
         when(
           mockRouterConnector.getRecords(
             any(),
@@ -141,7 +140,7 @@ class StoreRecordsServiceSpec
 
         verify(mockRouterConnector, times(2))
           .getRecords(any(), any(), any(), any())(any())
-        verify(mockRecordsRepository, times(1)).saveRecords(any(), any())
+        verify(mockRecordsRepository, times(1)).updateRecords(any(), any())
         verify(mockRecordsRepository).getCountWithInactive(any())
       }
 
@@ -151,7 +150,7 @@ class StoreRecordsServiceSpec
 
         when(mockRecordsRepository.getCountWithInactive(any())) thenReturn Future.successful(totalRecordsNum)
         when(mockRecordsSummaryRepository.set(any(), any())) thenReturn Future.successful(true)
-        when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
+        when(mockRecordsRepository.updateRecords(any(), any())) thenReturn Future.successful(Done)
         when(
           mockRouterConnector.getRecords(
             any(),
@@ -176,7 +175,7 @@ class StoreRecordsServiceSpec
           .getRecords(any(), eqTo(lastUpdatedDate), any(), any())(any())
         verify(mockRouterConnector)
           .getRecords(any(), eqTo(None), any(), any())(any())
-        verify(mockRecordsRepository, times(1)).saveRecords(any(), any())
+        verify(mockRecordsRepository, times(1)).updateRecords(any(), any())
         verify(mockRecordsRepository).getCountWithInactive(any())
       }
     }
