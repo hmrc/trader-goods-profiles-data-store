@@ -42,7 +42,8 @@ class RecordsRepository @Inject() (
           IndexOptions().name("recordId")
         )
       )
-    ) with Transactions {
+    )
+    with Transactions {
 
   private implicit val tc = TransactionConfiguration.strict
 
@@ -54,7 +55,7 @@ class RecordsRepository @Inject() (
   private def byEoriAndInactive(eori: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.equal("active", false))
 
-  private def byEoriAndRecordId(eori: String, recordId: String): Bson        =
+  private def byEoriAndRecordId(eori: String, recordId: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.equal("_id", recordId))
 
   private def byEoriAndRecordIds(eori: String, recordIds: Seq[String]): Bson =
@@ -98,25 +99,25 @@ class RecordsRepository @Inject() (
       })
       .map(_ => true)
 
-  def applyChanges(eori: String, records: Seq[GoodsItemRecord]): Future[Boolean] = {
-    val activeRecords   = records.filter(_.active)
-    val activeRecordsIds = records.filter(_.active).map(_.recordId)
-    val inactiveRecordsIds = records.filter(!_.active).map(_.recordId)
-
-    withSessionAndTransaction(session =>
-      for {
-        deleteResult <- collection.deleteMany(byEoriAndRecordIds(eori, inactiveRecordsIds)).toFuture()
-        updateResult <- collection.updateMany(
-          clientSession = session,
-          update = activeRecords,
-          filter = byEoriAndRecordIds(eori, activeRecordsIds),
-          options = UpdateOptions().upsert(true)
-        ).toFuture()
-      } yield {
-
-      }
-
-  }
+//  def applyChanges(eori: String, records: Seq[GoodsItemRecord]): Future[Boolean] = {
+//    val activeRecords   = records.filter(_.active)
+//    val activeRecordsIds = records.filter(_.active).map(_.recordId)
+//    val inactiveRecordsIds = records.filter(!_.active).map(_.recordId)
+//
+//    withSessionAndTransaction(session =>
+//      for {
+//        deleteResult <- collection.deleteMany(byEoriAndRecordIds(eori, inactiveRecordsIds)).toFuture()
+//        updateResult <- collection.updateMany(
+//          clientSession = session,
+//          update = activeRecords,
+//          filter = byEoriAndRecordIds(eori, activeRecordsIds),
+//          options = UpdateOptions().upsert(true)
+//        ).toFuture()
+//      } yield {
+//
+//      }
+//
+//  }
 
   // split into 2 groups, on eto delete and one to update/create
 
