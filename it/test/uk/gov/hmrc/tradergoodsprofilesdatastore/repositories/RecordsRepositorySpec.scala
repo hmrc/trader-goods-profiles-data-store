@@ -682,4 +682,19 @@ class RecordsRepositorySpec
       result mustEqual 5
     }
   }
+
+  ".deleteManyByEoriAndInactive" - {
+    "must delete all records with matching eori" in {
+      insert(sampleGoodsItemRecords).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "2", eori = "test", active = false)).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "3")).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "4", active = false)).futureValue
+      insert(sampleGoodsItemRecords.copy(recordId = "5", active = false)).futureValue
+      insert(latestGoodsItemRecords).futureValue
+
+      val result = repository.deleteManyByEoriAndInactive(sampleGoodsItemRecords.eori).futureValue
+      result mustEqual 2
+    }
+  }
+
 }

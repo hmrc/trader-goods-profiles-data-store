@@ -25,7 +25,10 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary.Update
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{recursivePageSize, recursiveStartingPage}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{RecordsRepository, RecordsSummaryRepository}
 
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import scala.concurrent.{ExecutionContext, Future}
+import scala.math.Ordered.orderingToOrdered
 
 class StoreRecordsService @Inject() (
   routerConnector: RouterConnector,
@@ -38,10 +41,10 @@ class StoreRecordsService @Inject() (
   def cleanseCache(
     eori: String,
     lastUpdatedDate: Option[String]
-  )(implicit hc: HeaderCarrier): Future[Boolean] =
+  ): Future[Boolean] =
     lastUpdatedDate match {
-      case Some(_) => Future.successful(false)
-      case None    => recordsRepository.deleteManyByEori(eori).map(_ => true)
+      case Some(date) if Instant.parse(date) > Instant.now.minus(4 * 365, ChronoUnit.DAYS) => Future.successful(false)
+      case _                                                                               => recordsRepository.deleteManyByEori(eori).map(_ => true)
     }
 
   def storeRecords(
@@ -96,7 +99,11 @@ class StoreRecordsService @Inject() (
       recordsResponse =>
         recordsRepository
           .saveRecords(eori, recordsResponse.goodsItemRecords)
-          .map(_ => recordsResponse.pagination.totalRecords)
+          .flatMap(_ =>
+            recordsRepository
+              .deleteManyByEoriAndInactive(eori)
+              .map(_ => recordsResponse.pagination.totalRecords)
+          )
     }
 
   private def storeRecordsRecursively(
