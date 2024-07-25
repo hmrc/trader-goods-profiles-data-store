@@ -104,7 +104,7 @@ class StoreRecordsService @Inject() (
       recordsRepository.saveRecords(eori, recordsResponse.goodsItemRecords).flatMap { _ =>
         val newRecordsToStore = recordsToStore - recordsResponse.goodsItemRecords.size
         val newRecordsStored  = recordsStored + recordsResponse.goodsItemRecords.size
-        recordsSummaryRepository.set(eori, Some(Update(newRecordsToStore, newRecordsStored))).flatMap { _ =>
+        recordsSummaryRepository.set(eori, Some(Update(newRecordsStored, newRecordsToStore))).flatMap { _ =>
           if (recordsResponse.pagination.nextPage.isDefined) {
             storeRecordsRecursively(eori, page + 1, lastUpdatedDate, newRecordsToStore, newRecordsStored)
           } else {
