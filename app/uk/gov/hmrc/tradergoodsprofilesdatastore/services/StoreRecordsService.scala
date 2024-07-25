@@ -43,11 +43,16 @@ class StoreRecordsService @Inject() (
       if (recordsToStore > recursivePageSize) {
         recordsSummaryRepository.set(eori, Some(Update(recursivePageSize, recordsToStore - recursivePageSize))).map {
           _ =>
-            storeRecordsRecursively(eori, recursiveStartingPage + 1, lastUpdatedDate, 0, recordsToStore).onComplete {
-              _ =>
-                recordsSummaryRepository.set(eori, None).flatMap { _ =>
-                  checkInSync(eori)
-                }
+            storeRecordsRecursively(
+              eori,
+              recursiveStartingPage + 1,
+              lastUpdatedDate,
+              recordsToStore - recursivePageSize,
+              recursivePageSize
+            ).onComplete { _ =>
+              recordsSummaryRepository.set(eori, None).flatMap { _ =>
+                checkInSync(eori)
+              }
             }
             false
         }
