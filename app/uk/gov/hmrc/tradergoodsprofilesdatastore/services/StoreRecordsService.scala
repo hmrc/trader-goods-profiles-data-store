@@ -41,6 +41,7 @@ class StoreRecordsService @Inject() (
   )(implicit hc: HeaderCarrier): Future[Boolean] =
     storeFirstBatchOfRecords(eori, lastUpdatedDate).flatMap { recordsToStore =>
       if (recordsToStore > recursivePageSize) {
+
         recordsSummaryRepository.set(eori, Some(Update(recursivePageSize, recordsToStore - recursivePageSize))).map { _ =>
           storeRecordsRecursively(
             eori,
@@ -81,7 +82,7 @@ class StoreRecordsService @Inject() (
     routerConnector.getRecords(eori, lastUpdatedDate, Some(recursiveStartingPage), Some(recursivePageSize)).flatMap {
       recordsResponse =>
         recordsRepository
-          .saveRecords(eori, recordsResponse.goodsItemRecords)
+          .updateRecords(eori, recordsResponse.goodsItemRecords)
           .map(_ => recordsResponse.pagination.totalRecords)
     }
 
@@ -93,7 +94,7 @@ class StoreRecordsService @Inject() (
     recordsStored: Int
   )(implicit hc: HeaderCarrier): Future[Done] =
     routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(recursivePageSize)).flatMap { recordsResponse =>
-      recordsRepository.saveRecords(eori, recordsResponse.goodsItemRecords).flatMap { _ =>
+      recordsRepository.updateRecords(eori, recordsResponse.goodsItemRecords).flatMap { _ =>
         val newRecordsToStore = recordsToStore - recordsResponse.goodsItemRecords.size
         val newRecordsStored  = recordsStored + recordsResponse.goodsItemRecords.size
         recordsSummaryRepository.set(eori, Some(Update(newRecordsStored, newRecordsToStore))).flatMap { _ =>
