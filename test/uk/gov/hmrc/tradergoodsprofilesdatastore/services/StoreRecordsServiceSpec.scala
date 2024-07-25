@@ -225,7 +225,7 @@ class StoreRecordsServiceSpec
         val result = await(service.storeRecords(requestEori, None)(hc))
 
         eventually {
-          verify(mockRouterConnector, times(4)).getRecords(any(), any(), any(), any())(any())
+          verify(mockRouterConnector, times(5)).getRecords(any(), any(), any(), any())(any())
           verify(mockRecordsRepository, times(4)).saveRecords(any(), any())
           verify(mockRecordsSummaryRepository, times(5)).set(any(), any())
           verify(mockRecordsRepository, times(0)).getCountWithInactive(any())
