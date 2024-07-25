@@ -40,11 +40,6 @@ class RecordsRepository @Inject() (
       domainFormat = GoodsItemRecord.goodsItemRecordsMongoFormat,
       indexes = Seq(
         IndexModel(
-          Indexes.ascending("recordId"),
-          IndexOptions()
-            .name("recordId_idx")
-        ),
-        IndexModel(
           Indexes.compoundIndex(
             Indexes.ascending("eori"),
             Indexes.ascending("recordId")
@@ -74,15 +69,17 @@ class RecordsRepository @Inject() (
     Filters.and(Filters.equal("eori", eori), Filters.equal("_id", recordId))
 
   private def byEoriAndRecordIds(eori: String, recordIds: Seq[String]): Bson =
-    Filters.and(Filters.equal("eori", eori), Filters.in("_id", recordIds))
+    Filters.and(Filters.equal("eori", eori), Filters.in("_id", recordIds: _*))
 
   private def byLatest: Bson = Sorts.descending("updatedDateTime")
 
   private def byField(field: String, searchTerm: String, exactMatch: Boolean): Bson =
     if (exactMatch)
       Filters.equal(field, searchTerm)
-    else
+    else {
+      // TODO we must not allow people to give us regexes to execute
       Filters.regex(field, searchTerm, "i")
+    }
 
   private def byComCodeOrGoodsDescriptionOrTraderRef(value: String, exactMatch: Boolean): Bson =
     if (exactMatch) {
@@ -94,6 +91,7 @@ class RecordsRepository @Inject() (
     } else {
       val escapedSearchString = escapeRegexSpecialChars(value)
       val searchPattern       = s".*$escapedSearchString.*"
+      // TODO we must not allow people to give us regexes to execute
       Filters.or(
         Filters.regex("traderRef", searchPattern, "i"),
         Filters.regex("goodsDescription", searchPattern, "i"),
@@ -113,6 +111,23 @@ class RecordsRepository @Inject() (
           .toFuture()
       })
       .map(_ => true)
+  }
+
+  def updateRecords(eori: String, records: Seq[GoodsItemRecord]): Future[Done] = Mdc.preservingMdc {
+    val (activeRecords, inactiveRecords) = records.partition(_.active)
+    val inactiveRecordIds = inactiveRecords.map(_.recordId)
+    withSessionAndTransaction { session =>
+      collection.bulkWrite(
+        session,
+        activeRecords.map { record =>
+          ReplaceOneModel(
+            filter = byEoriAndRecordId(eori, record.recordId),
+            replacement = record,
+            replaceOptions = ReplaceOptions().upsert(true)
+          )
+        } :+ DeleteManyModel(byEoriAndRecordIds(eori, inactiveRecordIds))
+      ).toFuture().map(_ => Done)
+    }
   }
 
   def getMany(eori: String, pageOpt: Option[Int], sizeOpt: Option[Int]): Future[Seq[GoodsItemRecord]] = Mdc.preservingMdc {
@@ -147,6 +162,7 @@ class RecordsRepository @Inject() (
       .headOption()
   }
 
+  // TODO need to add an appropriate index for this to search
   def filterRecords(
     eori: String,
     searchTerm: Option[String],
