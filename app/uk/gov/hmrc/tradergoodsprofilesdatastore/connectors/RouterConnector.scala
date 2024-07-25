@@ -34,7 +34,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2)(implicit ec: ExecutionContext) {
 
   private val baseUrlRouter: Service         = config.get[Service]("microservice.services.trader-goods-profiles-router")
-  private val clientIdHeader                 = ("X-Client-ID", "tgp-frontend")
+  private val clientIdAndAcceptHeaders       =
+    Seq("X-Client-ID" -> "tgp-frontend", "Accept" -> "application/vnd.hmrc.1.0+json")
   private def traderProfileUrl(eori: String) =
     url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori"
 
@@ -64,7 +65,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   def submitTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
       .put(traderProfileUrl(eori))
-      .setHeader(clientIdHeader)
+      .setHeader(clientIdAndAcceptHeaders: _*)
       .withBody(Json.toJson(traderProfile))
       .execute[HttpResponse]
       .flatMap { response =>
@@ -80,7 +81,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   )(implicit hc: HeaderCarrier): Future[GoodsItemRecord] =
     httpClient
       .post(createGoodsRecordUrl(eori))
-      .setHeader(clientIdHeader)
+      .setHeader(clientIdAndAcceptHeaders: _*)
       .withBody(Json.toJson(createRecordRequest))
       .execute[HttpResponse]
       .flatMap { response =>
@@ -99,7 +100,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
     val uri = tgpRecordsUri(eori, lastUpdatedDate, page, size).toString()
     httpClient
       .get(url"$uri")
-      .setHeader(clientIdHeader)
+      .setHeader(clientIdAndAcceptHeaders: _*)
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
@@ -115,7 +116,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   )(implicit hc: HeaderCarrier): Future[GoodsItemRecord] =
     httpClient
       .get(tgpGetOrUpdateRecordUrl(eori, recordId))
-      .setHeader(clientIdHeader)
+      .setHeader(clientIdAndAcceptHeaders: _*)
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
@@ -130,7 +131,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   )(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
       .delete(tgpDeleteRecordUrl(eori, recordId))
-      .setHeader(clientIdHeader)
+      .setHeader(clientIdAndAcceptHeaders: _*)
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
@@ -146,7 +147,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   )(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
       .patch(tgpGetOrUpdateRecordUrl(eori, recordId))
-      .setHeader(clientIdHeader)
+      .setHeader(clientIdAndAcceptHeaders: _*)
       .withBody(Json.toJson(updateRecord))
       .execute[HttpResponse]
       .flatMap { response =>
