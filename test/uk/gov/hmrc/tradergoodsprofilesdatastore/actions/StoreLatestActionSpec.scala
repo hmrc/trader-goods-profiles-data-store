@@ -61,9 +61,11 @@ class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
 
       val action = new Harness(mockRecordsSummaryRepository, mockStoreRecordsService)
 
-      action
+      val result = action
         .callFilter(IdentifierRequest(FakeRequest(), "testUserId", requestEori, AffinityGroup.Individual))
         .futureValue
+
+      result mustEqual None
 
       verify(mockRecordsSummaryRepository).get(any())
       verify(mockStoreRecordsService).storeRecords(any(), any())(any())
@@ -80,9 +82,11 @@ class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
 
       val action = new Harness(mockRecordsSummaryRepository, mockStoreRecordsService)
 
-      action
+      val result = action
         .callFilter(IdentifierRequest(FakeRequest(), "testUserId", requestEori, AffinityGroup.Individual))
         .futureValue
+
+      result mustEqual None
 
       verify(mockRecordsSummaryRepository).get(any())
       verify(mockStoreRecordsService).storeRecords(any(), any())(any())
