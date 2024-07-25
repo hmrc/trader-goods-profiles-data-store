@@ -25,32 +25,35 @@ import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.CheckRecords
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.CheckRecordsRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsSummaryRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
 
+import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 
-class CheckRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecordsResponseUtil {
+class RecordsSummaryControllerSpec extends SpecBase with MockitoSugar with GetRecordsResponseUtil {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
 
-  "checkRecords" - {
-    "return 204 if the checkRecords is present" in {
+  "recordsSummary" - {
+    "return 204 if the recordsSummary is present" in {
 
-      val requestEori = "GB123456789099"
-      val checkUrl    = routes.CheckRecordsController
-        .checkRecords(requestEori)
+      val requestEori       = "GB123456789099"
+      val recordsSummaryUrl = routes.RecordsSummaryController
+        .recordsSummary(requestEori)
         .url
 
-      val validFakeGetRequest = FakeRequest("HEAD", checkUrl)
+      val validFakeGetRequest = FakeRequest("HEAD", recordsSummaryUrl)
 
-      val mockCheckRecordsRepository = mock[CheckRecordsRepository]
-      when(mockCheckRecordsRepository.get(any())) thenReturn Future.successful(Some(CheckRecords(requestEori)))
+      val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
+      when(mockRecordsSummaryRepository.get(any())) thenReturn Future.successful(
+        Some(RecordsSummary(requestEori, None, lastUpdated = Instant.now))
+      )
 
       val application = applicationBuilder()
         .overrides(
-          bind[CheckRecordsRepository].toInstance(mockCheckRecordsRepository)
+          bind[RecordsSummaryRepository].toInstance(mockRecordsSummaryRepository)
         )
         .build()
       running(application) {
@@ -59,21 +62,21 @@ class CheckRecordsControllerSpec extends SpecBase with MockitoSugar with GetReco
       }
     }
 
-    "return 404 if the checkRecords is not present" in {
+    "return 404 if the recordsSummary is not present" in {
 
-      val requestEori = "GB123456789099"
-      val checkUrl    = routes.CheckRecordsController
-        .checkRecords(requestEori)
+      val requestEori       = "GB123456789099"
+      val recordsSummaryUrl = routes.RecordsSummaryController
+        .recordsSummary(requestEori)
         .url
 
-      val validFakeGetRequest = FakeRequest("HEAD", checkUrl)
+      val validFakeGetRequest = FakeRequest("HEAD", recordsSummaryUrl)
 
-      val mockCheckRecordsRepository = mock[CheckRecordsRepository]
-      when(mockCheckRecordsRepository.get(any())) thenReturn Future.successful(None)
+      val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
+      when(mockRecordsSummaryRepository.get(any())) thenReturn Future.successful(None)
 
       val application = applicationBuilder()
         .overrides(
-          bind[CheckRecordsRepository].toInstance(mockCheckRecordsRepository)
+          bind[RecordsSummaryRepository].toInstance(mockRecordsSummaryRepository)
         )
         .build()
       running(application) {

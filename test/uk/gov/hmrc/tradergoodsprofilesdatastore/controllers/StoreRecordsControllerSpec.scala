@@ -26,7 +26,7 @@ import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.CheckRecordsRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsSummaryRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.services.StoreRecordsService
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
 
@@ -46,8 +46,8 @@ class StoreRecordsControllerSpec extends SpecBase with MockitoSugar with GetReco
 
       val validFakeHeadRequest = FakeRequest("HEAD", storeUrl)
 
-      val mockCheckRecordsRepository = mock[CheckRecordsRepository]
-      when(mockCheckRecordsRepository.set(any())) thenReturn Future.successful(true)
+      val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
+      when(mockRecordsSummaryRepository.set(any(), any())) thenReturn Future.successful(true)
 
       val mockStoreRecordsService = mock[StoreRecordsService]
       when(mockStoreRecordsService.deleteAndStoreRecords(eqTo(requestEori))(any(), any())) thenReturn Future
@@ -56,7 +56,7 @@ class StoreRecordsControllerSpec extends SpecBase with MockitoSugar with GetReco
       val application = applicationBuilder()
         .overrides(
           bind[StoreRecordsService].toInstance(mockStoreRecordsService),
-          bind[CheckRecordsRepository].toInstance(mockCheckRecordsRepository)
+          bind[RecordsSummaryRepository].toInstance(mockRecordsSummaryRepository)
         )
         .build()
       running(application) {
