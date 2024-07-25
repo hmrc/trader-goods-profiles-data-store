@@ -20,6 +20,7 @@ import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+import uk.gov.hmrc.mongo.transaction.{TransactionConfiguration, Transactions}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GoodsItemRecord
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{localPageSize, localStartingPage}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.StringHelper.escapeRegexSpecialChars
@@ -41,7 +42,9 @@ class RecordsRepository @Inject() (
           IndexOptions().name("recordId")
         )
       )
-    ) {
+    ) with Transactions {
+
+  private implicit val tc = TransactionConfiguration.strict
 
   private def byEori(eori: String): Bson = Filters.equal("eori", eori)
 
@@ -51,8 +54,11 @@ class RecordsRepository @Inject() (
   private def byEoriAndInactive(eori: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.equal("active", false))
 
-  private def byEoriAndRecordId(eori: String, recordId: String): Bson =
+  private def byEoriAndRecordId(eori: String, recordId: String): Bson        =
     Filters.and(Filters.equal("eori", eori), Filters.equal("_id", recordId))
+
+  private def byEoriAndRecordIds(eori: String, recordIds: Seq[String]): Bson =
+    Filters.and(Filters.equal("eori", eori), Filters.in("_id", recordIds))
 
   private def byLatest: Bson = Sorts.descending("updatedDateTime")
 
@@ -91,6 +97,32 @@ class RecordsRepository @Inject() (
           .toFuture()
       })
       .map(_ => true)
+
+  def applyChanges(eori: String, records: Seq[GoodsItemRecord]): Future[Boolean] = {
+    val activeRecords   = records.filter(_.active)
+    val activeRecordsIds = records.filter(_.active).map(_.recordId)
+    val inactiveRecordsIds = records.filter(!_.active).map(_.recordId)
+
+    withSessionAndTransaction(session =>
+      for {
+        deleteResult <- collection.deleteMany(byEoriAndRecordIds(eori, inactiveRecordsIds)).toFuture()
+        updateResult <- collection.updateMany(
+          clientSession = session,
+          update = activeRecords,
+          filter = byEoriAndRecordIds(eori, activeRecordsIds),
+          options = UpdateOptions().upsert(true)
+        ).toFuture()
+      } yield {
+
+      }
+
+  }
+
+  // split into 2 groups, on eto delete and one to update/create
+
+  //bulk update/create
+
+  //bulk delete
 
   def getMany(eori: String, pageOpt: Option[Int], sizeOpt: Option[Int]): Future[Seq[GoodsItemRecord]] = {
     val size = sizeOpt.getOrElse(localPageSize)
