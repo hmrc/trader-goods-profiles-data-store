@@ -35,24 +35,35 @@ class StoreRecordsService @Inject() (
   ec: ExecutionContext
 ) extends Logging {
 
+  def cleanseCache(
+    eori: String,
+    lastUpdatedDate: Option[String]
+  )(implicit hc: HeaderCarrier): Future[Boolean] =
+    lastUpdatedDate match {
+      case Some(_) => Future.successful(false)
+      case None    => recordsRepository.deleteManyByEori(eori).map(_ => true)
+    }
+
   def storeRecords(
     eori: String,
     lastUpdatedDate: Option[String]
   )(implicit hc: HeaderCarrier): Future[Boolean] =
-    storeFirstBatchOfRecords(eori, lastUpdatedDate).flatMap { recordsToStore =>
-      if (recordsToStore > recursivePageSize) {
-        recordsSummaryRepository.set(eori, Some(Update(recursivePageSize, recordsToStore - recursivePageSize))).map {
-          _ =>
-            storeRecordsRecursively(eori, recursiveStartingPage + 1, lastUpdatedDate, 0, recordsToStore).onComplete {
-              _ =>
-                recordsSummaryRepository.set(eori, None).flatMap { _ =>
-                  checkInSync(eori)
-                }
-            }
-            false
+    cleanseCache(eori, lastUpdatedDate).flatMap { _ =>
+      storeFirstBatchOfRecords(eori, lastUpdatedDate).flatMap { recordsToStore =>
+        if (recordsToStore > recursivePageSize) {
+          recordsSummaryRepository.set(eori, Some(Update(recursivePageSize, recordsToStore - recursivePageSize))).map {
+            _ =>
+              storeRecordsRecursively(eori, recursiveStartingPage + 1, lastUpdatedDate, 0, recordsToStore).onComplete {
+                _ =>
+                  recordsSummaryRepository.set(eori, None).flatMap { _ =>
+                    checkInSync(eori)
+                  }
+              }
+              false
+          }
+        } else {
+          checkInSync(eori).map(_ => true)
         }
-      } else {
-        checkInSync(eori).map(_ => true)
       }
     }
 
@@ -73,7 +84,7 @@ class StoreRecordsService @Inject() (
   def deleteAndStoreRecords(
     eori: String
   )(implicit hc: HeaderCarrier): Future[Done] =
-    recordsRepository.deleteMany(eori).flatMap { _ =>
+    recordsRepository.deleteManyByEori(eori).flatMap { _ =>
       storeRecordsRecursively(eori, recursiveStartingPage, None, 0, 0).map(_ => Done)
     }
 
@@ -103,7 +114,7 @@ class StoreRecordsService @Inject() (
           if (recordsResponse.pagination.nextPage.isDefined) {
             storeRecordsRecursively(eori, page + 1, lastUpdatedDate, newRecordsToStore, newRecordsStored)
           } else {
-            Future.successful(Done)
+            recordsRepository.deleteManyByEoriAndInactive(eori).map(_ => Done)
           }
         }
       }

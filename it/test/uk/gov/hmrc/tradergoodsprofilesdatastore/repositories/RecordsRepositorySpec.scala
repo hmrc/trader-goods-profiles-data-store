@@ -669,7 +669,7 @@ class RecordsRepositorySpec
     }
   }
 
-  ".deleteMany" - {
+  ".deleteManyByEori" - {
     "must delete all records with matching eori" in {
       insert(sampleGoodsItemRecords).futureValue
       insert(sampleGoodsItemRecords.copy(recordId = "2", eori = "test")).futureValue
@@ -678,7 +678,7 @@ class RecordsRepositorySpec
       insert(sampleGoodsItemRecords.copy(recordId = "5")).futureValue
       insert(latestGoodsItemRecords).futureValue
 
-      val result = repository.deleteMany(sampleGoodsItemRecords.eori).futureValue
+      val result = repository.deleteManyByEori(sampleGoodsItemRecords.eori).futureValue
       result mustEqual 5
     }
   }
