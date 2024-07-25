@@ -27,7 +27,9 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.IdentifierReques
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.services.StoreRecordsService
 
+import java.time.temporal.ChronoUnit
 import scala.concurrent.{ExecutionContext, Future}
+import scala.math.Ordered.orderingToOrdered
 import scala.util.{Failure, Success}
 
 class StoreLatestActionImpl @Inject() (
@@ -48,7 +50,12 @@ class StoreLatestActionImpl @Inject() (
         .storeRecords(
           identifierRequest.eori,
           response match {
-            case Some(record) => Some(record.updatedDateTime.toString)
+            case Some(record) =>
+              if (record.updatedDateTime < record.updatedDateTime.minus(4, ChronoUnit.YEARS)) {
+                None
+              } else {
+                Some(record.updatedDateTime.toString)
+              }
             case None         => None
           }
         )

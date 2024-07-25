@@ -48,6 +48,9 @@ class RecordsRepository @Inject() (
   private def byEoriAndActive(eori: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.equal("active", true))
 
+  private def byEoriAndInactive(eori: String): Bson =
+    Filters.and(Filters.equal("eori", eori), Filters.equal("active", false))
+
   private def byEoriAndRecordId(eori: String, recordId: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.equal("_id", recordId))
 
@@ -151,6 +154,9 @@ class RecordsRepository @Inject() (
       case None        => Future.successful(Seq.empty)
     }
 
-  def deleteMany(eori: String): Future[Long] =
+  def deleteManyByEori(eori: String): Future[Long] =
     collection.deleteMany(byEori(eori)).toFuture().map(result => result.getDeletedCount)
+
+  def deleteManyByEoriAndInactive(eori: String): Future[Long] =
+    collection.deleteMany(byEoriAndInactive(eori)).toFuture().map(result => result.getDeletedCount)
 }
