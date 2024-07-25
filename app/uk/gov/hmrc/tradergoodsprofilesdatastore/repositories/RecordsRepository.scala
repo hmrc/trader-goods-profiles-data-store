@@ -99,20 +99,6 @@ class RecordsRepository @Inject() (
       )
     }
 
-  def saveRecords(eori: String, records: Seq[GoodsItemRecord]): Future[Boolean] = Mdc.preservingMdc {
-    Future
-      .sequence(records.map { record =>
-        collection
-          .replaceOne(
-            filter = byEoriAndRecordId(eori, record.recordId),
-            replacement = record,
-            options = ReplaceOptions().upsert(true)
-          )
-          .toFuture()
-      })
-      .map(_ => true)
-  }
-
   def updateRecords(eori: String, records: Seq[GoodsItemRecord]): Future[Done] = Mdc.preservingMdc {
     val (activeRecords, inactiveRecords) = records.partition(_.active)
     val inactiveRecordIds = inactiveRecords.map(_.recordId)
