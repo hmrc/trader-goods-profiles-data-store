@@ -19,7 +19,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.services
 import org.apache.pekko.Done
 import org.apache.pekko.util.Helpers.Requiring
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito.{reset, times, verify, when}
+import org.mockito.Mockito.{never, reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.Eventually.eventually
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
@@ -62,7 +62,8 @@ class StoreRecordsServiceSpec
       "must store all records in data-store with multiple pages" in {
         val totalRecordsNum = 2000
         val requestEori     = "GB123456789099"
-
+        when(mockRecordsRepository.deleteManyByEoriAndInactive(any())) thenReturn Future.successful(0)
+        when(mockRecordsRepository.deleteManyByEori(any())) thenReturn Future.successful(0)
         when(mockRecordsRepository.getCountWithInactive(any())) thenReturn Future.successful(totalRecordsNum)
         when(mockRecordsSummaryRepository.set(any(), any())) thenReturn Future.successful(true)
         when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
@@ -98,13 +99,16 @@ class StoreRecordsServiceSpec
             )
           )
         )
-        val result = await(service.storeRecords(requestEori, None)(hc))
+        val result          = await(service.storeRecords(requestEori, None)(hc))
 
         eventually {
           verify(mockRouterConnector, times(5)).getRecords(any(), any(), any(), any())(any())
           verify(mockRecordsRepository, times(4)).saveRecords(any(), any())
           verify(mockRecordsSummaryRepository, times(5)).set(any(), any())
           verify(mockRecordsRepository).getCountWithInactive(any())
+          verify(mockRecordsRepository, times(2)).deleteManyByEoriAndInactive(any())
+          verify(mockRecordsRepository).deleteManyByEori(any())
+
           result shouldBe false
         }
       }
@@ -113,12 +117,11 @@ class StoreRecordsServiceSpec
         val totalRecordsNum = recursivePageSize
         val requestEori     = "GB123456789099"
 
+        when(mockRecordsRepository.deleteManyByEoriAndInactive(any())) thenReturn Future.successful(0)
+        when(mockRecordsRepository.deleteManyByEori(any())) thenReturn Future.successful(0)
         when(mockRecordsRepository.getCountWithInactive(any())) thenReturn Future.successful(totalRecordsNum)
-
         when(mockRecordsSummaryRepository.set(any(), any())) thenReturn Future.successful(true)
-
         when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
-
         when(
           mockRouterConnector.getRecords(
             any(),
@@ -142,18 +145,19 @@ class StoreRecordsServiceSpec
           .getRecords(any(), any(), any(), any())(any())
         verify(mockRecordsRepository, times(1)).saveRecords(any(), any())
         verify(mockRecordsRepository).getCountWithInactive(any())
+        verify(mockRecordsRepository).deleteManyByEori(any())
+        verify(mockRecordsRepository).deleteManyByEoriAndInactive(any())
       }
 
       "must store latest records in data-store with one page" in {
         val totalRecordsNum = recursivePageSize
         val requestEori     = "GB123456789099"
 
+        when(mockRecordsRepository.deleteManyByEoriAndInactive(any())) thenReturn Future.successful(0)
+        when(mockRecordsRepository.deleteManyByEori(any())) thenReturn Future.successful(0)
         when(mockRecordsRepository.getCountWithInactive(any())) thenReturn Future.successful(totalRecordsNum)
-
         when(mockRecordsSummaryRepository.set(any(), any())) thenReturn Future.successful(true)
-
         when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
-
         when(
           mockRouterConnector.getRecords(
             any(),
@@ -180,7 +184,49 @@ class StoreRecordsServiceSpec
           .getRecords(any(), eqTo(None), any(), any())(any())
         verify(mockRecordsRepository, times(1)).saveRecords(any(), any())
         verify(mockRecordsRepository).getCountWithInactive(any())
+        verify(mockRecordsRepository, never()).deleteManyByEori(any())
+        verify(mockRecordsRepository).deleteManyByEoriAndInactive(any())
       }
+
+      "must cleanse database first (as data is old) and then store latest records in data-store with one page" in {
+        val totalRecordsNum = recursivePageSize
+        val requestEori     = "GB123456789099"
+
+        when(mockRecordsRepository.deleteManyByEoriAndInactive(any())) thenReturn Future.successful(0)
+        when(mockRecordsRepository.deleteManyByEori(any())) thenReturn Future.successful(1)
+        when(mockRecordsRepository.getCountWithInactive(any())) thenReturn Future.successful(totalRecordsNum)
+        when(mockRecordsSummaryRepository.set(any(), any())) thenReturn Future.successful(true)
+        when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
+        when(
+          mockRouterConnector.getRecords(
+            any(),
+            any(),
+            any(),
+            any()
+          )(any())
+        ) thenReturn
+          Future.successful(
+            GetRecordsResponse(
+              goodsItemRecords = getTestRecords(requestEori, recursivePageSize),
+              Pagination(totalRecordsNum, 0, 6, None, None)
+            )
+          )
+
+        val lastUpdatedDate = Some("2000-10-12T16:12:34Z")
+        val result          = await(service.storeRecords(requestEori, lastUpdatedDate)(hc))
+
+        result.value shouldBe true
+
+        verify(mockRouterConnector)
+          .getRecords(any(), eqTo(lastUpdatedDate), any(), any())(any())
+        verify(mockRouterConnector)
+          .getRecords(any(), eqTo(None), any(), any())(any())
+        verify(mockRecordsRepository, times(1)).saveRecords(any(), any())
+        verify(mockRecordsRepository).getCountWithInactive(any())
+        verify(mockRecordsRepository).deleteManyByEori(any())
+        verify(mockRecordsRepository).deleteManyByEoriAndInactive(any())
+      }
+
     }
 
     "deleteAndStoreRecords" - {
@@ -188,7 +234,8 @@ class StoreRecordsServiceSpec
         val totalRecordsNum = 3000
         val requestEori     = "GB123456789099"
 
-        when(mockRecordsRepository.deleteMany(any())) thenReturn Future.successful(10)
+        when(mockRecordsRepository.deleteManyByEoriAndInactive(any())) thenReturn Future.successful(0)
+        when(mockRecordsRepository.deleteManyByEori(any())) thenReturn Future.successful(10)
         when(mockRecordsSummaryRepository.set(any(), any())) thenReturn Future.successful(true)
         when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
         when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
@@ -235,7 +282,7 @@ class StoreRecordsServiceSpec
         result.value shouldBe Done
         verify(mockRouterConnector, times(6)).getRecords(any(), any(), any(), any())(any())
         verify(mockRecordsRepository, times(6)).saveRecords(any(), any())
-        verify(mockRecordsRepository).deleteMany(any())
+        verify(mockRecordsRepository).deleteManyByEori(any())
       }
     }
   }

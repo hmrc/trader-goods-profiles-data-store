@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.actions
 
-import play.api.http.Status.{ACCEPTED, INTERNAL_SERVER_ERROR}
+import play.api.http.Status.ACCEPTED
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{verify, when}
 import org.scalatestplus.mockito.MockitoSugar.mock
