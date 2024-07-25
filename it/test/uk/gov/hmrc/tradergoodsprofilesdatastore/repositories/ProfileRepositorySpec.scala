@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
+import org.apache.pekko.Done
 import org.mongodb.scala.model.Filters
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
@@ -29,7 +30,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.ProfileResponse
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class SessionRepositorySpec
-  extends AnyFreeSpec
+    extends AnyFreeSpec
     with Matchers
     with PlayMongoRepositorySupport[ProfileResponse]
     with ScalaFutures
@@ -43,15 +44,15 @@ class SessionRepositorySpec
     prepareDatabase()
   }
 
-  private val profileEori = "test-eori"
-  private val profileRequest = ProfileRequest("test-actor-id", "test-ukims", Some("test-nirms"), Some("test-niphl"))
-  private val profileResponse = ProfileResponse(profileEori, "test-actor-id", "test-ukims", Some("test-nirms"), Some("test-niphl"))
+  private val profileEori     = "test-eori"
+  private val profileRequest  = ProfileRequest("test-actor-id", "test-ukims", Some("test-nirms"), Some("test-niphl"))
+  private val profileResponse =
+    ProfileResponse(profileEori, "test-actor-id", "test-ukims", Some("test-nirms"), Some("test-niphl"))
 
   protected override val repository = new ProfileRepository(mongoComponent = mongoComponent)
 
-  private def byEori = {
+  private def byEori =
     Filters.equal("eori", profileResponse.eori)
-  }
 
   ".set" - {
 
@@ -65,10 +66,10 @@ class SessionRepositorySpec
 
     "must update a record when there is one" in {
       insert(profileResponse).futureValue
-      val modifiedProfileRequest = profileRequest.copy(ukimsNumber = "new-ukims")
+      val modifiedProfileRequest  = profileRequest.copy(ukimsNumber = "new-ukims")
       val expectedProfileResponse = profileResponse.copy(ukimsNumber = "new-ukims")
 
-      val setResult = repository.set(profileEori, modifiedProfileRequest).futureValue
+      val setResult     = repository.set(profileEori, modifiedProfileRequest).futureValue
       val updatedRecord = find(byEori).futureValue.headOption.value
 
       setResult mustEqual true
@@ -80,7 +81,7 @@ class SessionRepositorySpec
 
     "when there is a record for this eori it must get the record" in {
       insert(profileResponse).futureValue
-      val result         = repository.get(profileEori).futureValue
+      val result = repository.get(profileEori).futureValue
       result.value mustEqual profileResponse
     }
 
@@ -88,6 +89,16 @@ class SessionRepositorySpec
       repository.get("eori that does not exist").futureValue must not be defined
     }
 
+  }
+
+  ".deleteAll" - {
+    "it mush drop the profiles collection" in {
+      insert(profileResponse).futureValue
+      val result      = repository.deleteAll.futureValue
+      val recordCheck = repository.get(profileEori).futureValue
+      result mustEqual Done
+      recordCheck mustEqual None
+    }
   }
 
 }

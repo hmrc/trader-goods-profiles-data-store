@@ -12,3 +12,4 @@ HEAD       /traders/:eori/records/store             uk.gov.hmrc.tradergoodsprofi
 GET        /traders/:eori/records/count             uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.GetRecordsController.getRecordsCount(eori: String)
 GET        /traders/:eori/records/:recordId         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.GetRecordsController.getRecord(eori: String, recordId: String)
 PATCH      /traders/:eori/records/:recordId         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.UpdateRecordController.updateRecord(eori: String, recordId: String)
+DELETE     /traders/profile                         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.deleteAll()
