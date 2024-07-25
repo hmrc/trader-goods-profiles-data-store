@@ -95,6 +95,7 @@ class RouterConnectorSpec
       wireMockServer.stubFor(
         put(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori"))
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
           .willReturn(ok())
       )
 
@@ -108,6 +109,7 @@ class RouterConnectorSpec
       wireMockServer.stubFor(
         put(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori"))
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
           .willReturn(serverError())
       )
 
@@ -126,6 +128,7 @@ class RouterConnectorSpec
           )
         )
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
           .willReturn(ok().withBody(Json.toJson(response).toString()))
       )
 
@@ -141,6 +144,7 @@ class RouterConnectorSpec
           )
         )
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
           .willReturn(ok().withBody(Json.toJson(response).toString()))
       )
 
@@ -156,6 +160,7 @@ class RouterConnectorSpec
           )
         )
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
           .willReturn(serverError())
       )
 
@@ -174,6 +179,7 @@ class RouterConnectorSpec
           )
         )
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
           .willReturn(noContent())
       )
 
@@ -189,6 +195,7 @@ class RouterConnectorSpec
           )
         )
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
           .willReturn(serverError())
       )
 
@@ -203,6 +210,7 @@ class RouterConnectorSpec
       wireMockServer.stubFor(
         get(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId"))
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
           .willReturn(ok().withBody(Json.toJson(goodsItemRecord).toString()))
       )
 
@@ -214,6 +222,7 @@ class RouterConnectorSpec
       wireMockServer.stubFor(
         get(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId"))
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
           .willReturn(serverError())
       )
 
@@ -230,6 +239,7 @@ class RouterConnectorSpec
       wireMockServer.stubFor(
         patch(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId"))
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
           .willReturn(ok())
       )
 
@@ -243,6 +253,7 @@ class RouterConnectorSpec
       wireMockServer.stubFor(
         patch(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId"))
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
           .willReturn(serverError())
       )
 
@@ -270,6 +281,7 @@ class RouterConnectorSpec
       wireMockServer.stubFor(
         post(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records"))
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
           .willReturn(created().withBody(Json.toJson(goodsItemRecord).toString()))
       )
 
@@ -284,6 +296,7 @@ class RouterConnectorSpec
       wireMockServer.stubFor(
         post(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records"))
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
           .willReturn(serverError())
       )
 
