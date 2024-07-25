@@ -17,43 +17,49 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.services
 
 import org.apache.pekko.Done
-import org.apache.pekko.pattern.StatusReply.success
 import org.apache.pekko.util.Helpers.Requiring
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.Mockito.{reset, times, verify, when}
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.Eventually.eventually
-import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
-import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.{Logger, Logging}
-import play.api.i18n.Lang.logger
+import play.api.Logging
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.recursivePageSize
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{RecordsRepository, RecordsSummaryRepository}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
 
-import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Success
 
-class StoreRecordsServiceSpec extends SpecBase with MockitoSugar with GetRecordsResponseUtil with Logging {
+class StoreRecordsServiceSpec
+    extends SpecBase
+    with MockitoSugar
+    with GetRecordsResponseUtil
+    with BeforeAndAfterEach
+    with Logging {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
   implicit val hc: HeaderCarrier    = HeaderCarrier()
 
+  private val mockRouterConnector          = mock[RouterConnector]
+  private val mockRecordsRepository        = mock[RecordsRepository]
+  private val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
+
+  val service = new StoreRecordsService(mockRouterConnector, mockRecordsRepository, mockRecordsSummaryRepository)
+
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    reset(mockRouterConnector, mockRecordsRepository, mockRecordsSummaryRepository)
+  }
+
   "StoreRecordsService" - {
     "storeRecords" - {
       "must store all records in data-store with multiple pages" in {
-        val mockRouterConnector          = mock[RouterConnector]
-        val mockRecordsRepository        = mock[RecordsRepository]
-        val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
-
-        val service         = new StoreRecordsService(mockRouterConnector, mockRecordsRepository, mockRecordsSummaryRepository)
         val totalRecordsNum = 2000
         val requestEori     = "GB123456789099"
 
@@ -104,11 +110,6 @@ class StoreRecordsServiceSpec extends SpecBase with MockitoSugar with GetRecords
       }
 
       "must store all records in data-store with one page" in {
-        val mockRouterConnector          = mock[RouterConnector]
-        val mockRecordsRepository        = mock[RecordsRepository]
-        val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
-
-        val service         = new StoreRecordsService(mockRouterConnector, mockRecordsRepository, mockRecordsSummaryRepository)
         val totalRecordsNum = recursivePageSize
         val requestEori     = "GB123456789099"
 
@@ -144,11 +145,6 @@ class StoreRecordsServiceSpec extends SpecBase with MockitoSugar with GetRecords
       }
 
       "must store latest records in data-store with one page" in {
-        val mockRouterConnector          = mock[RouterConnector]
-        val mockRecordsRepository        = mock[RecordsRepository]
-        val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
-
-        val service         = new StoreRecordsService(mockRouterConnector, mockRecordsRepository, mockRecordsSummaryRepository)
         val totalRecordsNum = recursivePageSize
         val requestEori     = "GB123456789099"
 
@@ -189,11 +185,6 @@ class StoreRecordsServiceSpec extends SpecBase with MockitoSugar with GetRecords
 
     "deleteAndStoreRecords" - {
       "should wipe the db and store all records in data-store" in {
-        val mockRouterConnector          = mock[RouterConnector]
-        val mockRecordsRepository        = mock[RecordsRepository]
-        val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
-
-        val service         = new StoreRecordsService(mockRouterConnector, mockRecordsRepository, mockRecordsSummaryRepository)
         val totalRecordsNum = 3000
         val requestEori     = "GB123456789099"
 
