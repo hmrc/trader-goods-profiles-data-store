@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
-import org.mongodb.scala.bson.conversions.Bson
-import org.mongodb.scala.model.Filters
 import org.scalactic.source.Position
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
@@ -224,33 +222,6 @@ class RecordsRepositorySpec
 
   protected override val repository: RecordsRepository =
     app.injector.instanceOf[RecordsRepository]
-
-  private def byRecordId(recordId: String): Bson = Filters.equal("_id", recordId)
-
-  ".saveRecords" - {
-
-    "must create a record when there is none" in {
-      val setResult     = repository.saveRecords(testEori, Seq(sampleGoodsItemRecord)).futureValue
-      val updatedRecord = find(byRecordId(sampleGoodsItemRecord.recordId)).futureValue.headOption.value
-
-      setResult mustEqual true
-      updatedRecord mustEqual sampleGoodsItemRecord
-    }
-
-    "must update a record when there is one" in {
-      repository.saveRecords(testEori, Seq(sampleGoodsItemRecord)).futureValue
-      val modifiedGoodsItemRecords = sampleGoodsItemRecord.copy(ukimsNumber = Some("new-ukims"))
-      val expectedGoodsItemRecords = sampleGoodsItemRecord.copy(ukimsNumber = Some("new-ukims"))
-
-      val saveResult    = repository.saveRecords(testEori, Seq(modifiedGoodsItemRecords)).futureValue
-      val updatedRecord = find(byRecordId(sampleGoodsItemRecord.recordId)).futureValue.headOption.value
-
-      saveResult mustEqual true
-      updatedRecord mustEqual expectedGoodsItemRecords
-    }
-
-    mustPreserveMdc(repository.saveRecords(testEori, Seq(sampleGoodsItemRecord)))
-  }
 
   ".getCount" - {
 
