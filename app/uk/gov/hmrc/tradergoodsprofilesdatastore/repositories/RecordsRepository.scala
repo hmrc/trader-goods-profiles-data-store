@@ -60,12 +60,6 @@ class RecordsRepository @Inject() (
 
   private def byEori(eori: String): Bson = Filters.equal("eori", eori)
 
-  private def byEoriAndActive(eori: String): Bson =
-    Filters.and(Filters.equal("eori", eori), Filters.equal("active", true))
-
-  private def byEoriAndInactive(eori: String): Bson =
-    Filters.and(Filters.equal("eori", eori), Filters.equal("active", false))
-
   private def byEoriAndRecordId(eori: String, recordId: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.equal("_id", recordId))
 
@@ -126,7 +120,7 @@ class RecordsRepository @Inject() (
       val page = pageOpt.getOrElse(localStartingPage)
       val skip = (page - 1) * size
       collection
-        .find[GoodsItemRecord](byEoriAndActive(eori))
+        .find[GoodsItemRecord](byEori(eori))
         .sort(byLatest)
         .limit(size)
         .skip(skip)
@@ -135,22 +129,8 @@ class RecordsRepository @Inject() (
 
   def getCount(eori: String): Future[Long] = Mdc.preservingMdc {
     collection
-      .countDocuments(byEoriAndActive(eori))
-      .toFuture()
-  }
-
-  def getCountWithInactive(eori: String): Future[Long] = Mdc.preservingMdc {
-    collection
       .countDocuments(byEori(eori))
       .toFuture()
-  }
-
-  def getLatest(eori: String): Future[Option[GoodsItemRecord]] = Mdc.preservingMdc {
-    collection
-      .find[GoodsItemRecord](byEori(eori))
-      .sort(byLatest)
-      .limit(1)
-      .headOption()
   }
 
   // TODO need to add an appropriate index for this to search
@@ -167,7 +147,7 @@ class RecordsRepository @Inject() (
             collection
               .find[GoodsItemRecord](
                 Filters.and(
-                  byEoriAndActive(eori),
+                  byEori(eori),
                   byField(searchField, value, exactMatch)
                 )
               )
@@ -177,7 +157,7 @@ class RecordsRepository @Inject() (
             collection
               .find[GoodsItemRecord](
                 Filters.and(
-                  byEoriAndActive(eori),
+                  byEori(eori),
                   byComCodeOrGoodsDescriptionOrTraderRef(value, exactMatch)
                 )
               )

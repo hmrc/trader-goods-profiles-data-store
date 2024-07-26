@@ -225,10 +225,9 @@ class RecordsRepositorySpec
 
   ".getCount" - {
 
-    "when there are records for this eori it must return the active count" in {
+    "when there are records for this eori" in {
       insert(sampleGoodsItemRecord).futureValue
       insert(sampleGoodsItemRecord.copy(recordId = "2")).futureValue
-      insert(sampleGoodsItemRecord.copy(recordId = "3", active = false)).futureValue
 
       val result = repository.getCount(sampleGoodsItemRecord.eori).futureValue
       result mustEqual 2
@@ -239,20 +238,6 @@ class RecordsRepositorySpec
     }
 
     mustPreserveMdc(repository.getCount(sampleGoodsItemRecord.eori))
-  }
-
-  ".getCountWithInactive" - {
-
-    "when there are records for this eori it must return the total count including inactive" in {
-      insert(sampleGoodsItemRecord).futureValue
-      insert(sampleGoodsItemRecord.copy(recordId = "2")).futureValue
-      insert(sampleGoodsItemRecord.copy(recordId = "3", active = false)).futureValue
-
-      val result = repository.getCountWithInactive(sampleGoodsItemRecord.eori).futureValue
-      result mustEqual 3
-    }
-
-    mustPreserveMdc(repository.getCountWithInactive(sampleGoodsItemRecord.eori))
   }
 
   ".getMany" - {
@@ -299,47 +284,12 @@ class RecordsRepositorySpec
       result.size mustEqual 0
     }
 
-    "when there are 8 records for this eori but only 2 of them are active: false it must return 2 records and it asks for page 1 of size 5" in {
-      insert(sampleGoodsItemRecord).futureValue
-      insert(sampleGoodsItemRecord.copy(recordId = "2")).futureValue
-      insert(sampleGoodsItemRecord.copy(recordId = "3", active = false)).futureValue
-      insert(sampleGoodsItemRecord.copy(recordId = "4", active = false)).futureValue
-      insert(sampleGoodsItemRecord.copy(recordId = "5", active = false)).futureValue
-      insert(sampleGoodsItemRecord.copy(recordId = "6", active = false)).futureValue
-      insert(sampleGoodsItemRecord.copy(recordId = "7", active = false)).futureValue
-      insert(sampleGoodsItemRecord.copy(recordId = "8", active = false)).futureValue
-
-      val result = repository.getMany(sampleGoodsItemRecord.eori, Some(1), Some(5)).futureValue
-      result.size mustEqual 2
-    }
-
     "when there are no records for this eori it must return empty Array" in {
       val result = repository.getMany(sampleGoodsItemRecord.eori, None, None).futureValue
       result.size mustEqual 0
     }
 
     mustPreserveMdc(repository.getMany(sampleGoodsItemRecord.eori, None, None))
-  }
-
-  ".getLatest" - {
-
-    "when there are 8 records for this eori it must get the last updated" in {
-      insert(sampleGoodsItemRecord).futureValue
-      insert(sampleGoodsItemRecord.copy(recordId = "2")).futureValue
-      insert(sampleGoodsItemRecord.copy(recordId = "3")).futureValue
-      insert(sampleGoodsItemRecord.copy(recordId = "4")).futureValue
-      insert(sampleGoodsItemRecord.copy(recordId = "5")).futureValue
-      insert(latestGoodsItemRecord).futureValue
-
-      val result = repository.getLatest(sampleGoodsItemRecord.eori).futureValue
-      result.value.recordId mustEqual latestRecordId
-    }
-
-    "when there are no records for this eori it must return None" in {
-      repository.getLatest(sampleGoodsItemRecord.eori).futureValue mustEqual None
-    }
-
-    mustPreserveMdc(repository.getLatest(sampleGoodsItemRecord.eori))
   }
 
   ".filterRecords" - {
@@ -392,28 +342,6 @@ class RecordsRepositorySpec
           )
           .futureValue
         result.size mustEqual 2
-        result.headOption.value.traderRef mustEqual traderRefSearchTerm
-      }
-
-      "when there are 8 records and 2 matching traderRef searchTerm for this eori and the field is passed but only 1 is active it must return a record of size 2" in {
-        insert(sampleGoodsItemRecord).futureValue
-        insert(sampleGoodsItemRecord.copy(recordId = "2")).futureValue
-        insert(sampleGoodsItemRecord2.copy(recordId = "3")).futureValue
-        insert(sampleGoodsItemRecord2.copy(recordId = "4", active = false)).futureValue
-        insert(sampleGoodsItemRecord.copy(recordId = "5")).futureValue
-        insert(latestGoodsItemRecord).futureValue
-        insert(latestGoodsItemRecord.copy(recordId = "6", active = false)).futureValue
-        insert(sampleGoodsItemRecord.copy(recordId = "7")).futureValue
-
-        val result = repository
-          .filterRecords(
-            sampleGoodsItemRecord.eori,
-            Some(traderRefSearchTerm),
-            Some(traderRefSearchField),
-            exactMatch = true
-          )
-          .futureValue
-        result.size mustEqual 1
         result.headOption.value.traderRef mustEqual traderRefSearchTerm
       }
 
@@ -527,28 +455,6 @@ class RecordsRepositorySpec
           )
           .futureValue
         result.size mustEqual 4
-        result.headOption.value.traderRef.contains(traderRefPartialSearchTerm)
-      }
-
-      "when there are 8 records and 4 matching traderRef searchTerm for this eori and the field is passed but only 3 is active it must return a record of size 3" in {
-        insert(sampleGoodsItemRecord).futureValue
-        insert(sampleGoodsItemRecord.copy(recordId = "2")).futureValue
-        insert(sampleGoodsItemRecord2.copy(recordId = "3")).futureValue
-        insert(sampleGoodsItemRecord2.copy(recordId = "4", active = false)).futureValue
-        insert(sampleGoodsItemRecord.copy(recordId = "5")).futureValue
-        insert(latestGoodsItemRecord).futureValue
-        insert(latestGoodsItemRecord.copy(recordId = "6", active = false)).futureValue
-        insert(inactiveGoodsItemRecord.copy(recordId = "7")).futureValue
-
-        val result = repository
-          .filterRecords(
-            sampleGoodsItemRecord.eori,
-            Some(traderRefPartialSearchTerm),
-            Some(traderRefSearchField),
-            exactMatch = false
-          )
-          .futureValue
-        result.size mustEqual 3
         result.headOption.value.traderRef.contains(traderRefPartialSearchTerm)
       }
 
