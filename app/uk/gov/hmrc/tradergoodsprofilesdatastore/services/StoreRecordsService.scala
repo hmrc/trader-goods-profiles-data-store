@@ -19,57 +19,97 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.services
 import com.google.inject.Inject
 import org.apache.pekko.Done
 import play.api.Logging
-import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary.Update
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{recursivePageSize, recursiveStartingPage}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{RecordsRepository, RecordsSummaryRepository}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class StoreRecordsService @Inject() (routerConnector: RouterConnector, recordsRepository: RecordsRepository)(implicit
+class StoreRecordsService @Inject() (
+  routerConnector: RouterConnector,
+  recordsRepository: RecordsRepository,
+  recordsSummaryRepository: RecordsSummaryRepository
+)(implicit
   ec: ExecutionContext
 ) extends Logging {
 
   def storeRecords(
     eori: String,
     lastUpdatedDate: Option[String]
-  )(implicit request: Request[_], hc: HeaderCarrier): Future[Done] =
-    storeRecordsRecursively(eori, recursiveStartingPage, lastUpdatedDate).flatMap { _ =>
-      routerConnector.getRecords(eori, None, Some(recursiveStartingPage), Some(1)).flatMap { recordsResponse =>
-        val totalRouterRecords = recordsResponse.pagination.totalRecords
-        recordsRepository.getCountWithInactive(eori).flatMap { totalDataStoreRecords =>
-          if (totalRouterRecords == totalDataStoreRecords) {
-            Future.successful(Done)
-          } else {
-            Future.failed(
-              new RuntimeException(
-                s"Data Store and B&T Database are out of sync: There are $totalDataStoreRecords data store records and $totalRouterRecords B&T records."
-              )
-            )
-          }
+  )(implicit hc: HeaderCarrier): Future[Boolean] =
+    storeFirstBatchOfRecords(eori, lastUpdatedDate).flatMap { recordsToStore =>
+      if (recordsToStore > recursivePageSize) {
+        recordsSummaryRepository.set(eori, Some(Update(recursivePageSize, recordsToStore - recursivePageSize))).map {
+          _ =>
+            storeRecordsRecursively(
+              eori,
+              recursiveStartingPage + 1,
+              lastUpdatedDate,
+              recordsToStore - recursivePageSize,
+              recursivePageSize
+            ).onComplete { _ =>
+              recordsSummaryRepository.set(eori, None).flatMap { _ =>
+                checkInSync(eori)
+              }
+            }
+            false
         }
+      } else {
+        checkInSync(eori).map(_ => true)
       }
     }
 
+  private def checkInSync(eori: String)(implicit hc: HeaderCarrier): Future[Done] =
+    routerConnector.getRecords(eori, None, Some(recursiveStartingPage), Some(1)).flatMap { recordsResponse =>
+      val totalRouterRecords = recordsResponse.pagination.totalRecords
+      recordsRepository.getCountWithInactive(eori).map { totalDataStoreRecords =>
+        if (totalRouterRecords != totalDataStoreRecords) {
+          logger.error(
+            s"Data Store and B&T Database are out of sync for eori $eori: There are $totalDataStoreRecords data store records and $totalRouterRecords B&T records."
+          )
+        }
+        Done
+      }
+    }
+
+  //TODO delete function
   def deleteAndStoreRecords(
     eori: String
-  )(implicit request: Request[_], hc: HeaderCarrier): Future[Done] =
+  )(implicit hc: HeaderCarrier): Future[Done] =
     recordsRepository.deleteMany(eori).flatMap { _ =>
-      storeRecordsRecursively(eori, recursiveStartingPage, None).map(_ => Done)
+      storeRecordsRecursively(eori, recursiveStartingPage, None, 0, 0).map(_ => Done)
+    }
+
+  private def storeFirstBatchOfRecords(
+    eori: String,
+    lastUpdatedDate: Option[String]
+  )(implicit hc: HeaderCarrier): Future[Int] =
+    routerConnector.getRecords(eori, lastUpdatedDate, Some(recursiveStartingPage), Some(recursivePageSize)).flatMap {
+      recordsResponse =>
+        recordsRepository
+          .saveRecords(eori, recordsResponse.goodsItemRecords)
+          .map(_ => recordsResponse.pagination.totalRecords)
     }
 
   private def storeRecordsRecursively(
     eori: String,
     page: Int,
-    lastUpdatedDate: Option[String]
-  )(implicit request: Request[_], hc: HeaderCarrier): Future[Done] =
+    lastUpdatedDate: Option[String],
+    recordsToStore: Int,
+    recordsStored: Int
+  )(implicit hc: HeaderCarrier): Future[Done] =
     routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(recursivePageSize)).flatMap { recordsResponse =>
       recordsRepository.saveRecords(eori, recordsResponse.goodsItemRecords).flatMap { _ =>
-        if (recordsResponse.pagination.nextPage.isDefined) {
-          storeRecordsRecursively(eori, page + 1, lastUpdatedDate)
-        } else {
-          Future.successful(Done)
+        val newRecordsToStore = recordsToStore - recordsResponse.goodsItemRecords.size
+        val newRecordsStored  = recordsStored + recordsResponse.goodsItemRecords.size
+        recordsSummaryRepository.set(eori, Some(Update(newRecordsStored, newRecordsToStore))).flatMap { _ =>
+          if (recordsResponse.pagination.nextPage.isDefined) {
+            storeRecordsRecursively(eori, page + 1, lastUpdatedDate, newRecordsToStore, newRecordsStored)
+          } else {
+            Future.successful(Done)
+          }
         }
       }
     }
