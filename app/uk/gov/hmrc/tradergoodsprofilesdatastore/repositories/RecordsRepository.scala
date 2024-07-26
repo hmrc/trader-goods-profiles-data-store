@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
+import org.apache.pekko.Done
+import org.mongodb.scala.bson.Document
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo.MongoComponent
@@ -153,4 +155,7 @@ class RecordsRepository @Inject() (
 
   def deleteMany(eori: String): Future[Long] =
     collection.deleteMany(byEori(eori)).toFuture().map(result => result.getDeletedCount)
+
+  def deleteAll: Future[Done] =
+    collection.deleteMany(Document()).toFuture().map(_ => Done)
 }

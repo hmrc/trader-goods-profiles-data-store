@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
+import org.apache.pekko.Done
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Filters
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
@@ -680,6 +681,16 @@ class RecordsRepositorySpec
 
       val result = repository.deleteMany(sampleGoodsItemRecords.eori).futureValue
       result mustEqual 5
+    }
+  }
+
+  ".deleteAll" - {
+    "it must delete all documents in the collection" in {
+      insert(sampleGoodsItemRecords).futureValue
+      val result      = repository.deleteAll.futureValue
+      val recordCheck = repository.getCount(sampleGoodsItemRecords.eori).futureValue
+      result mustEqual Done
+      recordCheck mustEqual 0
     }
   }
 }

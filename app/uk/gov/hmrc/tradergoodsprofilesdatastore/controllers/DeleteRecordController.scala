@@ -20,6 +20,7 @@ import play.api.Logging
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, StoreLatestAction}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
@@ -32,6 +33,7 @@ class DeleteRecordController @Inject() (
   cc: ControllerComponents,
   routerConnector: RouterConnector,
   recordsRepository: RecordsRepository,
+  config: DataStoreAppConfig,
   identify: IdentifierAction,
   storeLatestAction: StoreLatestAction
 )(implicit ec: ExecutionContext)
@@ -62,5 +64,12 @@ class DeleteRecordController @Inject() (
           logger.error(s"Get record failed with ${cause.statusCode} with message: ${cause.message}")
           Success(InternalServerError)
       }
+  }
+
+  def deleteAll(): Action[AnyContent] = identify.async {
+    if (config.deleteAllCollectionDocumentsForRecordAndProfile)
+      recordsRepository.deleteAll.map(_ => Ok)
+    else
+      Future.successful(InternalServerError)
   }
 }

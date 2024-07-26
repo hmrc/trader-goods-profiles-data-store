@@ -27,6 +27,7 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeIdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
+import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GoodsItemRecord}
@@ -42,7 +43,9 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
   val testEori             = "GB123456789099"
   private val testRecordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f"
 
-  private val getUrl = routes.DeleteRecordController.deleteRecord(testEori, testRecordId).url
+  private val getUrl           = routes.DeleteRecordController.deleteRecord(testEori, testRecordId).url
+  private val deleteAllUrl     = routes.DeleteRecordController.deleteAll().url
+  private val deleteAllRequest = FakeRequest("DELETE", deleteAllUrl)
 
   private val validFakeGetRequest = FakeRequest("DELETE", getUrl)
 
@@ -300,6 +303,47 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
           verify(mockRouterConnector)
             .getRecord(eqTo(testEori), eqTo(testRecordId))(any())
         }
+      }
+    }
+  }
+
+  s"DELETE $deleteAllUrl" - {
+
+    "return 200 when the feature flag for deleting all collection documents is true" in {
+
+      val mockRecordsRepository = mock[RecordsRepository]
+      val dataStoreAppConfig    = mock[DataStoreAppConfig]
+      when(mockRecordsRepository.deleteAll) thenReturn Future.successful(Done)
+      when(dataStoreAppConfig.deleteAllCollectionDocumentsForRecordAndProfile) thenReturn true
+      val application           = applicationBuilder()
+        .overrides(
+          inject.bind[RecordsRepository].toInstance(mockRecordsRepository),
+          inject.bind[DataStoreAppConfig].toInstance(dataStoreAppConfig)
+        )
+        .build()
+
+      running(application) {
+        val result = route(application, deleteAllRequest).value
+        status(result) shouldBe OK
+      }
+    }
+
+    "return 500 when the feature flag for deleting all collection documents is false" in {
+
+      val mockRecordsRepository = mock[RecordsRepository]
+      val dataStoreAppConfig    = mock[DataStoreAppConfig]
+      when(mockRecordsRepository.deleteAll) thenReturn Future.successful(Done)
+      when(dataStoreAppConfig.deleteAllCollectionDocumentsForRecordAndProfile) thenReturn false
+      val application           = applicationBuilder()
+        .overrides(
+          inject.bind[RecordsRepository].toInstance(mockRecordsRepository),
+          inject.bind[DataStoreAppConfig].toInstance(dataStoreAppConfig)
+        )
+        .build()
+
+      running(application) {
+        val result = route(application, deleteAllRequest).value
+        status(result) shouldBe INTERNAL_SERVER_ERROR
       }
     }
   }
