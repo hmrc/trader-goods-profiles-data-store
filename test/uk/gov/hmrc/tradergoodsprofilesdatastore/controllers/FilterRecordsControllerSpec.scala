@@ -55,10 +55,6 @@ class FilterRecordsControllerSpec
     mockRouterConnector = mock[RouterConnector]
     mockAction = mock[Action[AnyContent]]
 
-    when(mockRecordsRepository.getLatest(any())) thenReturn Future.successful(
-      Some(getGoodsItemRecord("GB123456789099"))
-    )
-
     when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn
       Future.successful(
         GetRecordsResponse(

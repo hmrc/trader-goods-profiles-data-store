@@ -141,7 +141,6 @@ class StoreRecordsServiceSpec
         val oldDate            = Instant.now()
         val latestRecordUpdate = oldDate.plus(1, ChronoUnit.DAYS)
 
-        when(mockRecordsRepository.getCountWithInactive(any())) thenReturn Future.successful(totalRecordsNum)
         when(mockRecordsSummaryRepository.set(any(), any(), any())) thenReturn Future.successful(Done)
         when(mockRecordsRepository.updateRecords(any(), any())) thenReturn Future.successful(Done)
         when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
@@ -178,12 +177,10 @@ class StoreRecordsServiceSpec
       }
 
       "must remove the updating status when the recursive call fails" in {
-        val totalRecordsNum    = pageSize + 1
-        val requestEori        = "GB123456789099"
-        val oldDate            = Instant.now()
-        val latestRecordUpdate = oldDate.plus(1, ChronoUnit.DAYS)
+        val totalRecordsNum = pageSize + 1
+        val requestEori     = "GB123456789099"
+        val oldDate         = Instant.now()
 
-        when(mockRecordsRepository.getCountWithInactive(any())) thenReturn Future.successful(totalRecordsNum)
         when(mockRecordsSummaryRepository.set(any(), any(), any())) thenReturn Future.successful(Done)
         when(mockRecordsRepository.updateRecords(any(), any())) thenReturn Future.successful(Done)
         when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
