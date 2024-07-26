@@ -42,7 +42,7 @@ class RecordsRepository @Inject() (
         IndexModel(
           Indexes.compoundIndex(
             Indexes.ascending("eori"),
-            Indexes.ascending("recordId")
+            Indexes.ascending("_id")
           ),
           IndexOptions()
             .name("eori_recordId_idx")
