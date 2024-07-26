@@ -48,7 +48,8 @@ class RecordsRepository @Inject() (
             .name("eori_recordId_idx")
         )
       )
-    ) with Transactions {
+    )
+    with Transactions {
 
   // We will be handling the timing out of this data with a worker
   // rather than a TTL as this will need to be coordinated
@@ -65,7 +66,7 @@ class RecordsRepository @Inject() (
   private def byEoriAndInactive(eori: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.equal("active", false))
 
-  private def byEoriAndRecordId(eori: String, recordId: String): Bson        =
+  private def byEoriAndRecordId(eori: String, recordId: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.equal("_id", recordId))
 
   private def byEoriAndRecordIds(eori: String, recordIds: Seq[String]): Bson =
@@ -101,32 +102,36 @@ class RecordsRepository @Inject() (
 
   def updateRecords(eori: String, records: Seq[GoodsItemRecord]): Future[Done] = Mdc.preservingMdc {
     val (activeRecords, inactiveRecords) = records.partition(_.active)
-    val inactiveRecordIds = inactiveRecords.map(_.recordId)
+    val inactiveRecordIds                = inactiveRecords.map(_.recordId)
     withSessionAndTransaction { session =>
-      collection.bulkWrite(
-        session,
-        activeRecords.map { record =>
-          ReplaceOneModel(
-            filter = byEoriAndRecordId(eori, record.recordId),
-            replacement = record,
-            replaceOptions = ReplaceOptions().upsert(true)
-          )
-        } :+ DeleteManyModel(byEoriAndRecordIds(eori, inactiveRecordIds))
-      ).toFuture().map(_ => Done)
+      collection
+        .bulkWrite(
+          session,
+          activeRecords.map { record =>
+            ReplaceOneModel(
+              filter = byEoriAndRecordId(eori, record.recordId),
+              replacement = record,
+              replaceOptions = ReplaceOptions().upsert(true)
+            )
+          } :+ DeleteManyModel(byEoriAndRecordIds(eori, inactiveRecordIds))
+        )
+        .toFuture()
+        .map(_ => Done)
     }
   }
 
-  def getMany(eori: String, pageOpt: Option[Int], sizeOpt: Option[Int]): Future[Seq[GoodsItemRecord]] = Mdc.preservingMdc {
-    val size = sizeOpt.getOrElse(localPageSize)
-    val page = pageOpt.getOrElse(localStartingPage)
-    val skip = (page - 1) * size
-    collection
-      .find[GoodsItemRecord](byEoriAndActive(eori))
-      .sort(byLatest)
-      .limit(size)
-      .skip(skip)
-      .toFuture()
-  }
+  def getMany(eori: String, pageOpt: Option[Int], sizeOpt: Option[Int]): Future[Seq[GoodsItemRecord]] =
+    Mdc.preservingMdc {
+      val size = sizeOpt.getOrElse(localPageSize)
+      val page = pageOpt.getOrElse(localStartingPage)
+      val skip = (page - 1) * size
+      collection
+        .find[GoodsItemRecord](byEoriAndActive(eori))
+        .sort(byLatest)
+        .limit(size)
+        .skip(skip)
+        .toFuture()
+    }
 
   def getCount(eori: String): Future[Long] = Mdc.preservingMdc {
     collection

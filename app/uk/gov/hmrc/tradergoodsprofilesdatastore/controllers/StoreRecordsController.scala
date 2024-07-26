@@ -27,7 +27,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.services.StoreRecordsService
 
 class StoreRecordsController @Inject() (
   cc: ControllerComponents,
-  identify: IdentifierAction,
+  identify: IdentifierAction
 ) extends BackendController(cc) {
 
   def storeAllRecords(

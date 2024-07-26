@@ -40,7 +40,7 @@ import java.time.{Clock, Instant, ZoneOffset}
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
 class StoreRecordsServiceSpec
-  extends SpecBase
+    extends SpecBase
     with MockitoSugar
     with GetRecordsResponseUtil
     with BeforeAndAfterEach
@@ -67,7 +67,7 @@ class StoreRecordsServiceSpec
 
       "must not update records summary when there are no new records" in {
         val totalRecordsNum = 0
-        val requestEori = "GB123456789099"
+        val requestEori     = "GB123456789099"
 
         when(mockRecordsSummaryRepository.set(any(), any(), any())) thenReturn Future.successful(Done)
         when(mockRecordsRepository.updateRecords(any(), any())) thenReturn Future.successful(Done)
@@ -100,13 +100,13 @@ class StoreRecordsServiceSpec
 
       "must store records when there is a single page of records" in {
         val totalRecordsNum = pageSize
-        val requestEori = "GB123456789099"
+        val requestEori     = "GB123456789099"
 
         when(mockRecordsSummaryRepository.set(any(), any(), any())) thenReturn Future.successful(Done)
         when(mockRecordsRepository.updateRecords(any(), any())) thenReturn Future.successful(Done)
         when(mockRecordsSummaryRepository.update(any(), any(), any())) thenReturn Future.successful(Done)
 
-        val firstRecord = getGoodsItemRecord(requestEori)
+        val firstRecord  = getGoodsItemRecord(requestEori)
           .copy(updatedDateTime = Instant.now().minus(2, ChronoUnit.DAYS))
         val secondRecord = getGoodsItemRecord(requestEori)
           .copy(updatedDateTime = Instant.now().minus(1, ChronoUnit.DAYS))
@@ -136,15 +136,15 @@ class StoreRecordsServiceSpec
       }
 
       "must store records when there are multiple pages of records" in {
-        val totalRecordsNum = pageSize + 1
-        val requestEori = "GB123456789099"
-        val oldDate = Instant.now()
+        val totalRecordsNum    = pageSize + 1
+        val requestEori        = "GB123456789099"
+        val oldDate            = Instant.now()
         val latestRecordUpdate = oldDate.plus(1, ChronoUnit.DAYS)
 
         when(mockRecordsRepository.getCountWithInactive(any())) thenReturn Future.successful(totalRecordsNum)
         when(mockRecordsSummaryRepository.set(any(), any(), any())) thenReturn Future.successful(Done)
         when(mockRecordsRepository.updateRecords(any(), any())) thenReturn Future.successful(Done)
-        when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn(
+        when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
           Future.successful(
             GetRecordsResponse(
               goodsItemRecords = getTestRecords(requestEori, pageSize).map(_.copy(updatedDateTime = oldDate)),
@@ -168,7 +168,8 @@ class StoreRecordsServiceSpec
           verify(mockRecordsRepository, times(2)).updateRecords(any(), any())
           verify(mockRecordsSummaryRepository, times(2)).set(any(), any(), any())
           verify(mockRecordsSummaryRepository, times(1)).set(requestEori, Some(Update(pageSize, 1)), oldDate)
-          verify(mockRecordsSummaryRepository, times(1)).set(requestEori, Some(Update(pageSize + 1, 0)), latestRecordUpdate)
+          verify(mockRecordsSummaryRepository, times(1))
+            .set(requestEori, Some(Update(pageSize + 1, 0)), latestRecordUpdate)
           verify(mockRecordsSummaryRepository, times(1)).update(requestEori, None, None)
           done.success(Done)
         }
@@ -177,15 +178,15 @@ class StoreRecordsServiceSpec
       }
 
       "must remove the updating status when the recursive call fails" in {
-        val totalRecordsNum = pageSize + 1
-        val requestEori = "GB123456789099"
-        val oldDate = Instant.now()
+        val totalRecordsNum    = pageSize + 1
+        val requestEori        = "GB123456789099"
+        val oldDate            = Instant.now()
         val latestRecordUpdate = oldDate.plus(1, ChronoUnit.DAYS)
 
         when(mockRecordsRepository.getCountWithInactive(any())) thenReturn Future.successful(totalRecordsNum)
         when(mockRecordsSummaryRepository.set(any(), any(), any())) thenReturn Future.successful(Done)
         when(mockRecordsRepository.updateRecords(any(), any())) thenReturn Future.successful(Done)
-        when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn(
+        when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
           Future.successful(
             GetRecordsResponse(
               goodsItemRecords = getTestRecords(requestEori, pageSize).map(_.copy(updatedDateTime = oldDate)),

@@ -39,8 +39,7 @@ class StoreLatestActionImpl @Inject() (
   override protected def filter[A](
     identifierRequest: IdentifierRequest[A]
   ): Future[Option[Result]] = {
-    implicit val hc: HeaderCarrier             = HeaderCarrierConverter.fromRequest(identifierRequest)
-    implicit val request: IdentifierRequest[A] = identifierRequest
+    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(identifierRequest)
 
     recordsSummaryRepository.get(identifierRequest.eori).flatMap { recordsSummaryOpt =>
       storeRecordsService
@@ -48,13 +47,13 @@ class StoreLatestActionImpl @Inject() (
           identifierRequest.eori,
           recordsSummaryOpt.map(_.lastUpdated.toString)
         )
-        .map(isDone =>
+        .map { isDone =>
           if (isDone) {
             None
           } else {
             Some(Accepted)
           }
-        )
+        }
     }
   }
 }

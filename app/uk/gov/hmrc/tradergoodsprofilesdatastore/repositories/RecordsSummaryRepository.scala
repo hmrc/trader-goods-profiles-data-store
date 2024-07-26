@@ -32,7 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class RecordsSummaryRepository @Inject() (
-  mongoComponent: MongoComponent,
+  mongoComponent: MongoComponent
 )(implicit ec: ExecutionContext)
     extends PlayMongoRepository[RecordsSummary](
       collectionName = "recordsSummary",
@@ -88,8 +88,10 @@ class RecordsSummaryRepository @Inject() (
     collection
       .updateOne(
         filter = byEori(eori),
-        update = Updates.combine(updates: _*),
-      ).head().flatMap { result =>
+        update = Updates.combine(updates: _*)
+      )
+      .head()
+      .flatMap { result =>
         if (result.getMatchedCount > 0) {
           Future.successful(Done)
         } else {
