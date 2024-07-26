@@ -23,7 +23,7 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, StoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{buildPagination, recursiveStartingPage}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{buildPagination, startingPage}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
@@ -78,7 +78,7 @@ class GetRecordsController @Inject() (
     eori: String
   ): Action[AnyContent] = identify.async { implicit request =>
     routerConnector
-      .getRecords(eori, page = Some(recursiveStartingPage), size = Some(1))
+      .getRecords(eori, page = Some(startingPage), size = Some(1))
       .map(recordsResponse => Ok(Json.toJson(recordsResponse.pagination.totalRecords))) transform {
       case s @ Success(_)                        => s
       case Failure(cause: UpstreamErrorResponse) =>
