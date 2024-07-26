@@ -46,23 +46,25 @@ class StoreRecordsService @Inject() (
       val totalRecords = recordsResponse.pagination.totalRecords
       if (totalRecords > pageSize) {
 
-        recordsSummaryRepository.set(
-          eori,
-          update = Some(Update(pageSize, totalRecords - pageSize)),
-          lastUpdated = getLastUpdated(recordsResponse.goodsItemRecords)
-        ).map { _ =>
-          storeRecordsRecursively(
+        recordsSummaryRepository
+          .set(
             eori,
-            startingPage + 1,
-            lastUpdatedDate,
-            totalRecords - pageSize,
-            pageSize
-          ).onComplete { _ =>
-            recordsSummaryRepository.update(eori, None, None)
-          }
+            update = Some(Update(pageSize, totalRecords - pageSize)),
+            lastUpdated = getLastUpdated(recordsResponse.goodsItemRecords)
+          )
+          .map { _ =>
+            storeRecordsRecursively(
+              eori,
+              startingPage + 1,
+              lastUpdatedDate,
+              totalRecords - pageSize,
+              pageSize
+            ).onComplete { _ =>
+              recordsSummaryRepository.update(eori, None, None)
+            }
 
-          false
-        }
+            false
+          }
       } else if (totalRecords > 0) {
         recordsSummaryRepository
           .set(eori, None, getLastUpdated(recordsResponse.goodsItemRecords))
@@ -78,7 +80,8 @@ class StoreRecordsService @Inject() (
   )(implicit hc: HeaderCarrier): Future[GetRecordsResponse] =
     routerConnector.getRecords(eori, lastUpdatedDate, Some(startingPage), Some(pageSize)).flatMap { recordsResponse =>
       if (recordsResponse.goodsItemRecords.nonEmpty) {
-        recordsRepository.updateRecords(eori, recordsResponse.goodsItemRecords)
+        recordsRepository
+          .updateRecords(eori, recordsResponse.goodsItemRecords)
           .map(_ => recordsResponse)
       } else {
         Future.successful(recordsResponse)
@@ -91,21 +94,23 @@ class StoreRecordsService @Inject() (
     lastUpdatedDate: Option[String],
     recordsToStore: Int,
     recordsStored: Int
-  )(implicit hc: HeaderCarrier): Future[Seq[GoodsItemRecord]] = {
-
+  )(implicit hc: HeaderCarrier): Future[Seq[GoodsItemRecord]] =
     for {
-      recordsResponse   <- routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(pageSize))
-      _                 <- recordsRepository.updateRecords(eori, recordsResponse.goodsItemRecords)
-      newRecordsToStore =  recordsToStore - recordsResponse.goodsItemRecords.size
-      newRecordsStored  =  recordsStored + recordsResponse.goodsItemRecords.size
-      _                 <- recordsSummaryRepository.set(eori, Some(Update(newRecordsStored, newRecordsToStore)), getLastUpdated(recordsResponse.goodsItemRecords))
-      _                 <- if (recordsResponse.pagination.nextPage.isDefined) {
-                             storeRecordsRecursively(eori, page + 1, lastUpdatedDate, newRecordsStored, newRecordsToStore)
-                           } else {
-                             Future.successful(Done)
-                           }
+      recordsResponse  <- routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(pageSize))
+      _                <- recordsRepository.updateRecords(eori, recordsResponse.goodsItemRecords)
+      newRecordsToStore = recordsToStore - recordsResponse.goodsItemRecords.size
+      newRecordsStored  = recordsStored + recordsResponse.goodsItemRecords.size
+      _                <- recordsSummaryRepository.set(
+                            eori,
+                            Some(Update(newRecordsStored, newRecordsToStore)),
+                            getLastUpdated(recordsResponse.goodsItemRecords)
+                          )
+      _                <- if (recordsResponse.pagination.nextPage.isDefined) {
+                            storeRecordsRecursively(eori, page + 1, lastUpdatedDate, newRecordsStored, newRecordsToStore)
+                          } else {
+                            Future.successful(Done)
+                          }
     } yield recordsResponse.goodsItemRecords
-  }
 
   private def getLastUpdated(records: Seq[GoodsItemRecord]): Instant =
     records
