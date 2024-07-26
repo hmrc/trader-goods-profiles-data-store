@@ -29,7 +29,7 @@ final case class RecordsSummary(
 
 object RecordsSummary extends MongoJavatimeFormats.Implicits {
 
-  final case class Update(recordsStored: Int, recordsToStore: Int)
+  final case class Update(recordsStored: Int, totalRecords: Int)
 
   object Update {
     implicit lazy val format: OFormat[Update] = Json.format

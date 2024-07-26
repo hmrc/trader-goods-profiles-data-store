@@ -166,9 +166,9 @@ class StoreRecordsServiceSpec
           verify(mockRouterConnector, times(2)).getRecords(any(), any(), any(), any())(any())
           verify(mockRecordsRepository, times(2)).updateRecords(any(), any())
           verify(mockRecordsSummaryRepository, times(2)).set(any(), any(), any())
-          verify(mockRecordsSummaryRepository, times(1)).set(requestEori, Some(Update(pageSize, 1)), oldDate)
+          verify(mockRecordsSummaryRepository, times(1)).set(requestEori, Some(Update(pageSize, totalRecordsNum)), oldDate)
           verify(mockRecordsSummaryRepository, times(1))
-            .set(requestEori, Some(Update(pageSize + 1, 0)), latestRecordUpdate)
+            .set(requestEori, Some(Update(pageSize + 1, totalRecordsNum)), latestRecordUpdate)
           verify(mockRecordsSummaryRepository, times(1)).update(requestEori, None, None)
           done.success(Done)
         }
@@ -201,7 +201,7 @@ class StoreRecordsServiceSpec
           verify(mockRouterConnector, times(2)).getRecords(any(), any(), any(), any())(any())
           verify(mockRecordsRepository, times(1)).updateRecords(any(), any())
           verify(mockRecordsSummaryRepository, times(1)).set(any(), any(), any())
-          verify(mockRecordsSummaryRepository, times(1)).set(requestEori, Some(Update(pageSize, 1)), oldDate)
+          verify(mockRecordsSummaryRepository, times(1)).set(requestEori, Some(Update(pageSize, pageSize + 1)), oldDate)
           verify(mockRecordsSummaryRepository, times(1)).update(requestEori, None, None)
           done.success(Done)
         }
