@@ -22,7 +22,6 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, StoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -31,7 +30,6 @@ import scala.util.{Failure, Success}
 class DeleteRecordController @Inject() (
   cc: ControllerComponents,
   routerConnector: RouterConnector,
-  recordsRepository: RecordsRepository,
   identify: IdentifierAction,
   storeLatestAction: StoreLatestAction
 )(implicit ec: ExecutionContext)

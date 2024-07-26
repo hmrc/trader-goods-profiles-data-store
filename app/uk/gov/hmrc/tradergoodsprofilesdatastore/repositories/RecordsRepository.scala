@@ -16,10 +16,13 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
+import org.apache.pekko.Done
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+import uk.gov.hmrc.mongo.transaction.{TransactionConfiguration, Transactions}
+import uk.gov.hmrc.play.http.logging.Mdc
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GoodsItemRecord
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{localPageSize, localStartingPage}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.StringHelper.escapeRegexSpecialChars
@@ -29,7 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class RecordsRepository @Inject() (
-  mongoComponent: MongoComponent
+  override val mongoComponent: MongoComponent
 )(implicit ec: ExecutionContext)
     extends PlayMongoRepository[GoodsItemRecord](
       collectionName = "goodsItemRecords",
@@ -37,27 +40,41 @@ class RecordsRepository @Inject() (
       domainFormat = GoodsItemRecord.goodsItemRecordsMongoFormat,
       indexes = Seq(
         IndexModel(
-          Indexes.ascending("recordId"),
-          IndexOptions().name("recordId")
+          Indexes.compoundIndex(
+            Indexes.ascending("eori"),
+            Indexes.ascending("_id")
+          ),
+          IndexOptions()
+            .name("eori_recordId_idx")
         )
       )
-    ) {
+    )
+    with Transactions {
+
+  // We will be handling the timing out of this data with a worker
+  // rather than a TTL as this will need to be coordinated
+  override lazy val requiresTtlIndex: Boolean = false
+
+  private implicit val tc: TransactionConfiguration =
+    TransactionConfiguration.strict
 
   private def byEori(eori: String): Bson = Filters.equal("eori", eori)
 
-  private def byEoriAndActive(eori: String): Bson =
-    Filters.and(Filters.equal("eori", eori), Filters.equal("active", true))
-
   private def byEoriAndRecordId(eori: String, recordId: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.equal("_id", recordId))
+
+  private def byEoriAndRecordIds(eori: String, recordIds: Seq[String]): Bson =
+    Filters.and(Filters.equal("eori", eori), Filters.in("_id", recordIds: _*))
 
   private def byLatest: Bson = Sorts.descending("updatedDateTime")
 
   private def byField(field: String, searchTerm: String, exactMatch: Boolean): Bson =
     if (exactMatch)
       Filters.equal(field, searchTerm)
-    else
+    else {
+      // TODO we must not allow people to give us regexes to execute
       Filters.regex(field, searchTerm, "i")
+    }
 
   private def byComCodeOrGoodsDescriptionOrTraderRef(value: String, exactMatch: Boolean): Bson =
     if (exactMatch) {
@@ -69,6 +86,7 @@ class RecordsRepository @Inject() (
     } else {
       val escapedSearchString = escapeRegexSpecialChars(value)
       val searchPattern       = s".*$escapedSearchString.*"
+      // TODO we must not allow people to give us regexes to execute
       Filters.or(
         Filters.regex("traderRef", searchPattern, "i"),
         Filters.regex("goodsDescription", searchPattern, "i"),
@@ -76,54 +94,52 @@ class RecordsRepository @Inject() (
       )
     }
 
-  def saveRecords(eori: String, records: Seq[GoodsItemRecord]): Future[Boolean] =
-    Future
-      .sequence(records.map { record =>
-        collection
-          .replaceOne(
-            filter = byEoriAndRecordId(eori, record.recordId),
-            replacement = record,
-            options = ReplaceOptions().upsert(true)
-          )
-          .toFuture()
-      })
-      .map(_ => true)
-
-  def getMany(eori: String, pageOpt: Option[Int], sizeOpt: Option[Int]): Future[Seq[GoodsItemRecord]] = {
-    val size = sizeOpt.getOrElse(localPageSize)
-    val page = pageOpt.getOrElse(localStartingPage)
-    val skip = (page - 1) * size
-    collection
-      .find[GoodsItemRecord](byEoriAndActive(eori))
-      .sort(byLatest)
-      .limit(size)
-      .skip(skip)
-      .toFuture()
+  def updateRecords(eori: String, records: Seq[GoodsItemRecord]): Future[Done] = Mdc.preservingMdc {
+    val (activeRecords, inactiveRecords) = records.partition(_.active)
+    val inactiveRecordIds                = inactiveRecords.map(_.recordId)
+    withSessionAndTransaction { session =>
+      collection
+        .bulkWrite(
+          session,
+          activeRecords.map { record =>
+            ReplaceOneModel(
+              filter = byEoriAndRecordId(eori, record.recordId),
+              replacement = record,
+              replaceOptions = ReplaceOptions().upsert(true)
+            )
+          } :+ DeleteManyModel(byEoriAndRecordIds(eori, inactiveRecordIds))
+        )
+        .toFuture()
+        .map(_ => Done)
+    }
   }
 
-  def getCount(eori: String): Future[Long] =
-    collection
-      .countDocuments(byEoriAndActive(eori))
-      .toFuture()
+  def getMany(eori: String, pageOpt: Option[Int], sizeOpt: Option[Int]): Future[Seq[GoodsItemRecord]] =
+    Mdc.preservingMdc {
+      val size = sizeOpt.getOrElse(localPageSize)
+      val page = pageOpt.getOrElse(localStartingPage)
+      val skip = (page - 1) * size
+      collection
+        .find[GoodsItemRecord](byEori(eori))
+        .sort(byLatest)
+        .limit(size)
+        .skip(skip)
+        .toFuture()
+    }
 
-  def getCountWithInactive(eori: String): Future[Long] =
+  def getCount(eori: String): Future[Long] = Mdc.preservingMdc {
     collection
       .countDocuments(byEori(eori))
       .toFuture()
+  }
 
-  def getLatest(eori: String): Future[Option[GoodsItemRecord]] =
-    collection
-      .find[GoodsItemRecord](byEori(eori))
-      .sort(byLatest)
-      .limit(1)
-      .headOption()
-
+  // TODO need to add an appropriate index for this to search
   def filterRecords(
     eori: String,
     searchTerm: Option[String],
     field: Option[String],
     exactMatch: Boolean
-  ): Future[Seq[GoodsItemRecord]] =
+  ): Future[Seq[GoodsItemRecord]] = Mdc.preservingMdc {
     searchTerm match {
       case Some(value) =>
         field match {
@@ -131,7 +147,7 @@ class RecordsRepository @Inject() (
             collection
               .find[GoodsItemRecord](
                 Filters.and(
-                  byEoriAndActive(eori),
+                  byEori(eori),
                   byField(searchField, value, exactMatch)
                 )
               )
@@ -141,7 +157,7 @@ class RecordsRepository @Inject() (
             collection
               .find[GoodsItemRecord](
                 Filters.and(
-                  byEoriAndActive(eori),
+                  byEori(eori),
                   byComCodeOrGoodsDescriptionOrTraderRef(value, exactMatch)
                 )
               )
@@ -150,7 +166,5 @@ class RecordsRepository @Inject() (
         }
       case None        => Future.successful(Seq.empty)
     }
-
-  def deleteMany(eori: String): Future[Long] =
-    collection.deleteMany(byEori(eori)).toFuture().map(result => result.getDeletedCount)
+  }
 }

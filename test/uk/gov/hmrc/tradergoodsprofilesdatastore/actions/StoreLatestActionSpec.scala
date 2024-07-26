@@ -16,8 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.actions
 
-import play.api.http.Status.INTERNAL_SERVER_ERROR
-import org.apache.pekko.Done
+import play.api.http.Status.ACCEPTED
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{verify, when}
 import org.scalatestplus.mockito.MockitoSugar.mock
@@ -27,18 +26,23 @@ import play.api.test.Helpers.{defaultAwaitTimeout, status}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestActionImpl
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.IdentifierRequest
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{RecordsRepository, RecordsSummaryRepository}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.services.StoreRecordsService
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
 
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
 
-  class Harness(recordsRepository: RecordsRepository, storeRecordsService: StoreRecordsService)
-      extends StoreLatestActionImpl(recordsRepository, storeRecordsService) {
+  class Harness(
+    recordsSummaryRepository: RecordsSummaryRepository,
+    storeRecordsService: StoreRecordsService
+  ) extends StoreLatestActionImpl(recordsSummaryRepository, storeRecordsService) {
     def callFilter[A](request: IdentifierRequest[A]): Future[Option[Result]] = filter(request)
   }
 
@@ -48,64 +52,88 @@ class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
 
       val requestEori = "GB123456789099"
 
-      val mockRecordsRepository   = mock[RecordsRepository]
-      when(mockRecordsRepository.getLatest(any())) thenReturn Future.successful(Some(getGoodsItemRecord(requestEori)))
-      val mockStoreRecordsService = mock[StoreRecordsService]
-      when(mockStoreRecordsService.storeRecords(any(), any())(any(), any())) thenReturn Future.successful(Done)
+      val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
+      when(mockRecordsSummaryRepository.get(any())) thenReturn Future.successful(
+        Some(RecordsSummary(requestEori, None, Instant.now.minus(3, ChronoUnit.DAYS)))
+      )
+      val mockStoreRecordsService      = mock[StoreRecordsService]
+      when(mockStoreRecordsService.storeRecords(any(), any())(any())) thenReturn Future.successful(true)
 
-      val action = new Harness(mockRecordsRepository, mockStoreRecordsService)
+      val action = new Harness(mockRecordsSummaryRepository, mockStoreRecordsService)
 
-      action
+      val result = action
         .callFilter(IdentifierRequest(FakeRequest(), "testUserId", requestEori, AffinityGroup.Individual))
         .futureValue
 
-      verify(mockRecordsRepository).getLatest(any())
-      verify(mockStoreRecordsService).storeRecords(any(), any())(any(), any())
+      result mustEqual None
+
+      verify(mockRecordsSummaryRepository).get(any())
+      verify(mockStoreRecordsService).storeRecords(any(), any())(any())
     }
 
     "must store all when there is no latest" in {
 
       val requestEori = "GB123456789099"
 
-      val mockRecordsRepository   = mock[RecordsRepository]
-      when(mockRecordsRepository.getLatest(any())) thenReturn Future.successful(None)
-      val mockStoreRecordsService = mock[StoreRecordsService]
-      when(mockStoreRecordsService.storeRecords(any(), any())(any(), any())) thenReturn Future.successful(Done)
+      val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
+      when(mockRecordsSummaryRepository.get(any())) thenReturn Future.successful(None)
+      val mockStoreRecordsService      = mock[StoreRecordsService]
+      when(mockStoreRecordsService.storeRecords(any(), any())(any())) thenReturn Future.successful(true)
 
-      val action = new Harness(mockRecordsRepository, mockStoreRecordsService)
+      val action = new Harness(mockRecordsSummaryRepository, mockStoreRecordsService)
 
-      action
+      val result = action
         .callFilter(IdentifierRequest(FakeRequest(), "testUserId", requestEori, AffinityGroup.Individual))
         .futureValue
 
-      verify(mockRecordsRepository).getLatest(any())
-      verify(mockStoreRecordsService).storeRecords(any(), any())(any(), any())
+      result mustEqual None
+
+      verify(mockRecordsSummaryRepository).get(any())
+      verify(mockStoreRecordsService).storeRecords(any(), any())(any())
     }
 
-    "must throw error when there is a mismatch in the database" in {
+    "must store latest records but more than one page" in {
 
       val requestEori = "GB123456789099"
 
-      val mockRecordsRepository   = mock[RecordsRepository]
-      when(mockRecordsRepository.getLatest(any())) thenReturn Future.successful(None)
-      val mockStoreRecordsService = mock[StoreRecordsService]
-      when(mockStoreRecordsService.storeRecords(any(), any())(any(), any())) thenReturn Future.failed(
-        new RuntimeException(
-          "Data Store and B&T Database are out of sync"
-        )
+      val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
+      when(mockRecordsSummaryRepository.get(any())) thenReturn Future.successful(
+        Some(RecordsSummary(requestEori, None, Instant.now.minus(3, ChronoUnit.DAYS)))
       )
+      val mockStoreRecordsService      = mock[StoreRecordsService]
+      when(mockStoreRecordsService.storeRecords(any(), any())(any())) thenReturn Future.successful(false)
 
-      val action = new Harness(mockRecordsRepository, mockStoreRecordsService)
+      val action = new Harness(mockRecordsSummaryRepository, mockStoreRecordsService)
 
       val result = action
         .callFilter(IdentifierRequest(FakeRequest(), "testUserId", requestEori, AffinityGroup.Individual))
         .futureValue
         .value
+      status(Future.successful(result)) mustEqual ACCEPTED
 
-      status(Future.successful(result)) mustEqual INTERNAL_SERVER_ERROR
+      verify(mockRecordsSummaryRepository).get(any())
+      verify(mockStoreRecordsService).storeRecords(any(), any())(any())
+    }
 
-      verify(mockRecordsRepository).getLatest(any())
-      verify(mockStoreRecordsService).storeRecords(any(), any())(any(), any())
+    "must store all when there is no latest but more than one page" in {
+
+      val requestEori = "GB123456789099"
+
+      val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
+      when(mockRecordsSummaryRepository.get(any())) thenReturn Future.successful(None)
+      val mockStoreRecordsService      = mock[StoreRecordsService]
+      when(mockStoreRecordsService.storeRecords(any(), any())(any())) thenReturn Future.successful(false)
+
+      val action = new Harness(mockRecordsSummaryRepository, mockStoreRecordsService)
+
+      val result = action
+        .callFilter(IdentifierRequest(FakeRequest(), "testUserId", requestEori, AffinityGroup.Individual))
+        .futureValue
+        .value
+      status(Future.successful(result)) mustEqual ACCEPTED
+
+      verify(mockRecordsSummaryRepository).get(any())
+      verify(mockStoreRecordsService).storeRecords(any(), any())(any())
     }
   }
 }

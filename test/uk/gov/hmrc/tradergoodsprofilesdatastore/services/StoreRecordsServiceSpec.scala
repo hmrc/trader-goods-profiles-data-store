@@ -18,250 +18,196 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.services
 
 import org.apache.pekko.Done
 import org.apache.pekko.util.Helpers.Requiring
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.Mockito.{reset, times, verify, when}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.concurrent.Eventually.eventually
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.test.FakeRequest
+import play.api.Logging
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary.Update
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.pageSize
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.recursivePageSize
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{RecordsRepository, RecordsSummaryRepository}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
 
-import scala.concurrent.{ExecutionContext, Future}
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import scala.concurrent.{ExecutionContext, Future, Promise}
 
-class StoreRecordsServiceSpec extends SpecBase with MockitoSugar with GetRecordsResponseUtil {
+class StoreRecordsServiceSpec
+    extends SpecBase
+    with MockitoSugar
+    with GetRecordsResponseUtil
+    with BeforeAndAfterEach
+    with Logging {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
   implicit val hc: HeaderCarrier    = HeaderCarrier()
 
+  private val mockRouterConnector          = mock[RouterConnector]
+  private val mockRecordsRepository        = mock[RecordsRepository]
+  private val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
+
+  val service = new StoreRecordsService(mockRouterConnector, mockRecordsRepository, mockRecordsSummaryRepository)
+
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    reset(mockRouterConnector, mockRecordsRepository, mockRecordsSummaryRepository)
+  }
+
   "StoreRecordsService" - {
+
     "storeRecords" - {
-      "must store all records in data-store" in {
-        val mockRouterConnector   = mock[RouterConnector]
-        val mockRecordsRepository = mock[RecordsRepository]
 
-        val service         = new StoreRecordsService(mockRouterConnector, mockRecordsRepository)
-        val totalRecordsNum = 60000
+      "must not update records summary when there are no new records" in {
+        val totalRecordsNum = 0
         val requestEori     = "GB123456789099"
 
-        when(mockRecordsRepository.getCountWithInactive(any())) thenReturn Future.successful(60000)
+        when(mockRecordsSummaryRepository.set(any(), any(), any())) thenReturn Future.successful(Done)
+        when(mockRecordsRepository.updateRecords(any(), any())) thenReturn Future.successful(Done)
+        when(mockRecordsSummaryRepository.set(any(), any(), any())) thenReturn Future.successful(Done)
 
-        when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
-        when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
+        when(
+          mockRouterConnector.getRecords(
+            any(),
+            any(),
+            any(),
+            any()
+          )(any())
+        ) thenReturn
           Future.successful(
             GetRecordsResponse(
-              goodsItemRecords = getTestRecords(requestEori, recursivePageSize),
-              Pagination(totalRecordsNum, 1, 6, Some(2), None)
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 2, 6, Some(3), Some(1))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 3, 6, Some(4), Some(2))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 4, 6, Some(5), Some(3))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 5, 6, Some(6), Some(4))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 6, 6, None, Some(5))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 1, totalRecordsNum, Some(2), None)
+              goodsItemRecords = Seq.empty,
+              Pagination(totalRecordsNum, 0, 0, None, None)
             )
           )
-        )
 
-        val result = await(service.storeRecords(requestEori, None)(FakeRequest(), hc))
+        val result = await(service.storeRecords(requestEori, None)(hc))
+        result.value shouldBe true
 
-        result.value shouldBe Done
-        verify(mockRouterConnector, times(7)).getRecords(any(), any(), any(), any())(any())
-        verify(mockRecordsRepository, times(6)).saveRecords(any(), any())
-        verify(mockRecordsRepository).getCountWithInactive(any())
+        verify(mockRouterConnector, times(1))
+          .getRecords(eqTo(requestEori), eqTo(None), eqTo(Some(0)), eqTo(Some(pageSize)))(any())
+        verify(mockRecordsRepository, times(0)).updateRecords(any(), any())
+        verify(mockRecordsSummaryRepository, times(0)).set(any(), any(), any())
+        verify(mockRecordsSummaryRepository, times(0)).update(any(), any(), any())
       }
 
-      "must store latest records in data-store" in {
-        val mockRouterConnector   = mock[RouterConnector]
-        val mockRecordsRepository = mock[RecordsRepository]
-
-        val service         = new StoreRecordsService(mockRouterConnector, mockRecordsRepository)
-        val totalRecordsNum = 11
+      "must store records when there is a single page of records" in {
+        val totalRecordsNum = pageSize
         val requestEori     = "GB123456789099"
 
-        when(mockRecordsRepository.getCountWithInactive(any())) thenReturn Future.successful(11)
+        when(mockRecordsSummaryRepository.set(any(), any(), any())) thenReturn Future.successful(Done)
+        when(mockRecordsRepository.updateRecords(any(), any())) thenReturn Future.successful(Done)
+        when(mockRecordsSummaryRepository.update(any(), any(), any())) thenReturn Future.successful(Done)
 
-        when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
-        when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
+        val firstRecord  = getGoodsItemRecord(requestEori)
+          .copy(updatedDateTime = Instant.now().minus(2, ChronoUnit.DAYS))
+        val secondRecord = getGoodsItemRecord(requestEori)
+          .copy(updatedDateTime = Instant.now().minus(1, ChronoUnit.DAYS))
+
+        when(
+          mockRouterConnector.getRecords(
+            any(),
+            any(),
+            any(),
+            any()
+          )(any())
+        ) thenReturn
           Future.successful(
             GetRecordsResponse(
-              goodsItemRecords = getTestRecords(requestEori, totalRecordsNum),
-              Pagination(totalRecordsNum, 1, 1, None, None)
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 1, totalRecordsNum, Some(2), None)
+              goodsItemRecords = Seq(firstRecord, secondRecord),
+              Pagination(totalRecordsNum, 0, 1, None, None)
             )
           )
-        )
-        val result = await(service.storeRecords(requestEori, Some("2024-10-12T16:12:34Z"))(FakeRequest(), hc))
 
-        result.value shouldBe Done
-        verify(mockRouterConnector, times(2)).getRecords(any(), any(), any(), any())(any())
-        verify(mockRecordsRepository).saveRecords(any(), any())
-        verify(mockRecordsRepository).getCountWithInactive(any())
+        val result = await(service.storeRecords(requestEori, None)(hc))
+        result shouldBe true
+
+        verify(mockRouterConnector, times(1))
+          .getRecords(any(), any(), any(), any())(any())
+        verify(mockRecordsRepository, times(1)).updateRecords(any(), any())
+        verify(mockRecordsSummaryRepository, times(1)).set(requestEori, None, secondRecord.updatedDateTime)
       }
 
-      "must throw error if number of records from router and on data store are mismatched" in {
-        val mockRouterConnector   = mock[RouterConnector]
-        val mockRecordsRepository = mock[RecordsRepository]
+      "must store records when there are multiple pages of records" in {
+        val totalRecordsNum    = pageSize + 1
+        val requestEori        = "GB123456789099"
+        val oldDate            = Instant.now()
+        val latestRecordUpdate = oldDate.plus(1, ChronoUnit.DAYS)
 
-        val service         = new StoreRecordsService(mockRouterConnector, mockRecordsRepository)
-        val totalRecordsNum = 60000
-        val requestEori     = "GB123456789099"
-
-        when(mockRecordsRepository.getCountWithInactive(any())) thenReturn Future.successful(60002)
-
-        when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
+        when(mockRecordsSummaryRepository.set(any(), any(), any())) thenReturn Future.successful(Done)
+        when(mockRecordsRepository.updateRecords(any(), any())) thenReturn Future.successful(Done)
         when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
           Future.successful(
             GetRecordsResponse(
-              goodsItemRecords = getTestRecords(requestEori, recursivePageSize),
-              Pagination(totalRecordsNum, 1, 6, Some(2), None)
+              goodsItemRecords = getTestRecords(requestEori, pageSize).map(_.copy(updatedDateTime = oldDate)),
+              Pagination(totalRecordsNum, 0, 2, Some(1), None)
             )
           ),
           Future.successful(
             GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 2, 6, Some(3), Some(1))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 3, 6, Some(4), Some(2))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 4, 6, Some(5), Some(3))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 5, 6, Some(6), Some(4))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 6, 6, None, Some(5))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 1, totalRecordsNum, Some(2), None)
+              goodsItemRecords = Seq(getGoodsItemRecord(requestEori).copy(updatedDateTime = latestRecordUpdate)),
+              Pagination(totalRecordsNum, 1, 2, None, Some(0))
             )
           )
         )
-        intercept[RuntimeException] {
-          await(service.storeRecords(requestEori, None)(FakeRequest(), hc))
+
+        val result = await(service.storeRecords(requestEori, None)(hc))
+        result shouldBe false
+
+        val done = Promise[Done]
+        eventually {
+          verify(mockRouterConnector, times(2)).getRecords(any(), any(), any(), any())(any())
+          verify(mockRecordsRepository, times(2)).updateRecords(any(), any())
+          verify(mockRecordsSummaryRepository, times(2)).set(any(), any(), any())
+          verify(mockRecordsSummaryRepository, times(1))
+            .set(requestEori, Some(Update(pageSize, totalRecordsNum)), oldDate)
+          verify(mockRecordsSummaryRepository, times(1))
+            .set(requestEori, Some(Update(pageSize + 1, totalRecordsNum)), latestRecordUpdate)
+          verify(mockRecordsSummaryRepository, times(1)).update(requestEori, None, None)
+          done.success(Done)
         }
 
-        verify(mockRouterConnector, times(7)).getRecords(any(), any(), any(), any())(any())
-        verify(mockRecordsRepository, times(6)).saveRecords(any(), any())
-        verify(mockRecordsRepository).getCountWithInactive(any())
+        done.future.futureValue
       }
-    }
 
-    "deleteAndStoreRecords" - {
-      "should wipe the db and store all records in data-store" in {
-        val mockRouterConnector   = mock[RouterConnector]
-        val mockRecordsRepository = mock[RecordsRepository]
-
-        val service         = new StoreRecordsService(mockRouterConnector, mockRecordsRepository)
-        val totalRecordsNum = 60000
+      "must remove the updating status when the recursive call fails" in {
+        val totalRecordsNum = pageSize + 1
         val requestEori     = "GB123456789099"
+        val oldDate         = Instant.now()
 
-        when(mockRecordsRepository.deleteMany(any())) thenReturn Future.successful(10)
-
-        when(mockRecordsRepository.saveRecords(any(), any())) thenReturn Future.successful(true)
+        when(mockRecordsSummaryRepository.set(any(), any(), any())) thenReturn Future.successful(Done)
+        when(mockRecordsRepository.updateRecords(any(), any())) thenReturn Future.successful(Done)
         when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
           Future.successful(
             GetRecordsResponse(
-              goodsItemRecords = getTestRecords(requestEori, recursivePageSize),
-              Pagination(totalRecordsNum, 1, 6, Some(2), None)
+              goodsItemRecords = getTestRecords(requestEori, pageSize).map(_.copy(updatedDateTime = oldDate)),
+              Pagination(totalRecordsNum, 0, 2, Some(1), None)
             )
           ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 2, 6, Some(3), Some(1))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 3, 6, Some(4), Some(2))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 4, 6, Some(5), Some(3))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 5, 6, Some(6), Some(4))
-            )
-          ),
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(getGoodsItemRecord(requestEori)),
-              Pagination(totalRecordsNum, 6, 6, None, Some(5))
-            )
-          )
+          Future.failed(new RuntimeException())
         )
 
-        val result = await(service.deleteAndStoreRecords(requestEori)(FakeRequest(), hc))
+        val result = await(service.storeRecords(requestEori, None)(hc))
+        result shouldBe false
 
-        result.value shouldBe Done
-        verify(mockRouterConnector, times(6)).getRecords(any(), any(), any(), any())(any())
-        verify(mockRecordsRepository, times(6)).saveRecords(any(), any())
-        verify(mockRecordsRepository).deleteMany(any())
+        val done = Promise[Done]
+        eventually {
+          verify(mockRouterConnector, times(2)).getRecords(any(), any(), any(), any())(any())
+          verify(mockRecordsRepository, times(1)).updateRecords(any(), any())
+          verify(mockRecordsSummaryRepository, times(1)).set(any(), any(), any())
+          verify(mockRecordsSummaryRepository, times(1)).set(requestEori, Some(Update(pageSize, pageSize + 1)), oldDate)
+          verify(mockRecordsSummaryRepository, times(1)).update(requestEori, None, None)
+          done.success(Done)
+        }
+
+        done.future.futureValue
       }
-
     }
   }
 }
