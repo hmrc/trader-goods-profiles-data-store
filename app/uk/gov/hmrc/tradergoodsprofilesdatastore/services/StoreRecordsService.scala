@@ -32,7 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class StoreRecordsService @Inject() (
   routerConnector: RouterConnector,
   recordsRepository: RecordsRepository,
-  recordsSummaryRepository: RecordsSummaryRepository,
+  recordsSummaryRepository: RecordsSummaryRepository
 )(implicit
   ec: ExecutionContext
 ) extends Logging {
@@ -40,14 +40,12 @@ class StoreRecordsService @Inject() (
   def storeRecords(
     eori: String,
     lastUpdatedDate: Option[String]
-  )(implicit hc: HeaderCarrier): Future[Boolean] = {
-
+  )(implicit hc: HeaderCarrier): Future[Boolean] =
     routerConnector.getRecords(eori, lastUpdatedDate, Some(startingPage), Some(pageSize)).flatMap { recordsResponse =>
       if (recordsResponse.goodsItemRecords.nonEmpty) {
         recordsRepository
           .updateRecords(eori, recordsResponse.goodsItemRecords)
           .flatMap { _ =>
-
             val totalRecords = recordsResponse.pagination.totalRecords
             if (totalRecords > pageSize) {
 
@@ -79,7 +77,6 @@ class StoreRecordsService @Inject() (
         Future.successful(true)
       }
     }
-  }
 
   private def storeRecordsRecursively(
     eori: String,
@@ -88,19 +85,19 @@ class StoreRecordsService @Inject() (
     recordsStored: Int
   )(implicit hc: HeaderCarrier): Future[Seq[GoodsItemRecord]] =
     for {
-      recordsResponse  <- routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(pageSize))
-      _                <- recordsRepository.updateRecords(eori, recordsResponse.goodsItemRecords)
-      newRecordsStored  = recordsStored + recordsResponse.goodsItemRecords.size
-      _                <- recordsSummaryRepository.set(
-                            eori,
-                            Some(Update(newRecordsStored, recordsResponse.pagination.totalRecords)),
-                            getLastUpdated(recordsResponse.goodsItemRecords)
-                          )
-      _                <- if (recordsResponse.pagination.nextPage.isDefined) {
-                            storeRecordsRecursively(eori, page + 1, lastUpdatedDate, newRecordsStored)
-                          } else {
-                            Future.successful(Done)
-                          }
+      recordsResponse <- routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(pageSize))
+      _               <- recordsRepository.updateRecords(eori, recordsResponse.goodsItemRecords)
+      newRecordsStored = recordsStored + recordsResponse.goodsItemRecords.size
+      _               <- recordsSummaryRepository.set(
+                           eori,
+                           Some(Update(newRecordsStored, recordsResponse.pagination.totalRecords)),
+                           getLastUpdated(recordsResponse.goodsItemRecords)
+                         )
+      _               <- if (recordsResponse.pagination.nextPage.isDefined) {
+                           storeRecordsRecursively(eori, page + 1, lastUpdatedDate, newRecordsStored)
+                         } else {
+                           Future.successful(Done)
+                         }
     } yield recordsResponse.goodsItemRecords
 
   private def getLastUpdated(records: Seq[GoodsItemRecord]): Instant =

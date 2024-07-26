@@ -35,8 +35,8 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsRespo
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{RecordsRepository, RecordsSummaryRepository}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
 
+import java.time.Instant
 import java.time.temporal.ChronoUnit
-import java.time.{Clock, Instant, ZoneOffset}
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
 class StoreRecordsServiceSpec
@@ -52,9 +52,8 @@ class StoreRecordsServiceSpec
   private val mockRouterConnector          = mock[RouterConnector]
   private val mockRecordsRepository        = mock[RecordsRepository]
   private val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
-  private val clock                        = Clock.fixed(Instant.now(), ZoneOffset.UTC)
 
-  val service = new StoreRecordsService(mockRouterConnector, mockRecordsRepository, mockRecordsSummaryRepository, clock)
+  val service = new StoreRecordsService(mockRouterConnector, mockRecordsRepository, mockRecordsSummaryRepository)
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -166,7 +165,8 @@ class StoreRecordsServiceSpec
           verify(mockRouterConnector, times(2)).getRecords(any(), any(), any(), any())(any())
           verify(mockRecordsRepository, times(2)).updateRecords(any(), any())
           verify(mockRecordsSummaryRepository, times(2)).set(any(), any(), any())
-          verify(mockRecordsSummaryRepository, times(1)).set(requestEori, Some(Update(pageSize, totalRecordsNum)), oldDate)
+          verify(mockRecordsSummaryRepository, times(1))
+            .set(requestEori, Some(Update(pageSize, totalRecordsNum)), oldDate)
           verify(mockRecordsSummaryRepository, times(1))
             .set(requestEori, Some(Update(pageSize + 1, totalRecordsNum)), latestRecordUpdate)
           verify(mockRecordsSummaryRepository, times(1)).update(requestEori, None, None)
