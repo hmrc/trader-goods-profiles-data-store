@@ -92,7 +92,7 @@ class SessionRepositorySpec
   }
 
   ".deleteAll" - {
-    "it mush drop the profiles collection" in {
+    "it must delete all documents in the collection" in {
       insert(profileResponse).futureValue
       val result      = repository.deleteAll.futureValue
       val recordCheck = repository.get(profileEori).futureValue

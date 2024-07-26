@@ -192,12 +192,12 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
 
   s"DELETE $deleteAllUrl" - {
 
-    "return 200 when the feature flag for dropping profile collection is true" in {
+    "return 200 when the feature flag deleting all collection documents is true" in {
 
       val mockProfileRepository = mock[ProfileRepository]
       val dataStoreAppConfig    = mock[DataStoreAppConfig]
       when(mockProfileRepository.deleteAll) thenReturn Future.successful(Done)
-      when(dataStoreAppConfig.droppingProfileCollection) thenReturn true
+      when(dataStoreAppConfig.deleteAllCollectionDocumentsForRecordAndProfile) thenReturn true
       val application           = applicationBuilder()
         .overrides(
           inject.bind[ProfileRepository].toInstance(mockProfileRepository),
@@ -211,12 +211,12 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
       }
     }
 
-    "return 500 when the feature flag for dropping profile collection is false" in {
+    "return 500 when the feature flag for deleting all collection documents is false" in {
 
       val mockProfileRepository = mock[ProfileRepository]
       val dataStoreAppConfig    = mock[DataStoreAppConfig]
       when(mockProfileRepository.deleteAll) thenReturn Future.successful(Done)
-      when(dataStoreAppConfig.droppingProfileCollection) thenReturn false
+      when(dataStoreAppConfig.deleteAllCollectionDocumentsForRecordAndProfile) thenReturn false
       val application           = applicationBuilder()
         .overrides(
           inject.bind[ProfileRepository].toInstance(mockProfileRepository),

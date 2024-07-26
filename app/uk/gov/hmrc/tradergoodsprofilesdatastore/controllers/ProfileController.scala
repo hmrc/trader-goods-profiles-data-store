@@ -65,7 +65,7 @@ class ProfileController @Inject() (
   }
 
   def deleteAll(): Action[AnyContent] = identify.async {
-    if (config.droppingProfileCollection)
+    if (config.deleteAllCollectionDocumentsForRecordAndProfile)
       profileRepository.deleteAll.map(_ => Ok)
     else
       Future.successful(InternalServerError)
