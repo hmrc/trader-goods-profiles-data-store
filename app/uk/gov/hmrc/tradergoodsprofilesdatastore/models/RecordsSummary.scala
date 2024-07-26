@@ -17,6 +17,7 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.models
 
 import play.api.libs.json.{Json, OFormat}
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import java.time.Instant
 
@@ -24,11 +25,9 @@ final case class RecordsSummary(
   eori: String,
   currentUpdate: Option[RecordsSummary.Update],
   lastUpdated: Instant
-) {
-  def isUpdating: Boolean = currentUpdate.isDefined
-}
+)
 
-object RecordsSummary {
+object RecordsSummary extends MongoJavatimeFormats.Implicits {
 
   final case class Update(recordsStored: Int, recordsToStore: Int)
 
