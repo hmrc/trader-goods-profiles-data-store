@@ -17,11 +17,12 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
+import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
 import play.api.inject.bind
+import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
@@ -37,18 +38,19 @@ class RecordsSummaryControllerSpec extends SpecBase with MockitoSugar with GetRe
   implicit val ec: ExecutionContext = ExecutionContext.global
 
   "recordsSummary" - {
-    "return 204 if the recordsSummary is present" in {
+    "return 200 and the RecordSummary if it exists" in {
 
-      val requestEori       = "GB123456789099"
-      val recordsSummaryUrl = routes.RecordsSummaryController
+      val requestEori            = "GB123456789099"
+      lazy val recordsSummaryUrl = routes.RecordsSummaryController
         .recordsSummary(requestEori)
         .url
 
-      val validFakeGetRequest = FakeRequest("HEAD", recordsSummaryUrl)
+      lazy val validFakeGetRequest = FakeRequest("GET", recordsSummaryUrl)
+      val recordsSummary           = RecordsSummary(requestEori, None, lastUpdated = Instant.now)
 
       val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
       when(mockRecordsSummaryRepository.get(any())) thenReturn Future.successful(
-        Some(RecordsSummary(requestEori, None, lastUpdated = Instant.now))
+        Some(recordsSummary)
       )
 
       val application = applicationBuilder()
@@ -58,18 +60,21 @@ class RecordsSummaryControllerSpec extends SpecBase with MockitoSugar with GetRe
         .build()
       running(application) {
         val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.NO_CONTENT
+        status(result) shouldBe Status.OK
+        contentAsJson(result) mustEqual Json.toJson(recordsSummary)
       }
+
+      verify(mockRecordsSummaryRepository, times(1)).get(requestEori)
     }
 
-    "return 404 if the recordsSummary is not present" in {
+    "return 404 if the RecordSummary is not present" in {
 
-      val requestEori       = "GB123456789099"
-      val recordsSummaryUrl = routes.RecordsSummaryController
+      val requestEori            = "GB123456789099"
+      lazy val recordsSummaryUrl = routes.RecordsSummaryController
         .recordsSummary(requestEori)
         .url
 
-      val validFakeGetRequest = FakeRequest("HEAD", recordsSummaryUrl)
+      lazy val validFakeGetRequest = FakeRequest("GET", recordsSummaryUrl)
 
       val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
       when(mockRecordsSummaryRepository.get(any())) thenReturn Future.successful(None)
@@ -83,8 +88,8 @@ class RecordsSummaryControllerSpec extends SpecBase with MockitoSugar with GetRe
         val result = route(application, validFakeGetRequest).value
         status(result) shouldBe Status.NOT_FOUND
       }
+
+      verify(mockRecordsSummaryRepository, times(1)).get(requestEori)
     }
-
   }
-
 }

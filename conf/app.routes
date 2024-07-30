@@ -6,7 +6,7 @@ DELETE     /traders/:eori/records/:recordId         uk.gov.hmrc.tradergoodsprofi
 GET        /traders/:eori/records                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.GetRecordsController.getLocalRecords(eori: String, page: Option[Int], size: Option[Int])
 POST       /traders/:eori/records                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.CreateRecordController.createRecord(eori: String)
 GET        /traders/:eori/records/filter            uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.FilterRecordsController.filterLocalRecords(eori: String, searchTerm: Option[String], exactMatch: Option[Boolean], field: Option[String], page: Option[Int], size: Option[Int])
-GET       /traders/:eori/records-summary              uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.RecordsSummaryController.recordsSummary(eori: String)
+GET        /traders/:eori/records-summary           uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.RecordsSummaryController.recordsSummary(eori: String)
 HEAD       /traders/:eori/checkRecords              uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.RecordsSummaryController.recordsSummary(eori: String)
 HEAD       /traders/:eori/records/store             uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.StoreRecordsController.storeAllRecords(eori: String)
 GET        /traders/:eori/records/count             uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.GetRecordsController.getRecordsCount(eori: String)

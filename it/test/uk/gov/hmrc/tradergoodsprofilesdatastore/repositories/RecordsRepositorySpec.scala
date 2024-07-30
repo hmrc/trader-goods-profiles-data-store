@@ -65,7 +65,7 @@ class RecordsRepositorySpec
     traderRef = Some("updated-reference")
   )
 
-  val testEori                                = "GB123456789001"
+  val testEori                               = "GB123456789001"
   val sampleGoodsItemRecord: GoodsItemRecord = GoodsItemRecord(
     eori = testEori,
     actorId = "GB098765432112",
@@ -218,7 +218,8 @@ class RecordsRepositorySpec
   override def fakeApplication(): Application = GuiceApplicationBuilder()
     .overrides(
       bind[MongoComponent].to(mongoComponent)
-    ).build()
+    )
+    .build()
 
   protected override val repository: RecordsRepository =
     app.injector.instanceOf[RecordsRepository]
@@ -570,7 +571,9 @@ class RecordsRepositorySpec
       }
     }
 
-    mustPreserveMdc(repository.filterRecords(sampleGoodsItemRecordWithSpecialCharacters.eori, Some("*"), None, exactMatch = false))
+    mustPreserveMdc(
+      repository.filterRecords(sampleGoodsItemRecordWithSpecialCharacters.eori, Some("*"), None, exactMatch = false)
+    )
   }
 
   ".updateRecords" - {
@@ -591,7 +594,7 @@ class RecordsRepositorySpec
       val results = repository.collection.find().toFuture().futureValue
 
       results.length mustBe 2
-      results must contain only(
+      results must contain only (
         sampleGoodsItemRecord.copy(toReview = true),
         sampleGoodsItemRecord.copy(recordId = "3", toReview = true)
       )

@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
+import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
@@ -35,8 +36,9 @@ class RecordsSummaryController @Inject() (
     recordsSummaryRepository
       .get(eori)
       .map {
-        case Some(_) => NoContent
-        case None    => NotFound
+        _.map { summary =>
+          Ok(Json.toJson(summary))
+        }.getOrElse(NotFound)
       }
   }
 }
