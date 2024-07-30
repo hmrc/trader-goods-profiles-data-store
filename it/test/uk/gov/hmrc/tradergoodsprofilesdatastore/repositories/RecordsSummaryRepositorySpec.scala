@@ -49,7 +49,7 @@ class RecordsSummaryRepositorySpec
     with GuiceOneAppPerSuite {
 
   val testEori = "GB123456789001"
-  val now = Instant.now().truncatedTo(ChronoUnit.MILLIS)
+  val now      = Instant.now().truncatedTo(ChronoUnit.MILLIS)
 
   val sampleRecordsSummary: RecordsSummary = RecordsSummary(
     eori = testEori,
@@ -60,7 +60,8 @@ class RecordsSummaryRepositorySpec
   override def fakeApplication(): Application = GuiceApplicationBuilder()
     .overrides(
       bind[MongoComponent].toInstance(mongoComponent)
-    ).build()
+    )
+    .build()
 
   protected override val repository: RecordsSummaryRepository =
     app.injector.instanceOf[RecordsSummaryRepository]
@@ -137,7 +138,7 @@ class RecordsSummaryRepositorySpec
     }
 
     "must fail when an existing record is not found" in {
-      val eori          = "EORI"
+      val eori = "EORI"
       repository.update(eori, None, None).failed.futureValue
     }
 
