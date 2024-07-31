@@ -35,7 +35,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsRespo
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{RecordsRepository, RecordsSummaryRepository}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
 
-import java.time.Instant
+import java.time.{Clock, Instant, ZoneOffset, ZonedDateTime}
 import java.time.temporal.ChronoUnit
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
@@ -52,8 +52,10 @@ class StoreRecordsServiceSpec
   private val mockRouterConnector          = mock[RouterConnector]
   private val mockRecordsRepository        = mock[RecordsRepository]
   private val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
+  private val now                          = Instant.now().plus(1, ChronoUnit.DAYS)
+  private val clock                        = Clock.fixed(now, ZoneOffset.UTC)
 
-  val service = new StoreRecordsService(mockRouterConnector, mockRecordsRepository, mockRecordsSummaryRepository)
+  val service = new StoreRecordsService(mockRouterConnector, mockRecordsRepository, mockRecordsSummaryRepository, clock)
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -131,7 +133,7 @@ class StoreRecordsServiceSpec
         verify(mockRouterConnector, times(1))
           .getRecords(any(), any(), any(), any())(any())
         verify(mockRecordsRepository, times(1)).updateRecords(any(), any())
-        verify(mockRecordsSummaryRepository, times(1)).set(requestEori, None, secondRecord.updatedDateTime)
+        verify(mockRecordsSummaryRepository, times(1)).set(requestEori, None, now)
       }
 
       "must store records when there are multiple pages of records" in {
@@ -164,12 +166,12 @@ class StoreRecordsServiceSpec
         eventually {
           verify(mockRouterConnector, times(2)).getRecords(any(), any(), any(), any())(any())
           verify(mockRecordsRepository, times(2)).updateRecords(any(), any())
-          verify(mockRecordsSummaryRepository, times(2)).set(any(), any(), any())
+          verify(mockRecordsSummaryRepository, times(3)).set(any(), any(), any())
           verify(mockRecordsSummaryRepository, times(1))
             .set(requestEori, Some(Update(pageSize, totalRecordsNum)), oldDate)
           verify(mockRecordsSummaryRepository, times(1))
             .set(requestEori, Some(Update(pageSize + 1, totalRecordsNum)), latestRecordUpdate)
-          verify(mockRecordsSummaryRepository, times(1)).update(requestEori, None, None)
+          verify(mockRecordsSummaryRepository, times(1)).set(requestEori, None, now)
           done.success(Done)
         }
 
