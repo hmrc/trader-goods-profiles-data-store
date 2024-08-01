@@ -17,7 +17,7 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions
 
 import play.api.Logging
-import play.api.mvc.Results.{Accepted, InternalServerError}
+import play.api.mvc.Results.Accepted
 
 import javax.inject.Inject
 import play.api.mvc.{ActionFilter, Result}

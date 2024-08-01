@@ -34,7 +34,6 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsRespo
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
 
-import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 
 class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecordsResponseUtil {

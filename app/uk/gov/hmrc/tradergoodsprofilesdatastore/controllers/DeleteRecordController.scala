@@ -30,27 +30,24 @@ import scala.util.{Failure, Success}
 class DeleteRecordController @Inject() (
   cc: ControllerComponents,
   routerConnector: RouterConnector,
-  identify: IdentifierAction,
-  storeLatestAction: StoreLatestAction
+  identify: IdentifierAction
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
     with Logging {
 
-  def deleteRecord(eori: String, recordId: String): Action[AnyContent] = (identify andThen storeLatestAction).async {
-    implicit request =>
-      routerConnector.deleteRecord(eori, recordId) transform {
-        case Success(_)                            => Success(NoContent)
-        case Failure(cause: UpstreamErrorResponse)
-            if cause.statusCode == NOT_FOUND || cause.statusCode == BAD_REQUEST =>
-          logger.error(
-            s"Delete record returned ${cause.statusCode} with message: ${cause.message}"
-          )
-          Success(NotFound)
-        case Failure(cause: UpstreamErrorResponse) =>
-          logger.error(
-            s"Delete record failed with ${cause.statusCode} with message: ${cause.message}"
-          )
-          Success(InternalServerError)
-      }
+  def deleteRecord(eori: String, recordId: String): Action[AnyContent] = identify.async { implicit request =>
+    routerConnector.deleteRecord(eori, recordId) transform {
+      case Success(_)                                                                                                => Success(NoContent)
+      case Failure(cause: UpstreamErrorResponse) if cause.statusCode == NOT_FOUND || cause.statusCode == BAD_REQUEST =>
+        logger.error(
+          s"Delete record returned ${cause.statusCode} with message: ${cause.message}"
+        )
+        Success(NotFound)
+      case Failure(cause: UpstreamErrorResponse)                                                                     =>
+        logger.error(
+          s"Delete record failed with ${cause.statusCode} with message: ${cause.message}"
+        )
+        Success(InternalServerError)
+    }
   }
 }
