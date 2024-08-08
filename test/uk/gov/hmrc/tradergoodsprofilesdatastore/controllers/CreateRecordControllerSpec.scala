@@ -49,7 +49,20 @@ class CreateRecordControllerSpec extends SpecBase with MockitoSugar {
       "EC",
       Instant.parse("2024-10-12T16:12:34Z"),
       comcodeEffectiveToDate = Some(Instant.parse("2024-10-12T16:12:34Z")),
-      3
+      Some(3)
+    )
+
+  private val goodsRecordWithoutCategory =
+    CreateRecordRequest(
+      testEori,
+      testEori,
+      "BAN001001",
+      "10410100",
+      "Organic bananas",
+      "EC",
+      Instant.parse("2024-10-12T16:12:34Z"),
+      comcodeEffectiveToDate = Some(Instant.parse("2024-10-12T16:12:34Z")),
+      None
     )
 
   private val testRecordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f"
@@ -67,7 +80,34 @@ class CreateRecordControllerSpec extends SpecBase with MockitoSugar {
     adviceStatus = "Not requested",
     goodsDescription = "Organic bananas",
     countryOfOrigin = "EC",
-    category = 3,
+    category = Some(3),
+    assessments = None,
+    supplementaryUnit = None,
+    measurementUnit = None,
+    comcodeEffectiveFromDate = Instant.parse("2024-10-12T16:12:34Z"),
+    comcodeEffectiveToDate = Some(Instant.parse("2024-10-12T16:12:34Z")),
+    version = 1,
+    active = true,
+    toReview = false,
+    reviewReason = None,
+    declarable = "IMMI ready",
+    ukimsNumber = Some("XIUKIM47699357400020231115081800"),
+    nirmsNumber = None,
+    niphlNumber = None,
+    createdDateTime = Instant.parse("2024-11-12T16:12:34Z"),
+    updatedDateTime = Instant.parse("2024-11-12T16:12:34Z")
+  )
+
+  val goodsItemRecordWithoutCategory: GoodsItemRecord = GoodsItemRecord(
+    eori = testEori,
+    actorId = testEori,
+    recordId = testRecordId,
+    traderRef = "BAN001001",
+    comcode = "10410100",
+    adviceStatus = "Not requested",
+    goodsDescription = "Organic bananas",
+    countryOfOrigin = "EC",
+    category = None,
     assessments = None,
     supplementaryUnit = None,
     measurementUnit = None,
@@ -110,6 +150,33 @@ class CreateRecordControllerSpec extends SpecBase with MockitoSugar {
         withClue("must call the relevant services with the correct details") {
           verify(mockRouterConnector)
             .createRecord(eqTo(goodsRecord), eqTo(testEori))(any())
+        }
+      }
+    }
+
+    "return 200 when record without category is successfully created" in {
+
+      val mockRouterConnector = mock[RouterConnector]
+      when(
+        mockRouterConnector.createRecord(any(), any())(any())
+      ) thenReturn Future.successful(goodsItemRecordWithoutCategory)
+
+      val application = applicationBuilder()
+        .overrides(
+          inject.bind[IdentifierAction].to[FakeIdentifierAction],
+          inject.bind[RouterConnector].toInstance(mockRouterConnector)
+        )
+        .build()
+      running(application) {
+        val request = validFakeCreateRequest
+          .withHeaders("Content-Type" -> "application/json")
+          .withJsonBody(Json.toJson(goodsItemRecordWithoutCategory))
+        val result  = route(application, request).value
+        status(result) shouldBe OK
+
+        withClue("must call the relevant services with the correct details") {
+          verify(mockRouterConnector)
+            .createRecord(eqTo(goodsRecordWithoutCategory), eqTo(testEori))(any())
         }
       }
     }

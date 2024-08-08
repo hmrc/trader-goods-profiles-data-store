@@ -68,7 +68,7 @@ class RouterConnectorSpec
     adviceStatus = "Not requested",
     goodsDescription = "Organic bananas",
     countryOfOrigin = "EC",
-    category = 3,
+    category = Some(3),
     assessments = None,
     supplementaryUnit = Some(500),
     measurementUnit = Some("square meters(m^2)"),
@@ -275,7 +275,7 @@ class RouterConnectorSpec
           "EC",
           Instant.parse("2024-10-12T16:12:34Z"),
           comcodeEffectiveToDate = Some(Instant.parse("2024-10-12T16:12:34Z")),
-          3
+          Some(3)
         )
 
       wireMockServer.stubFor(
@@ -291,7 +291,7 @@ class RouterConnectorSpec
     "must return a failed future when the server returns an error" in {
 
       val createRecordRequest =
-        CreateRecordRequest(testEori, testEori, "test", "test", "test", "test", Instant.now, Some(Instant.now), 1)
+        CreateRecordRequest(testEori, testEori, "test", "test", "test", "test", Instant.now, Some(Instant.now), Some(1))
 
       wireMockServer.stubFor(
         post(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records"))

@@ -32,7 +32,7 @@ case class CreateRecordRequest(
   countryOfOrigin: String,
   comcodeEffectiveFromDate: Instant,
   comcodeEffectiveToDate: Option[Instant],
-  category: Int
+  category: Option[Int]
 )
 
 object CreateRecordRequest {
@@ -46,7 +46,7 @@ object CreateRecordRequest {
       (JsPath \ "countryOfOrigin").read[String] and
       (JsPath \ "comcodeEffectiveFromDate").read[Instant] and
       (JsPath \ "comcodeEffectiveToDate").readNullable[Instant] and
-      (JsPath \ "category").read[Int])(CreateRecordRequest.apply _)
+      (JsPath \ "category").readNullable[Int])(CreateRecordRequest.apply _)
 
   implicit lazy val writes: OWrites[CreateRecordRequest] =
     ((JsPath \ "eori").write[String] and
@@ -57,5 +57,5 @@ object CreateRecordRequest {
       (JsPath \ "countryOfOrigin").write[String] and
       (JsPath \ "comcodeEffectiveFromDate").write[Instant] and
       (JsPath \ "comcodeEffectiveToDate").writeNullable[Instant] and
-      (JsPath \ "category").write[Int])(unlift(CreateRecordRequest.unapply))
+      (JsPath \ "category").writeNullable[Int])(unlift(CreateRecordRequest.unapply))
 }

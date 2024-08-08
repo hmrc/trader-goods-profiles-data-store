@@ -35,7 +35,7 @@ trait GetRecordsResponseUtil {
     "Not requested",
     "Organic bananas",
     "EC",
-    3,
+    Some(3),
     Some(
       Seq(
         Assessment(
@@ -78,7 +78,7 @@ trait GetRecordsResponseUtil {
     "Not requested",
     "Organic bananas",
     "EC",
-    3,
+    Some(3),
     Some(
       Seq(
         Assessment(
