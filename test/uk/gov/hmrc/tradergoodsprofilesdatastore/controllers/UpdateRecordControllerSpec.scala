@@ -73,7 +73,7 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
     adviceStatus = "Not requested",
     goodsDescription = "Organic bananas",
     countryOfOrigin = "EC",
-    category = 3,
+    category = Some(3),
     assessments = Some(Seq(sampleAssessment)),
     supplementaryUnit = Some(500),
     measurementUnit = Some("square meters(m^2)"),
