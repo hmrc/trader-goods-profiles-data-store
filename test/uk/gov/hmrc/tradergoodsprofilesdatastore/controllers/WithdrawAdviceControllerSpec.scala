@@ -44,8 +44,6 @@ class WithdrawAdviceControllerSpec extends SpecBase with MockitoSugar {
 
   private val withdrawUrl = routes.WithdrawAdviceController.withdrawAdvice(testEori, testRecordId).url
 
-  private val validFakeWithdrawRequest = FakeRequest("PUT", withdrawUrl)
-
   s"PUT $withdrawUrl" - {
 
     "return 200 when advice is successfully withdrawn" in {
@@ -64,7 +62,7 @@ class WithdrawAdviceControllerSpec extends SpecBase with MockitoSugar {
 
       running(application) {
 
-        val request = validFakeWithdrawRequest
+        val request = FakeRequest(routes.WithdrawAdviceController.withdrawAdvice(testEori, testRecordId))
           .withHeaders("Content-Type" -> "application/json")
           .withJsonBody(Json.toJson(withdrawReason))
 
@@ -92,7 +90,7 @@ class WithdrawAdviceControllerSpec extends SpecBase with MockitoSugar {
         )
         .build()
       running(application) {
-        val request = validFakeWithdrawRequest
+        val request = FakeRequest(routes.WithdrawAdviceController.withdrawAdvice(testEori, testRecordId))
           .withHeaders("Content-Type" -> "application/json")
           .withJsonBody(Json.toJson(withdrawReason))
         val result  = route(application, request).value

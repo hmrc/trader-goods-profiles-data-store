@@ -37,18 +37,16 @@ import scala.concurrent.{ExecutionContext, Future}
 class RequestAdviceControllerSpec extends SpecBase with MockitoSugar {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
-  val testEori                      = "GB123456789099"
+  private val testEori              = "GB123456789099"
   private val testRecordId          = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f"
 
   private val advice = AdviceRequest(testEori, "TESTNAME", testEori, testRecordId, "TEST@email.com")
 
-  private val createUrl = routes.RequestAdviceController.requestAdvice(testEori, testRecordId).url
+  private lazy val requestUrl = routes.RequestAdviceController.requestAdvice(testEori, testRecordId).url
 
-  private val validFakeCreateRequest = FakeRequest("POST", createUrl)
+  s"POST $requestUrl" - {
 
-  s"POST $createUrl" - {
-
-    "return 200 when advice is successfully created" in {
+    "return 201 when advice is successfully created" in {
 
       val mockRouterConnector = mock[RouterConnector]
       when(
@@ -64,9 +62,12 @@ class RequestAdviceControllerSpec extends SpecBase with MockitoSugar {
 
       running(application) {
 
-        val request = validFakeCreateRequest
+        val request = FakeRequest(routes.RequestAdviceController.requestAdvice(testEori, testRecordId))
           .withHeaders("Content-Type" -> "application/json")
           .withJsonBody(Json.toJson(advice))
+        println("hello")
+
+        println(request)
 
         val result = route(application, request).value
         status(result) shouldBe CREATED
@@ -92,7 +93,7 @@ class RequestAdviceControllerSpec extends SpecBase with MockitoSugar {
         )
         .build()
       running(application) {
-        val request = validFakeCreateRequest
+        val request = FakeRequest(routes.RequestAdviceController.requestAdvice(testEori, testRecordId))
           .withHeaders("Content-Type" -> "application/json")
           .withJsonBody(Json.toJson(advice))
         val result  = route(application, request).value
