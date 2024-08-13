@@ -22,7 +22,7 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.AdviceRequest
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.{AdviceRequest, WithdrawReasonRequest}
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
@@ -36,8 +36,8 @@ class WithdrawAdviceController @Inject() (
     extends BackendController(cc)
     with Logging {
 
-  def withdrawAdvice(eori: String, recordId: String): Action[AdviceRequest] =
-    identify.async(parse.json[AdviceRequest]) { implicit request =>
+  def withdrawAdvice(eori: String, recordId: String): Action[WithdrawReasonRequest] =
+    identify.async(parse.json[WithdrawReasonRequest]) { implicit request =>
       routerConnector.withdrawAdvice(eori, recordId, request.body).map(_ => NoContent) transform {
         case s @ Success(_)                        => s
         case Failure(cause: UpstreamErrorResponse) =>

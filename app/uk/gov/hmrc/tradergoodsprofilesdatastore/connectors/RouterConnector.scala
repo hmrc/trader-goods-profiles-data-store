@@ -25,7 +25,7 @@ import sttp.model.Uri.UriContext
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps, UpstreamErrorResponse}
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.{AdviceRequest, CreateRecordRequest, ProfileRequest, UpdateRecordRequest}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.{AdviceRequest, CreateRecordRequest, ProfileRequest, UpdateRecordRequest, WithdrawReasonRequest}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, GoodsItemRecord}
 
 import javax.inject.Inject
@@ -173,11 +173,13 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
         }
       }
 
-  def withdrawAdvice(eori: String, recordId: String, advice: AdviceRequest)(implicit hc: HeaderCarrier): Future[Done] =
+  def withdrawAdvice(eori: String, recordId: String, withdrawReason: WithdrawReasonRequest)(implicit
+    hc: HeaderCarrier
+  ): Future[Done] =
     httpClient
       .put(adviceUrl(eori, recordId))
       .setHeader(clientIdAndAcceptHeaders: _*)
-      .withBody(Json.toJson(advice))
+      .withBody(Json.toJson(withdrawReason))
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {

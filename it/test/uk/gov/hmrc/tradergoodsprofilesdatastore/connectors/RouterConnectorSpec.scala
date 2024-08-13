@@ -28,7 +28,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeStoreLatestAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.{AdviceRequest, CreateRecordRequest, ProfileRequest, UpdateRecordRequest}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.{AdviceRequest, CreateRecordRequest, ProfileRequest, UpdateRecordRequest, WithdrawReasonRequest}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, GoodsItemRecord, Pagination}
 
 import java.time.Instant
@@ -306,7 +306,7 @@ class RouterConnectorSpec
 
   ".withdrawAdvice" - {
 
-    val advice = AdviceRequest(testEori, "TESTNAME", testEori, recordId, "TEST@email.com")
+    val withdrawReason = WithdrawReasonRequest("REASON")
 
     "must withdraw advice and return no content" in {
 
@@ -317,7 +317,7 @@ class RouterConnectorSpec
           .willReturn(noContent())
       )
 
-      connector.withdrawAdvice(testEori, recordId, advice).futureValue
+      connector.withdrawAdvice(testEori, recordId, withdrawReason).futureValue
     }
 
     "must return a failed future when the server returns an error" in {
@@ -329,7 +329,7 @@ class RouterConnectorSpec
           .willReturn(serverError())
       )
 
-      connector.withdrawAdvice(testEori, recordId, advice).failed.futureValue
+      connector.withdrawAdvice(testEori, recordId, withdrawReason).failed.futureValue
     }
   }
 

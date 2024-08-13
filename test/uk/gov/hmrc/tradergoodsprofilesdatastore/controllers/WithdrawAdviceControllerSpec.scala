@@ -30,7 +30,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeIdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.AdviceRequest
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.WithdrawReasonRequest
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -40,7 +40,7 @@ class WithdrawAdviceControllerSpec extends SpecBase with MockitoSugar {
   private val testEori              = "GB123456789099"
   private val testRecordId          = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f"
 
-  private val advice = AdviceRequest(testEori, "TESTNAME", testEori, testRecordId, "TEST@email.com")
+  private val withdrawReason = WithdrawReasonRequest("REASON")
 
   private val withdrawUrl = routes.WithdrawAdviceController.withdrawAdvice(testEori, testRecordId).url
 
@@ -66,14 +66,14 @@ class WithdrawAdviceControllerSpec extends SpecBase with MockitoSugar {
 
         val request = validFakeWithdrawRequest
           .withHeaders("Content-Type" -> "application/json")
-          .withJsonBody(Json.toJson(advice))
+          .withJsonBody(Json.toJson(withdrawReason))
 
         val result = route(application, request).value
         status(result) shouldBe NO_CONTENT
 
         withClue("must call the relevant services with the correct details") {
           verify(mockRouterConnector)
-            .withdrawAdvice(eqTo(testEori), eqTo(testRecordId), eqTo(advice))(any())
+            .withdrawAdvice(eqTo(testEori), eqTo(testRecordId), eqTo(withdrawReason))(any())
         }
       }
     }
@@ -94,13 +94,13 @@ class WithdrawAdviceControllerSpec extends SpecBase with MockitoSugar {
       running(application) {
         val request = validFakeWithdrawRequest
           .withHeaders("Content-Type" -> "application/json")
-          .withJsonBody(Json.toJson(advice))
+          .withJsonBody(Json.toJson(withdrawReason))
         val result  = route(application, request).value
         status(result) shouldBe INTERNAL_SERVER_ERROR
 
         withClue("must call the relevant services with the correct details") {
           verify(mockRouterConnector)
-            .withdrawAdvice(eqTo(testEori), eqTo(testRecordId), eqTo(advice))(any())
+            .withdrawAdvice(eqTo(testEori), eqTo(testRecordId), eqTo(withdrawReason))(any())
         }
       }
     }
