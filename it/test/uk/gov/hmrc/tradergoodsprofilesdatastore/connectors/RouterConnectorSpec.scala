@@ -28,7 +28,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeStoreLatestAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.{CreateRecordRequest, ProfileRequest, UpdateRecordRequest}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.{AdviceRequest, CreateRecordRequest, ProfileRequest, UpdateRecordRequest}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, GoodsItemRecord, Pagination}
 
 import java.time.Instant
@@ -301,6 +301,64 @@ class RouterConnectorSpec
       )
 
       connector.createRecord(createRecordRequest, testEori).failed.futureValue
+    }
+  }
+
+  ".withdrawAdvice" - {
+
+    val advice = AdviceRequest(testEori, "TESTNAME", testEori, recordId, "TEST@email.com")
+
+    "must withdraw advice and return no content" in {
+
+      wireMockServer.stubFor(
+        put(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId/advice"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
+          .willReturn(noContent())
+      )
+
+      connector.withdrawAdvice(testEori, recordId, advice).futureValue
+    }
+
+    "must return a failed future when the server returns an error" in {
+
+      wireMockServer.stubFor(
+        put(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId/advice"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
+          .willReturn(serverError())
+      )
+
+      connector.withdrawAdvice(testEori, recordId, advice).failed.futureValue
+    }
+  }
+
+  ".createAdvice" - {
+
+    val advice = AdviceRequest(testEori, "TESTNAME", testEori, recordId, "TEST@email.com")
+
+    "must create advice successfully" in {
+
+      wireMockServer.stubFor(
+        post(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId/advice"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
+          .willReturn(created())
+      )
+
+      connector.createAdvice(testEori, recordId, advice).futureValue
+    }
+
+    "must return a failed future when the server returns an error" in {
+
+      wireMockServer.stubFor(
+        post(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId/advice"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
+          .willReturn(serverError())
+      )
+
+      connector.createAdvice(testEori, recordId, advice).failed.futureValue
     }
   }
 }
