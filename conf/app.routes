@@ -13,5 +13,5 @@ GET        /traders/:eori/records/count             uk.gov.hmrc.tradergoodsprofi
 GET        /traders/:eori/records/:recordId         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.GetRecordsController.getRecord(eori: String, recordId: String)
 PATCH      /traders/:eori/records/:recordId         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.UpdateRecordController.updateRecord(eori: String, recordId: String)
 DELETE     /traders/profile                         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.deleteAll()
-POST       /traders/:eori/records/:recordId/advice  uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.CreateAdviceController.createAdvice(eori: String, recordId: String)
+POST       /traders/:eori/records/:recordId/advice  uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.RequestAdviceController.requestAdvice(eori: String, recordId: String)
 PUT        /traders/:eori/records/:recordId/advice  uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.WithdrawAdviceController.withdrawAdvice(eori: String, recordId: String)

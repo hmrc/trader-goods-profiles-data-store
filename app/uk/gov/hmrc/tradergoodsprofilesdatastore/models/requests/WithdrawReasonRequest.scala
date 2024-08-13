@@ -19,7 +19,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests
 import play.api.libs.json.{Json, OFormat}
 
 final case class WithdrawReasonRequest(
-  withdrawReason: String
+  withdrawReason: Option[String]
 )
 
 object WithdrawReasonRequest {

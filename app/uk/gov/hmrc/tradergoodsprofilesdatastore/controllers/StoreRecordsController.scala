@@ -19,11 +19,8 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsSummaryRepository
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
-import uk.gov.hmrc.tradergoodsprofilesdatastore.services.StoreRecordsService
 
 class StoreRecordsController @Inject() (
   cc: ControllerComponents,

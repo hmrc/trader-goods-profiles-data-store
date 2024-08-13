@@ -160,7 +160,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
         }
       }
 
-  def createAdvice(eori: String, recordId: String, advice: AdviceRequest)(implicit hc: HeaderCarrier): Future[Done] =
+  def requestAdvice(eori: String, recordId: String, advice: AdviceRequest)(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
       .post(adviceUrl(eori, recordId))
       .setHeader(clientIdAndAcceptHeaders: _*)

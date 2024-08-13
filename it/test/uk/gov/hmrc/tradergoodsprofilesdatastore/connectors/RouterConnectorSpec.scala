@@ -306,7 +306,7 @@ class RouterConnectorSpec
 
   ".withdrawAdvice" - {
 
-    val withdrawReason = WithdrawReasonRequest("REASON")
+    val withdrawReason = WithdrawReasonRequest(Some("REASON"))
 
     "must withdraw advice and return no content" in {
 
@@ -333,11 +333,11 @@ class RouterConnectorSpec
     }
   }
 
-  ".createAdvice" - {
+  ".requestAdvice" - {
 
     val advice = AdviceRequest(testEori, "TESTNAME", testEori, recordId, "TEST@email.com")
 
-    "must create advice successfully" in {
+    "must request advice successfully" in {
 
       wireMockServer.stubFor(
         post(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId/advice"))
@@ -346,7 +346,7 @@ class RouterConnectorSpec
           .willReturn(created())
       )
 
-      connector.createAdvice(testEori, recordId, advice).futureValue
+      connector.requestAdvice(testEori, recordId, advice).futureValue
     }
 
     "must return a failed future when the server returns an error" in {
@@ -358,7 +358,7 @@ class RouterConnectorSpec
           .willReturn(serverError())
       )
 
-      connector.createAdvice(testEori, recordId, advice).failed.futureValue
+      connector.requestAdvice(testEori, recordId, advice).failed.futureValue
     }
   }
 }

@@ -28,7 +28,7 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
-class CreateAdviceController @Inject() (
+class RequestAdviceController @Inject() (
   cc: ControllerComponents,
   routerConnector: RouterConnector,
   identify: IdentifierAction
@@ -36,12 +36,13 @@ class CreateAdviceController @Inject() (
     extends BackendController(cc)
     with Logging {
 
-  def createAdvice(eori: String, recordId: String): Action[AdviceRequest] =
+  def requestAdvice(eori: String, recordId: String): Action[AdviceRequest] =
     identify.async(parse.json[AdviceRequest]) { implicit request =>
-      routerConnector.createAdvice(eori, recordId, request.body).map(_ => Created) transform {
+      println("hello")
+      routerConnector.requestAdvice(eori, recordId, request.body).map(_ => Created) transform {
         case s @ Success(_)                        => s
         case Failure(cause: UpstreamErrorResponse) =>
-          logger.error(s"Create advice failed with ${cause.statusCode} with message: ${cause.message}")
+          logger.error(s"Request advice failed with ${cause.statusCode} with message: ${cause.message}")
           Success(InternalServerError)
       }
     }

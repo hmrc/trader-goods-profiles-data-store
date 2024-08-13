@@ -34,7 +34,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.AdviceRequest
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class CreateAdviceControllerSpec extends SpecBase with MockitoSugar {
+class RequestAdviceControllerSpec extends SpecBase with MockitoSugar {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
   val testEori                      = "GB123456789099"
@@ -42,7 +42,7 @@ class CreateAdviceControllerSpec extends SpecBase with MockitoSugar {
 
   private val advice = AdviceRequest(testEori, "TESTNAME", testEori, testRecordId, "TEST@email.com")
 
-  private val createUrl = routes.CreateAdviceController.createAdvice(testEori, testRecordId).url
+  private val createUrl = routes.RequestAdviceController.requestAdvice(testEori, testRecordId).url
 
   private val validFakeCreateRequest = FakeRequest("POST", createUrl)
 
@@ -52,7 +52,7 @@ class CreateAdviceControllerSpec extends SpecBase with MockitoSugar {
 
       val mockRouterConnector = mock[RouterConnector]
       when(
-        mockRouterConnector.createAdvice(any(), any(), any())(any())
+        mockRouterConnector.requestAdvice(any(), any(), any())(any())
       ) thenReturn Future.successful(Done)
 
       val application = applicationBuilder()
@@ -73,7 +73,7 @@ class CreateAdviceControllerSpec extends SpecBase with MockitoSugar {
 
         withClue("must call the relevant services with the correct details") {
           verify(mockRouterConnector)
-            .createAdvice(eqTo(testEori), eqTo(testRecordId), eqTo(advice))(any())
+            .requestAdvice(eqTo(testEori), eqTo(testRecordId), eqTo(advice))(any())
         }
       }
     }
@@ -82,7 +82,7 @@ class CreateAdviceControllerSpec extends SpecBase with MockitoSugar {
 
       val mockRouterConnector = mock[RouterConnector]
       when(
-        mockRouterConnector.createAdvice(any(), any(), any())(any())
+        mockRouterConnector.requestAdvice(any(), any(), any())(any())
       ) thenReturn Future.failed(UpstreamErrorResponse("PROBLEM", NOT_FOUND))
 
       val application = applicationBuilder()
@@ -100,7 +100,7 @@ class CreateAdviceControllerSpec extends SpecBase with MockitoSugar {
 
         withClue("must call the relevant services with the correct details") {
           verify(mockRouterConnector)
-            .createAdvice(eqTo(testEori), eqTo(testRecordId), eqTo(advice))(any())
+            .requestAdvice(eqTo(testEori), eqTo(testRecordId), eqTo(advice))(any())
         }
       }
     }
