@@ -38,7 +38,6 @@ class RequestAdviceController @Inject() (
 
   def requestAdvice(eori: String, recordId: String): Action[AdviceRequest] =
     identify.async(parse.json[AdviceRequest]) { implicit request =>
-      println("hello")
       routerConnector.requestAdvice(eori, recordId, request.body).map(_ => Created) transform {
         case s @ Success(_)                        => s
         case Failure(cause: UpstreamErrorResponse) =>

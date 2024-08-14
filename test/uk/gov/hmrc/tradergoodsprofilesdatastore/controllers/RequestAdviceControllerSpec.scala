@@ -65,9 +65,6 @@ class RequestAdviceControllerSpec extends SpecBase with MockitoSugar {
         val request = FakeRequest(routes.RequestAdviceController.requestAdvice(testEori, testRecordId))
           .withHeaders("Content-Type" -> "application/json")
           .withJsonBody(Json.toJson(advice))
-        println("hello")
-
-        println(request)
 
         val result = route(application, request).value
         status(result) shouldBe CREATED
