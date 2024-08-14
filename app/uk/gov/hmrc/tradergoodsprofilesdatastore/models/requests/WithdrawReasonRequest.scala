@@ -14,22 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
+package uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests
 
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
+import play.api.libs.json.{Json, OFormat}
 
-import javax.inject.Inject
+final case class WithdrawReasonRequest(
+  withdrawReason: Option[String]
+)
 
-class StoreRecordsController @Inject() (
-  cc: ControllerComponents,
-  identify: IdentifierAction
-) extends BackendController(cc) {
+object WithdrawReasonRequest {
 
-  def storeAllRecords(
-    eori: String
-  ): Action[AnyContent] = identify {
-    NoContent
-  }
+  implicit lazy val format: OFormat[WithdrawReasonRequest] = Json.format
+
 }
