@@ -19,6 +19,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 import org.apache.pekko.Done
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
+import org.mongodb.scala.result
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.transaction.{TransactionConfiguration, Transactions}
@@ -131,6 +132,13 @@ class RecordsRepository @Inject() (
     collection
       .countDocuments(byEori(eori))
       .toFuture()
+  }
+
+  def deleteRecordsByEori(eori: String): Future[Long] = Mdc.preservingMdc {
+    collection
+      .deleteMany(byEori(eori))
+      .toFuture()
+      .map(_.getDeletedCount)
   }
 
   // TODO need to add an appropriate index for this to search

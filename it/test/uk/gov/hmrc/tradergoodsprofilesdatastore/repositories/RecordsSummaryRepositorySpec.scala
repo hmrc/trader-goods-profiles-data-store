@@ -68,6 +68,8 @@ class RecordsSummaryRepositorySpec
 
   private def byEori(eori: String): Bson = Filters.equal("eori", eori)
 
+  private def byLastUpdated(lastUpdated: Instant): Bson = Filters.lt("lastUpdated", lastUpdated)
+
   ".set" - {
 
     "must create a recordsSummary when there is none" in {
@@ -155,6 +157,51 @@ class RecordsSummaryRepositorySpec
 
     "when there is no recordsSummary for this eori it must return None" in {
       repository.get(sampleRecordsSummary.eori).futureValue must not be defined
+    }
+
+    "return records when lastUpdated date is before the given date" in {
+      val lastUpdated                          = now.minus(180, ChronoUnit.DAYS)
+      val sampleRecordsSummary: RecordsSummary = RecordsSummary(
+        eori = testEori,
+        currentUpdate = Some(Update(0, 0)),
+        lastUpdated = now.minus(182, ChronoUnit.DAYS)
+      )
+
+      insert(sampleRecordsSummary).futureValue
+
+      val result = repository.getByLastUpdatedBefore(lastUpdated)
+
+      result.futureValue.size mustBe 1
+    }
+
+    "return none when lastUpdated date is after the given date" in {
+      val lastUpdated                          = now.minus(180, ChronoUnit.DAYS)
+      val sampleRecordsSummary: RecordsSummary = RecordsSummary(
+        eori = testEori,
+        currentUpdate = Some(Update(0, 0)),
+        lastUpdated = now.minus(80, ChronoUnit.DAYS)
+      )
+
+      insert(sampleRecordsSummary).futureValue
+
+      val result = repository.getByLastUpdatedBefore(lastUpdated)
+
+      result.futureValue.size mustBe 0
+    }
+
+    "return none when lastUpdated date is equal to the given date" in {
+      val lastUpdated                          = now.minus(180, ChronoUnit.DAYS)
+      val sampleRecordsSummary: RecordsSummary = RecordsSummary(
+        eori = testEori,
+        currentUpdate = Some(Update(0, 0)),
+        lastUpdated = now.minus(180, ChronoUnit.DAYS)
+      )
+
+      insert(sampleRecordsSummary).futureValue
+
+      val result = repository.getByLastUpdatedBefore(lastUpdated)
+
+      result.futureValue.size mustBe 0
     }
 
     mustPreserveMdc(repository.get(sampleRecordsSummary.eori))
