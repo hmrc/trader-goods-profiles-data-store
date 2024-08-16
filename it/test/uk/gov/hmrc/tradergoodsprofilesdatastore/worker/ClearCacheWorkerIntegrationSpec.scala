@@ -16,7 +16,13 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.worker
 
+import org.mockito.ArgumentMatchersSugar.{any, eqTo}
+import org.mockito.Mockito
+import org.mockito.MockitoSugar.{verify, when}
 import org.mongodb.scala.model.Filters
+import org.scalatest.concurrent.Eventually.eventually
+import org.scalatest.concurrent.IntegrationPatience
+import org.scalatestplus.mockito.MockitoSugar.mock
 import org.scalatestplus.play.PlaySpec
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -31,12 +37,13 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{RecordsRepository,
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class ClearCacheWorkerIntegrationSpec
     extends PlaySpec
     with DefaultPlayMongoRepositorySupport[RecordsSummary]
-    with CleanMongoCollectionSupport {
+    with CleanMongoCollectionSupport
+    with IntegrationPatience {
 
   implicit val ec: ExecutionContext                                = ExecutionContext.global
   protected override lazy val repository: RecordsSummaryRepository = new RecordsSummaryRepository(mongoComponent)
@@ -103,23 +110,41 @@ class ClearCacheWorkerIntegrationSpec
     }
   }
 
-  /* "should fail to clear the cache in case of error" in {
+  "should fail to clear the cache in case of error" in {
     val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
+    val mockRecordsRepository = mock[RecordsRepository]
+
+    val sampleRecordsSummary: RecordsSummary = RecordsSummary(
+      eori = testEori,
+      currentUpdate = Some(Update(0, 0)),
+      lastUpdated = Instant.now().minus(182, ChronoUnit.DAYS)
+    )
+
+    when(mockRecordsSummaryRepository.getByLastUpdatedBefore(any))
+      .thenReturn(
+        Future.failed(new RuntimeException("error")),
+        Future.successful(Seq(sampleRecordsSummary))
+      )
+    when(mockRecordsSummaryRepository.deleteByEori(any)).thenReturn(Future.successful(1))
+    when(mockRecordsRepository.deleteRecordsByEori(any)).thenReturn(Future.successful(1))
 
     val applicationBuilder = GuiceApplicationBuilder()
       .overrides(
         bind[MongoComponent].toInstance(mongoComponent),
-        bind[RecordsSummaryRepository].toInstance(mockRecordsSummaryRepository)
+        bind[RecordsSummaryRepository].toInstance(mockRecordsSummaryRepository),
+        bind[RecordsRepository].toInstance(mockRecordsRepository)
       )
       .configure("workers.clear-cache-worker.initial-delay" -> "1 milliseconds")
       .configure("workers.clear-cache-worker.interval" -> "1 milliseconds")
       .build()
 
-    when(mockRecordsSummaryRepository.getByLastUpdatedBefore(any))
-      .thenReturn(Future.failed(new RuntimeException("error")))
-
     running(applicationBuilder) {
 
+      eventually {
+        verify(mockRecordsSummaryRepository, Mockito.atLeast(1)).deleteByEori(eqTo(testEori))
+      }
+       // verify(mockRecordsRepository).deleteRecordsByEori(eqTo(testEori))
+
     }
-  } */
+  }
 }
