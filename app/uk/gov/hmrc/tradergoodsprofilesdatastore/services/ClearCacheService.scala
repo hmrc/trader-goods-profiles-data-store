@@ -40,12 +40,15 @@ class ClearCacheService @Inject() (
       .withLock {
         recordsSummaryRepository.getByLastUpdatedBefore(lastUpdatedBefore).flatMap { recordSummaries =>
           recordSummaries.map { recordSummary =>
-            recordsRepository.deleteRecordsByEori(recordSummary.eori).map {
-              count => logger.info(s"[ClearCacheService] - successfully deleted $count records for eori '${recordSummary.eori}''")
+            recordsRepository.deleteRecordsByEori(recordSummary.eori).map { count =>
+              logger
+                .info(s"[ClearCacheService] - successfully deleted $count records for eori '${recordSummary.eori}''")
             }
 
-            recordsSummaryRepository.deleteByEori(recordSummary.eori).map {
-              count => logger.info(s"[ClearCacheService] - successfully deleted $count summary records for eori '${recordSummary.eori}''")
+            recordsSummaryRepository.deleteByEori(recordSummary.eori).map { count =>
+              logger.info(
+                s"[ClearCacheService] - successfully deleted $count summary records for eori '${recordSummary.eori}''"
+              )
             }
           }
           Future.successful(None)
