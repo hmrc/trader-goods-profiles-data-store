@@ -93,6 +93,7 @@ class ClearCacheWorkerIntegrationSpec
     }
   }
 
+
   private def buildApplication(
     mockRecordsSummaryRepository: RecordsSummaryRepository,
     mockRecordsRepository: RecordsRepository

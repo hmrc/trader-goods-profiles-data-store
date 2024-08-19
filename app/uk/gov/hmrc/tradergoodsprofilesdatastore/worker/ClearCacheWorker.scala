@@ -17,20 +17,20 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.worker
 
 import org.apache.pekko.actor.ActorSystem
+import play.api.Logging
 import play.api.inject.ApplicationLifecycle
-import play.api.{Configuration, Logging}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.services.ClearCacheService
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 @Singleton
 class ClearCacheWorker @Inject() (
-  configuration: Configuration,
+  appConfig: DataStoreAppConfig,
   lifecycle: ApplicationLifecycle,
   actorSystem: ActorSystem,
   clearCacheService: ClearCacheService
@@ -39,10 +39,10 @@ class ClearCacheWorker @Inject() (
 
   private val scheduler = actorSystem.scheduler
 
-  private val interval                 = configuration.get[FiniteDuration]("workers.clear-cache-worker.interval")
-  private val initialDelay             = configuration.get[FiniteDuration]("workers.clear-cache-worker.initial-delay")
-  private val enabled                  = configuration.get[Boolean]("workers.clear-cache-worker.enabled")
-  private val dataToClearOlderThanDays = configuration.get[FiniteDuration]("workers.clear-cache-worker.older-than-days")
+  private val interval                 = appConfig.clearCacheWorkerInterval
+  private val initialDelay             = appConfig.clearCacheWorkerInitialDelay
+  private val enabled                  = appConfig.clearCacheWorkerEnabled
+  private val dataToClearOlderThanDays = appConfig.dataToClearOlderThanDays
 
   if (enabled) {
 
