@@ -112,7 +112,7 @@ class ClearCacheWorkerIntegrationSpec
 
   "should fail to clear the cache in case of error" in {
     val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
-    val mockRecordsRepository = mock[RecordsRepository]
+    val mockRecordsRepository        = mock[RecordsRepository]
 
     val sampleRecordsSummary: RecordsSummary = RecordsSummary(
       eori = testEori,

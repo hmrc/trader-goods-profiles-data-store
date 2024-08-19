@@ -34,16 +34,13 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import scala.concurrent.{ExecutionContext, Future}
 
-class ClearCacheServiceSpec
-    extends PlaySpec
-    with BeforeAndAfterEach{
+class ClearCacheServiceSpec extends PlaySpec with BeforeAndAfterEach {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
 
   private val recordsSummaryRepository = mock[RecordsSummaryRepository]
-  private val recordsRepository = mock[RecordsRepository]
-  private val mongoLockRepository = mock[MongoLockRepository]
-
+  private val recordsRepository        = mock[RecordsRepository]
+  private val mongoLockRepository      = mock[MongoLockRepository]
 
   private val sut = new ClearCacheService(
     recordsSummaryRepository,
@@ -56,9 +53,9 @@ class ClearCacheServiceSpec
 
     reset(recordsSummaryRepository, recordsRepository, mongoLockRepository)
 
-    when(mongoLockRepository.takeLock(any,any,any))
+    when(mongoLockRepository.takeLock(any, any, any))
       .thenReturn(Future.successful(Some(Lock("clear-cache-lock", "123", Instant.now, Instant.now))))
-    when(mongoLockRepository.releaseLock(any,any)).thenReturn(Future.successful(Done))
+    when(mongoLockRepository.releaseLock(any, any)).thenReturn(Future.successful(Done))
     when(recordsSummaryRepository.getByLastUpdatedBefore(any))
       .thenReturn(Future.successful(Seq()))
   }
@@ -77,11 +74,11 @@ class ClearCacheServiceSpec
     }
 
     "delete a cache" in {
-        val sampleRecordsSummary: RecordsSummary = RecordsSummary(
-          eori = testEori,
-          currentUpdate = Some(Update(0, 0)),
-          lastUpdated = Instant.now().minus(182, ChronoUnit.DAYS)
-        )
+      val sampleRecordsSummary: RecordsSummary = RecordsSummary(
+        eori = testEori,
+        currentUpdate = Some(Update(0, 0)),
+        lastUpdated = Instant.now().minus(182, ChronoUnit.DAYS)
+      )
       when(recordsSummaryRepository.getByLastUpdatedBefore(any))
         .thenReturn(Future.successful(Seq(sampleRecordsSummary)))
 
@@ -93,7 +90,7 @@ class ClearCacheServiceSpec
       verify(recordsRepository).deleteRecordsByEori(eqTo(testEori))
     }
 
-    "not delete cache if record before expired date" in {
+    "should not delete cache if record is before expired date" in {
       val expiredBefore = Instant.now
       await(sut.clearCache(expiredBefore))
 
