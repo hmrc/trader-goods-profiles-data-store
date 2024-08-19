@@ -35,19 +35,24 @@ class ClearCacheService @Inject() (
 
   private val lockService = LockService(mongoLockRepository, lockId = "clear-cache-lock", ttl = 1.hour)
 
-  def clearCache(lastUpdatedBefore: Instant) =
+  def clearCache(lastUpdatedBefore: Instant): Future[Unit] =
     lockService
       .withLock {
         recordsSummaryRepository.getByLastUpdatedBefore(lastUpdatedBefore).flatMap { recordSummaries =>
           recordSummaries.map { recordSummary =>
-            recordsRepository.deleteRecordsByEori(recordSummary.eori)
-            recordsSummaryRepository.deleteByEori(recordSummary.eori)
+            recordsRepository.deleteRecordsByEori(recordSummary.eori).map {
+              count => logger.info(s"[ClearCacheService] - successfully deleted $count records for eori '${recordSummary.eori}''")
+            }
+
+            recordsSummaryRepository.deleteByEori(recordSummary.eori).map {
+              count => logger.info(s"[ClearCacheService] - successfully deleted $count summary records for eori '${recordSummary.eori}''")
+            }
           }
           Future.successful(None)
         }
       }
       .map {
-        case Some(res) => logger.debug(s"Finished with $res. Lock has been released.")
-        case None      => logger.debug("Failed to take lock")
+        case Some(res) => logger.debug(s"[ClearCacheService] - Finished with $res. Lock has been released.")
+        case None      => logger.debug("[ClearCacheService] - Failed to take lock")
       }
 }

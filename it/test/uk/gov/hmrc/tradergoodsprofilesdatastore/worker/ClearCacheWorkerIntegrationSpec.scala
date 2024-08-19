@@ -17,13 +17,13 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.worker
 
 import org.mockito.ArgumentMatchersSugar.{any, eqTo}
-import org.mockito.Mockito
-import org.mockito.MockitoSugar.{verify, when}
+import org.mockito.Mockito.verify
+import org.mockito.MockitoSugar.when
 import org.mongodb.scala.model.Filters
-import org.scalatest.concurrent.Eventually.eventually
-import org.scalatest.concurrent.IntegrationPatience
+import org.scalatest.concurrent.{Eventually, IntegrationPatience}
 import org.scalatestplus.mockito.MockitoSugar.mock
 import org.scalatestplus.play.PlaySpec
+import play.api.Application
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers.running
@@ -37,34 +37,85 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{RecordsRepository,
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
 
 class ClearCacheWorkerIntegrationSpec
     extends PlaySpec
     with DefaultPlayMongoRepositorySupport[RecordsSummary]
     with CleanMongoCollectionSupport
-    with IntegrationPatience {
+    with IntegrationPatience
+    with Eventually
+{
 
   implicit val ec: ExecutionContext                                = ExecutionContext.global
   protected override lazy val repository: RecordsSummaryRepository = new RecordsSummaryRepository(mongoComponent)
 
   "should start ClearCacheWorker" in {
     lazy val recordsRepository = new RecordsRepository(mongoComponent)
+    recordsRepository.updateRecords(testEori, Seq(goodsItemRecord)).futureValue
+    insert(sampleRecordSummary).futureValue
 
-    // Insert data for record summary
-    val sampleRecordsSummary: RecordsSummary = RecordsSummary(
-      eori = testEori,
-      currentUpdate = Some(Update(0, 0)),
-      lastUpdated = Instant.now().minus(182, ChronoUnit.DAYS)
-    )
-    insert(sampleRecordsSummary).futureValue
+    val app: Application = buildApplication(repository, recordsRepository)
 
-    // Insert data for records
-    val testrecordId                           = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f"
-    val sampleGoodsItemRecord: GoodsItemRecord = GoodsItemRecord(
+    running(app) {
+
+      val recordSummaryresult = find(Filters.eq("eori", testEori)).futureValue
+      recordSummaryresult.size mustBe 0
+
+      val recordsResult = recordsRepository.getMany(testEori, None, None).futureValue
+      recordsResult.size mustBe 0
+    }
+  }
+
+  "should fail to clear the cache in case of error" in {
+    val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
+    val mockRecordsRepository        = mock[RecordsRepository]
+
+    when(mockRecordsSummaryRepository.getByLastUpdatedBefore(any))
+      .thenReturn(
+        Future.failed(new RuntimeException("error")),
+        Future.successful(Seq(sampleRecordSummary)),
+        Future.successful(Seq.empty)
+      )
+    when(mockRecordsSummaryRepository.deleteByEori(any)).thenReturn(Future.successful(1))
+    when(mockRecordsRepository.deleteRecordsByEori(any)).thenReturn(Future.successful(1))
+
+    val app: Application = buildApplication(mockRecordsSummaryRepository, mockRecordsRepository)
+
+    running(app) {
+
+      eventually {
+        verify(mockRecordsSummaryRepository).deleteByEori(eqTo(testEori))
+        verify(mockRecordsRepository).deleteRecordsByEori(eqTo(testEori))
+        successful()
+      }
+    }
+  }
+
+  private def buildApplication(
+    mockRecordsSummaryRepository: RecordsSummaryRepository,
+    mockRecordsRepository: RecordsRepository
+  ): Application = {
+    GuiceApplicationBuilder()
+      .overrides(
+        bind[MongoComponent].toInstance(mongoComponent),
+        bind[RecordsSummaryRepository].toInstance(mockRecordsSummaryRepository),
+        bind[RecordsRepository].toInstance(mockRecordsRepository)
+      )
+      .configure(
+        Map(
+          "workers.clear-cache-worker.initial-delay" -> "1 milliseconds",
+          "workers.clear-cache-worker.interval" -> "1 milliseconds")
+      )
+      .build()
+  }
+
+  private def goodsItemRecord = {
+    GoodsItemRecord(
       eori = testEori,
       actorId = "GB098765432112",
-      recordId = testrecordId,
+      recordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f",
       traderRef = "BAN001001",
       comcode = "10410100",
       adviceStatus = "Not requested",
@@ -87,64 +138,13 @@ class ClearCacheWorkerIntegrationSpec
       createdDateTime = Instant.parse("2024-10-12T16:12:34Z"),
       updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
     )
-
-    recordsRepository.updateRecords(testEori, Seq(sampleGoodsItemRecord)).futureValue
-
-    val applicationBuilder = GuiceApplicationBuilder()
-      .overrides(
-        bind[MongoComponent].toInstance(mongoComponent),
-        bind[RecordsSummaryRepository].toInstance(repository),
-        bind[RecordsRepository].toInstance(recordsRepository)
-      )
-      .configure("workers.clear-cache-worker.initial-delay" -> "1 milliseconds")
-      .configure("workers.clear-cache-worker.interval" -> "1 milliseconds")
-      .build()
-
-    running(applicationBuilder) {
-
-      val recordSummaryresult = find(Filters.eq("eori", testEori)).futureValue
-      recordSummaryresult.size mustBe 0
-
-      val recordsResult = recordsRepository.getMany(testEori, None, None).futureValue
-      recordsResult.size mustBe 0
-    }
   }
 
-  "should fail to clear the cache in case of error" in {
-    val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
-    val mockRecordsRepository        = mock[RecordsRepository]
-
-    val sampleRecordsSummary: RecordsSummary = RecordsSummary(
+  private def sampleRecordSummary = {
+    RecordsSummary(
       eori = testEori,
       currentUpdate = Some(Update(0, 0)),
       lastUpdated = Instant.now().minus(182, ChronoUnit.DAYS)
     )
-
-    when(mockRecordsSummaryRepository.getByLastUpdatedBefore(any))
-      .thenReturn(
-        Future.failed(new RuntimeException("error")),
-        Future.successful(Seq(sampleRecordsSummary))
-      )
-    when(mockRecordsSummaryRepository.deleteByEori(any)).thenReturn(Future.successful(1))
-    when(mockRecordsRepository.deleteRecordsByEori(any)).thenReturn(Future.successful(1))
-
-    val applicationBuilder = GuiceApplicationBuilder()
-      .overrides(
-        bind[MongoComponent].toInstance(mongoComponent),
-        bind[RecordsSummaryRepository].toInstance(mockRecordsSummaryRepository),
-        bind[RecordsRepository].toInstance(mockRecordsRepository)
-      )
-      .configure("workers.clear-cache-worker.initial-delay" -> "1 milliseconds")
-      .configure("workers.clear-cache-worker.interval" -> "1 milliseconds")
-      .build()
-
-    running(applicationBuilder) {
-
-      eventually {
-        verify(mockRecordsSummaryRepository, Mockito.atLeast(1)).deleteByEori(eqTo(testEori))
-      }
-       // verify(mockRecordsRepository).deleteRecordsByEori(eqTo(testEori))
-
-    }
   }
 }

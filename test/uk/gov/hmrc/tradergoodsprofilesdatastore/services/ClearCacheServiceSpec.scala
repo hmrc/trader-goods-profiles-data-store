@@ -81,6 +81,8 @@ class ClearCacheServiceSpec extends PlaySpec with BeforeAndAfterEach {
       )
       when(recordsSummaryRepository.getByLastUpdatedBefore(any))
         .thenReturn(Future.successful(Seq(sampleRecordsSummary)))
+      when(recordsRepository.deleteRecordsByEori(any)).thenReturn(Future.successful(1))
+      when(recordsSummaryRepository.deleteByEori(any)).thenReturn(Future.successful(1))
 
       val expiredBefore = Instant.now
       await(sut.clearCache(expiredBefore))
