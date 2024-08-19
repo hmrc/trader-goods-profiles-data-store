@@ -66,11 +66,11 @@ class RecordsSummaryRepository @Inject() (
       .headOption()
   }
 
-  def getByLastUpdatedBefore(lastUpdated: Instant): Future[Seq[RecordsSummary]] = //Mdc.preservingMdc {
+  def getByLastUpdatedBefore(lastUpdated: Instant): Future[Seq[RecordsSummary]] = Mdc.preservingMdc {
     collection
       .find[RecordsSummary](byLastUpdated(lastUpdated))
       .toFuture()
-  //}
+  }
 
   def deleteByEori(eori: String): Future[Long] = Mdc.preservingMdc {
     collection
