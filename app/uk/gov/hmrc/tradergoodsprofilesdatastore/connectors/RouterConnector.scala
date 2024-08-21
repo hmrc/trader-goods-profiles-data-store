@@ -19,7 +19,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
 import org.apache.pekko.Done
 import play.api.Configuration
-import play.api.http.Status.{CREATED, NO_CONTENT, OK}
+import play.api.http.Status.{ACCEPTED, CREATED, NO_CONTENT, OK}
 import play.api.libs.json.Json
 import sttp.model.Uri.UriContext
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -64,6 +64,9 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
 
   private def adviceUrl(eori: String, recordId: String) =
     url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records/$recordId/advice"
+
+  private def getRequestDownloadDataUrl(eori: String) =
+    url"$baseUrlRouter/trader-goods-profiles-router/customs/traders/goods-profiles/:eori/download"
 
   def submitTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
@@ -185,6 +188,20 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
         response.status match {
           case NO_CONTENT => Future.successful(Done)
           case _          => Future.failed(UpstreamErrorResponse(response.body, response.status))
+        }
+      }
+
+  def getRequestDownloadData(
+    eori: String
+  )(implicit hc: HeaderCarrier): Future[Done] =
+    httpClient
+      .get(getRequestDownloadDataUrl(eori))
+      .setHeader(clientIdAndAcceptHeaders: _*)
+      .execute[HttpResponse]
+      .flatMap { response =>
+        response.status match {
+          case ACCEPTED => Future.successful(Done)
+          case _        => Future.failed(UpstreamErrorResponse(response.body, response.status))
         }
       }
 }

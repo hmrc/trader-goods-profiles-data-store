@@ -31,6 +31,7 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReady}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -49,7 +50,7 @@ class DownloadDataSummaryRepositorySpec
 
   val sampleDownloadDataSummary: DownloadDataSummary = DownloadDataSummary(
     eori = testEori,
-    status = "RequestFile"
+    status = FileInProgress
   )
 
   override def fakeApplication(): Application = GuiceApplicationBuilder()
@@ -77,7 +78,7 @@ class DownloadDataSummaryRepositorySpec
       insert(sampleDownloadDataSummary).futureValue
       val newDownloadDataSummary: DownloadDataSummary = DownloadDataSummary(
         eori = testEori,
-        status = "FileInProgress"
+        status = FileInProgress
       )
       repository.set(newDownloadDataSummary).futureValue
       val updatedRecord                               = find(byEori(testEori)).futureValue.headOption.value
@@ -102,6 +103,25 @@ class DownloadDataSummaryRepositorySpec
     }
 
     mustPreserveMdc(repository.get(sampleDownloadDataSummary.eori))
+  }
+
+  ".update" - {
+    val status = FileReady
+
+    "must update `status` when it is given" in {
+      repository.set(DownloadDataSummary(testEori, FileInProgress)).futureValue
+      repository.update(testEori, status).futureValue mustEqual Some(DownloadDataSummary(testEori, FileInProgress))
+      val updatedRecord = find(byEori(testEori)).futureValue.headOption.value
+
+      updatedRecord.eori mustEqual testEori
+      updatedRecord.status mustEqual status
+    }
+
+    "must return false when it is not found" in {
+      repository.update(testEori, status).futureValue mustEqual None
+    }
+
+    mustPreserveMdc(repository.update(testEori, status).failed)
   }
 
   private def mustPreserveMdc[A](f: => Future[A])(implicit pos: Position): Unit =

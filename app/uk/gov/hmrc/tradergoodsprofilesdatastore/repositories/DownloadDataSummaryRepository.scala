@@ -22,7 +22,7 @@ import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.play.http.logging.Mdc
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataStatus, DownloadDataSummary}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -63,5 +63,17 @@ class DownloadDataSummaryRepository @Inject() (
       )
       .toFuture()
       .map(_ => Done)
+  }
+
+  def update(eori: String, status: DownloadDataStatus): Future[Option[DownloadDataSummary]] = Mdc.preservingMdc {
+    val updates = Seq(
+      Updates.set("status", status.toString)
+    )
+    collection
+      .findOneAndUpdate(
+        filter = byEori(eori),
+        update = Updates.combine(updates: _*)
+      )
+      .headOption()
   }
 }
