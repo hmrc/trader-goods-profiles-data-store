@@ -167,4 +167,29 @@ class RecordsRepository @Inject() (
       case None        => Future.successful(Seq.empty)
     }
   }
+
+  def searchRecordsAndApplyFilters(
+   eori: String,
+   searchTerm: Option[String],
+   adviceStatus: Option[String],
+   countryOfOrigin: Option[String]
+  ): Future[Seq[GoodsItemRecord]] = Mdc.preservingMdc {
+
+    val defaultFilters: Seq[Bson] = searchTerm.map { term =>
+      Seq(
+        byEori(eori),
+        byComCodeOrGoodsDescriptionOrTraderRef(term, exactMatch = false)
+      )
+    }.getOrElse(Seq(byEori(eori)))
+
+    val additionalFilters: Seq[Bson] = Seq(
+      adviceStatus.map(value => byField("adviceStatus", value, exactMatch = true)),
+      countryOfOrigin.map(value => byField("countryOfOrigin", value, exactMatch = true))
+    ).flatten
+
+    collection
+      .find[GoodsItemRecord](Filters.and((defaultFilters ++ additionalFilters): _*))
+      .sort(byLatest)
+      .toFuture()
+  }
 }
