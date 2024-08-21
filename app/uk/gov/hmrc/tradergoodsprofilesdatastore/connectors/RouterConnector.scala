@@ -66,7 +66,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
     url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records/$recordId/advice"
 
   private def getRequestDownloadDataUrl(eori: String) =
-    url"$baseUrlRouter/trader-goods-profiles-router/customs/traders/goods-profiles/:eori/download"
+    url"$baseUrlRouter/trader-goods-profiles-router/customs/traders/goods-profiles/$eori/download"
 
   def submitTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
     httpClient

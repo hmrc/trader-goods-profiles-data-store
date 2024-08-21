@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.models
 
-import play.api.libs.json.{Format, JsError, JsResult, JsString, JsSuccess, JsValue, Json}
+import play.api.libs.json.{Format, JsError, JsResult, JsString, JsSuccess, JsValue, Json, OFormat}
 
 sealed abstract class DownloadDataStatus(val value: String)
 
@@ -55,5 +55,5 @@ final case class DownloadDataSummary(
 )
 
 object DownloadDataSummary {
-  implicit val format = Json.format[DownloadDataSummary]
+  implicit val format: OFormat[DownloadDataSummary] = Json.format[DownloadDataSummary]
 }

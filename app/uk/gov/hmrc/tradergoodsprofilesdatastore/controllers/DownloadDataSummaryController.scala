@@ -52,7 +52,7 @@ class DownloadDataSummaryController @Inject() (
     routerConnector.getRequestDownloadData(eori).flatMap { _ =>
       downloadDataSummaryRepository
         .set(DownloadDataSummary(eori, FileInProgress))
-        .map(_ => NoContent)
+        .map(_ => Accepted)
     }
   }
 

@@ -97,7 +97,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
   "requestDownloadData" - {
 
-    "return 204 when data is successfully requested" in {
+    "return 202 when data is successfully requested" in {
       val requestEori         = "GB123456789099"
       val downloadDataSummary = DownloadDataSummary(requestEori, FileInProgress)
 
@@ -127,7 +127,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         val request = validFakePostRequest
           .withHeaders("Content-Type" -> "application/json")
         val result  = route(application, request).value
-        status(result) shouldBe NO_CONTENT
+        status(result) shouldBe ACCEPTED
 
         withClue("must call the relevant services with the correct details") {
           verify(mockRouterConnector)
