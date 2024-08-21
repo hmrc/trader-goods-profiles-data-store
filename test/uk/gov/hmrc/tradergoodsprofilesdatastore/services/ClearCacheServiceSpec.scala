@@ -100,5 +100,23 @@ class ClearCacheServiceSpec extends PlaySpec with BeforeAndAfterEach {
       verify(recordsSummaryRepository, never()).deleteByEori(any)
       verifyZeroInteractions(recordsRepository)
     }
+
+    "should not delete cache if recordsRepository fails to delete records" in {
+      val sampleRecordsSummary: RecordsSummary = RecordsSummary(
+        eori = testEori,
+        currentUpdate = Some(Update(0, 0)),
+        lastUpdated = Instant.now().minus(182, ChronoUnit.DAYS)
+      )
+      when(recordsSummaryRepository.getByLastUpdatedBefore(any))
+        .thenReturn(Future.successful(Seq(sampleRecordsSummary)))
+      when(recordsRepository.deleteRecordsByEori(any)).thenThrow(new RuntimeException("error"))
+
+      val expiredBefore = Instant.now
+      intercept[RuntimeException] {
+        await(sut.clearCache(expiredBefore))
+      }
+
+      verify(recordsSummaryRepository, never).deleteByEori(any)
+    }
   }
 }

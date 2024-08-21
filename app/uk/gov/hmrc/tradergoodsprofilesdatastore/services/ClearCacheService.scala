@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.services
 
+import org.apache.pekko.Done
 import play.api.Logging
 import uk.gov.hmrc.mongo.lock.{LockService, MongoLockRepository}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{RecordsRepository, RecordsSummaryRepository}
@@ -40,22 +41,22 @@ class ClearCacheService @Inject() (
       .withLock {
         recordsSummaryRepository.getByLastUpdatedBefore(lastUpdatedBefore).flatMap { recordSummaries =>
           recordSummaries.map { recordSummary =>
-            recordsRepository.deleteRecordsByEori(recordSummary.eori).map { count =>
+            for {
+              recordsDeleteCount        <- recordsRepository.deleteRecordsByEori(recordSummary.eori)
+              recordsSummaryDeleteCount <- recordsSummaryRepository.deleteByEori(recordSummary.eori)
+            } yield {
               logger
-                .info(s"[ClearCacheService] - successfully deleted $count records for eori '${recordSummary.eori}''")
-            }
-
-            recordsSummaryRepository.deleteByEori(recordSummary.eori).map { count =>
+                .info(
+                  s"[ClearCacheService] - successfully deleted $recordsDeleteCount records for eori '${recordSummary.eori}''"
+                )
               logger.info(
-                s"[ClearCacheService] - successfully deleted $count summary records for eori '${recordSummary.eori}''"
+                s"[ClearCacheService] - successfully deleted $recordsSummaryDeleteCount summary records for eori '${recordSummary.eori}''"
               )
             }
           }
+
           Future.successful(None)
         }
       }
-      .map {
-        case Some(res) => logger.debug(s"[ClearCacheService] - Finished with $res. Lock has been released.")
-        case None      => logger.debug("[ClearCacheService] - Failed to take lock")
-      }
+      .map(_ => Done)
 }

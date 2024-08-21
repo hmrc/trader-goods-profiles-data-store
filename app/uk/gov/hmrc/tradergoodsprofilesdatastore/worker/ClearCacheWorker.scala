@@ -56,8 +56,11 @@ class ClearCacheWorker @Inject() (
             logger.error("[ClearCacheWorker] - Error while clearing cache", e)
         }
     }
-    logger.info("[ClearCacheWorker] - Stopped ClearCacheWorker")
-    lifecycle.addStopHook(() => Future.successful(cancel.cancel()))
+
+    lifecycle.addStopHook { () =>
+      logger.info("[ClearCacheWorker] - Stopped ClearCacheWorker")
+      Future.successful(cancel.cancel())
+    }
   } else {
     logger.info("[ClearCacheWorker] - ClearCacheWorker disabled")
   }
