@@ -61,8 +61,8 @@ class DownloadDataSummaryController @Inject() (
       downloadDataSummaryRepository
         .update(eori, request.body.status)
         .map {
-          case Some(_) => NoContent
-          case None    => NotFound
+          case true  => NoContent
+          case false => NotFound
         }
     }
 }

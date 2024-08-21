@@ -65,15 +65,16 @@ class DownloadDataSummaryRepository @Inject() (
       .map(_ => Done)
   }
 
-  def update(eori: String, status: DownloadDataStatus): Future[Option[DownloadDataSummary]] = Mdc.preservingMdc {
+  def update(eori: String, status: DownloadDataStatus): Future[Boolean] = Mdc.preservingMdc {
     val updates = Seq(
       Updates.set("status", status.toString)
     )
     collection
-      .findOneAndUpdate(
+      .updateOne(
         filter = byEori(eori),
         update = Updates.combine(updates: _*)
       )
-      .headOption()
+      .toFuture()
+      .map(result => result.getMatchedCount > 0)
   }
 }

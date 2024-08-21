@@ -142,9 +142,8 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
   "updateDownloadDataStatus" - {
 
     "return 204 when data is successfully updated" in {
-      val requestEori            = "GB123456789099"
-      val downloadDataSummary    = DownloadDataSummary(requestEori, FileReady)
-      val oldDownloadDataSummary = DownloadDataSummary(requestEori, FileInProgress)
+      val requestEori         = "GB123456789099"
+      val downloadDataSummary = DownloadDataSummary(requestEori, FileReady)
 
       lazy val downloadDataSummaryUrl = routes.DownloadDataSummaryController
         .updateDownloadDataStatus(requestEori)
@@ -154,7 +153,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
       when(
         mockDownloadDataSummaryRepository.update(any(), any())
-      ) thenReturn Future.successful(Some(oldDownloadDataSummary))
+      ) thenReturn Future.successful(true)
 
       val application = applicationBuilder()
         .overrides(
@@ -188,7 +187,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
       when(
         mockDownloadDataSummaryRepository.update(any(), any())
-      ) thenReturn Future.successful(None)
+      ) thenReturn Future.successful(false)
 
       val application = applicationBuilder()
         .overrides(

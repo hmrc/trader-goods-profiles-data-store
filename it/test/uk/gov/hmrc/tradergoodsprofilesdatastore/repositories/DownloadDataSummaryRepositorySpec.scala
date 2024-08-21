@@ -110,7 +110,7 @@ class DownloadDataSummaryRepositorySpec
 
     "must update `status` when it is given" in {
       repository.set(DownloadDataSummary(testEori, FileInProgress)).futureValue
-      repository.update(testEori, status).futureValue mustEqual Some(DownloadDataSummary(testEori, FileInProgress))
+      repository.update(testEori, status).futureValue mustEqual true
       val updatedRecord = find(byEori(testEori)).futureValue.headOption.value
 
       updatedRecord.eori mustEqual testEori
@@ -118,10 +118,10 @@ class DownloadDataSummaryRepositorySpec
     }
 
     "must return false when it is not found" in {
-      repository.update(testEori, status).futureValue mustEqual None
+      repository.update(testEori, status).futureValue mustEqual false
     }
 
-    mustPreserveMdc(repository.update(testEori, status).failed)
+    mustPreserveMdc(repository.update(testEori, status))
   }
 
   private def mustPreserveMdc[A](f: => Future[A])(implicit pos: Position): Unit =
