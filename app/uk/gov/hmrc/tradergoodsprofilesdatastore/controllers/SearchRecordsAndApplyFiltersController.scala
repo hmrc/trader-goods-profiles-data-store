@@ -25,7 +25,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{buil
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 class SearchRecordsAndApplyFiltersController @Inject()(
   recordsRepository: RecordsRepository,
@@ -46,12 +46,12 @@ class SearchRecordsAndApplyFiltersController @Inject()(
     for {
       filteredRecords <- recordsRepository.searchRecordsAndApplyFilters(eori, searchTerm, adviceStatus, countryOfOrigin)
     } yield {
-      val size1             = size.getOrElse(localPageSize)
-      val page1            = page.getOrElse(localStartingPage)
-      val skip             = (page1 - 1) * size1
-      val paginatedRecords = filteredRecords.slice(skip, skip + size1)
+      val sizeOrDefault             = size.getOrElse(localPageSize)
+      val pageOrDefault            = page.getOrElse(localStartingPage)
+      val skip             = (pageOrDefault - 1) * sizeOrDefault
+      val paginatedRecords = filteredRecords.slice(skip, skip + sizeOrDefault)
 
-      val pagination         = buildPagination(Some(size1), Some(page1), filteredRecords.size.toLong)
+      val pagination         = buildPagination(Some(sizeOrDefault), Some(pageOrDefault), filteredRecords.size.toLong)
       val getRecordsResponse = GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination = pagination)
       Ok(Json.toJson(getRecordsResponse))
     }
