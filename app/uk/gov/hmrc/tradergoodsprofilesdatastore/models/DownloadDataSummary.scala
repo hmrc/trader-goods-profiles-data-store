@@ -16,38 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.models
 
-import play.api.libs.json.{Format, JsError, JsResult, JsString, JsSuccess, JsValue, Json, OFormat}
-
-sealed abstract class DownloadDataStatus(val value: String)
-
-object DownloadDataStatus {
-  final case object RequestFile extends DownloadDataStatus("RequestFile")
-
-  final case object FileInProgress extends DownloadDataStatus("FileInProgress")
-
-  final case object FileReady extends DownloadDataStatus("FileReady")
-
-  lazy val downloadDataStatusTypes: Set[DownloadDataStatus] = Set(RequestFile, FileInProgress, FileReady)
-
-  private def enumFormat[A](values: Set[A])(getKey: A => String): Format[A] = new Format[A] {
-
-    override def writes(a: A): JsValue =
-      JsString(getKey(a))
-
-    override def reads(json: JsValue): JsResult[A] = json match {
-      case JsString(str) =>
-        values
-          .find(getKey(_) == str)
-          .map(JsSuccess(_))
-          .getOrElse(JsError("error.expected.validenumvalue"))
-      case _             =>
-        JsError("error.expected.enumstring")
-    }
-  }
-
-  implicit val format: Format[DownloadDataStatus] =
-    enumFormat(DownloadDataStatus.downloadDataStatusTypes)(_.value)
-}
+import play.api.libs.json.{Json, OFormat}
 
 final case class DownloadDataSummary(
   eori: String,
