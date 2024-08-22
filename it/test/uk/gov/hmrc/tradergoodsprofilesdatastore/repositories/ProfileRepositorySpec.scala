@@ -29,7 +29,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.ProfileResponse
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class SessionRepositorySpec
+class ProfileRepositorySpec
     extends AnyFreeSpec
     with Matchers
     with PlayMongoRepositorySupport[ProfileResponse]

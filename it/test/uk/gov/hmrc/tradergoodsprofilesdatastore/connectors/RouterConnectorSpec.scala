@@ -21,6 +21,7 @@ import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.Application
+import play.api.http.Status.ACCEPTED
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
@@ -227,6 +228,32 @@ class RouterConnectorSpec
       )
 
       connector.getRecord(testEori, recordId).failed.futureValue
+    }
+  }
+
+  ".getRequestDownloadData" - {
+
+    "must request to download data" in {
+      wireMockServer.stubFor(
+        get(urlEqualTo(s"/trader-goods-profiles-router/customs/traders/goods-profiles/$testEori/download"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
+          .willReturn(status(ACCEPTED))
+      )
+
+      connector.getRequestDownloadData(testEori).futureValue
+    }
+
+    "must return a failed future when the server returns an error" in {
+
+      wireMockServer.stubFor(
+        get(urlEqualTo(s"/trader-goods-profiles-router/customs/traders/goods-profiles/$testEori/download"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
+          .willReturn(serverError())
+      )
+
+      connector.getRequestDownloadData(testEori).failed.futureValue
     }
   }
 
