@@ -51,9 +51,8 @@ class ClearCacheWorker @Inject() (
       clearCacheService
         .clearCache(Instant.now().minus(dataToClearOlderThanDays.toDays, ChronoUnit.DAYS))
         .onComplete {
-          case Success(_) => ()
-          case Failure(e) =>
-            logger.error("[ClearCacheWorker] - Error while clearing cache", e)
+          case Success(_) => logger.info("[ClearCacheWorker] - Completed ClearCacheWorker")
+          case Failure(e) => logger.error("[ClearCacheWorker] - Error while clearing cache", e)
         }
     }
 
