@@ -56,18 +56,22 @@ class ClearCacheServiceSpec extends PlaySpec with BeforeAndAfterEach {
     when(mongoLockRepository.takeLock(any, any, any))
       .thenReturn(Future.successful(Some(Lock("clear-cache-lock", "123", Instant.now, Instant.now))))
     when(mongoLockRepository.releaseLock(any, any)).thenReturn(Future.successful(Done))
-    when(recordsSummaryRepository.getByLastUpdatedBefore(any))
-      .thenReturn(Future.successful(Seq()))
   }
 
   "clearCache" should {
     "acquire a lock" in {
+      when(recordsSummaryRepository.getByLastUpdatedBefore(any))
+        .thenReturn(Future.successful(Seq()))
+
       await(sut.clearCache(Instant.now))
 
       verify(mongoLockRepository).takeLock(eqTo("clear-cache-lock"), any, any)
     }
 
     "release a lock" in {
+      when(recordsSummaryRepository.getByLastUpdatedBefore(any))
+        .thenReturn(Future.successful(Seq()))
+
       await(sut.clearCache(Instant.now))
 
       verify(mongoLockRepository).releaseLock(eqTo("clear-cache-lock"), any)
@@ -94,6 +98,9 @@ class ClearCacheServiceSpec extends PlaySpec with BeforeAndAfterEach {
 
     "should not delete cache if record is before expired date" in {
       val expiredBefore = Instant.now
+      when(recordsSummaryRepository.getByLastUpdatedBefore(any))
+        .thenReturn(Future.successful(Seq()))
+
       await(sut.clearCache(expiredBefore))
 
       verify(recordsSummaryRepository).getByLastUpdatedBefore(eqTo(expiredBefore))

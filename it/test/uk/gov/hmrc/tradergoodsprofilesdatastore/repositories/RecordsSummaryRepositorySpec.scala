@@ -217,6 +217,16 @@ class RecordsSummaryRepositorySpec
 
     }
 
+    "when there are multiple recordsSummaries for different eori's" in {
+      insert(sampleRecordsSummary).futureValue
+      insert(sampleRecordsSummary.copy(eori = "GB123456789002")).futureValue
+
+      val result = repository.deleteByEori(sampleRecordsSummary.eori).futureValue
+
+      result mustEqual 1
+
+    }
+
     "when there is a no recordsSummary for this eori it must return 0" in {
       val result = repository.deleteByEori(sampleRecordsSummary.eori).futureValue
 

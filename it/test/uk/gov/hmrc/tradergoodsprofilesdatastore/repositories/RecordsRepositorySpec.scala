@@ -612,6 +612,15 @@ class RecordsRepositorySpec
       result mustEqual 1
     }
 
+    "when there are multiple records with different eori's" in {
+      insert(sampleGoodsItemRecord).futureValue
+      insert(sampleGoodsItemRecord.copy(recordId = "2", eori = "GB123456789002")).futureValue
+
+      val result = repository.deleteRecordsByEori(sampleGoodsItemRecord.eori).futureValue
+
+      result mustEqual 1
+    }
+
     "when there is a no recordsSummary for this eori it must return 0" in {
       val result = repository.deleteRecordsByEori(sampleGoodsItemRecord.eori).futureValue
 
