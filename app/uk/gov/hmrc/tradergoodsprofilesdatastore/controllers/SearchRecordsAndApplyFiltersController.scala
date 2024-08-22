@@ -40,18 +40,18 @@ class SearchRecordsAndApplyFiltersController @Inject()(
     searchTerm: Option[String],
     adviceStatus: Option[String],
     countryOfOrigin: Option[String],
-    pageOpt: Option[Int],
-    sizeOpt: Option[Int]
+    page: Option[Int],
+    size: Option[Int]
   ): Action[AnyContent] = (identify andThen storeLatest).async { implicit request =>
     for {
       filteredRecords <- recordsRepository.searchRecordsAndApplyFilters(eori, searchTerm, adviceStatus, countryOfOrigin)
     } yield {
-      val size             = sizeOpt.getOrElse(localPageSize)
-      val page             = pageOpt.getOrElse(localStartingPage)
-      val skip             = (page - 1) * size
-      val paginatedRecords = filteredRecords.slice(skip, skip + size)
+      val size1             = size.getOrElse(localPageSize)
+      val page1            = page.getOrElse(localStartingPage)
+      val skip             = (page1 - 1) * size1
+      val paginatedRecords = filteredRecords.slice(skip, skip + size1)
 
-      val pagination         = buildPagination(Some(size), Some(page), filteredRecords.size.toLong)
+      val pagination         = buildPagination(Some(size1), Some(page1), filteredRecords.size.toLong)
       val getRecordsResponse = GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination = pagination)
       Ok(Json.toJson(getRecordsResponse))
     }
