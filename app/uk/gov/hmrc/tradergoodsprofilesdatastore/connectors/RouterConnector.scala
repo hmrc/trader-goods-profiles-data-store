@@ -19,7 +19,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
 import org.apache.pekko.Done
 import play.api.Configuration
-import play.api.http.Status.{ACCEPTED, CREATED, NO_CONTENT, OK}
+import play.api.http.Status.{ACCEPTED, CREATED, NOT_FOUND, NO_CONTENT, OK}
 import play.api.libs.json.Json
 import sttp.model.Uri.UriContext
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -33,11 +33,13 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2)(implicit ec: ExecutionContext) {
 
-  private val baseUrlRouter: Service         = config.get[Service]("microservice.services.trader-goods-profiles-router")
+  private val baseUrlRouter: Service           = config.get[Service]("microservice.services.trader-goods-profiles-router")
+  private val baseUrlCustomsDataStore: Service = config.get[Service]("microservice.services.customs-data-store")
+
   private val clientIdAndAcceptHeaders       =
     Seq("X-Client-ID" -> "tgp-frontend", "Accept" -> "application/vnd.hmrc.1.0+json")
-  private def traderProfileUrl(eori: String) =
-    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori"
+
+  private def traderProfileUrl(eori: String) = url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori"
 
   private def tgpRecordsUri(
     eori: String,
@@ -67,6 +69,9 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
 
   private def getRequestDownloadDataUrl(eori: String) =
     url"$baseUrlRouter/trader-goods-profiles-router/customs/traders/goods-profiles/$eori/download"
+
+  private def emailUrl(eori: String) =
+    url"$baseUrlCustomsDataStore/customs-data-store/eori/$eori/verified-email"
 
   def submitTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
@@ -202,6 +207,20 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
         response.status match {
           case ACCEPTED => Future.successful(Done)
           case _        => Future.failed(UpstreamErrorResponse(response.body, response.status))
+        }
+      }
+
+  def getEmail(
+    eori: String
+  )(implicit hc: HeaderCarrier): Future[Boolean] =
+    httpClient
+      .get(emailUrl(eori))
+      .execute[HttpResponse]
+      .flatMap { response =>
+        response.status match {
+          case OK        => Future.successful(true)
+          case NOT_FOUND => Future.successful(false)
+          case _         => Future.failed(UpstreamErrorResponse(response.body, response.status))
         }
       }
 }
