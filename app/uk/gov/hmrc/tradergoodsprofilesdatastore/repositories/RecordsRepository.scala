@@ -171,25 +171,37 @@ class RecordsRepository @Inject() (
   def searchRecordsAndApplyFilters(
    eori: String,
    searchTerm: Option[String],
-   adviceStatus: Option[String],
+   immiReady: Option[String],
+   notImmiReady: Option[String],
+   actionNeeded: Option[String],
    countryOfOrigin: Option[String]
   ): Future[Seq[GoodsItemRecord]] = Mdc.preservingMdc {
 
-    val defaultFilters: Seq[Bson] = searchTerm.map { term =>
+    val filters: Bson = Filters.and(searchTerm.map { term =>
       Seq(
         byEori(eori),
         byComCodeOrGoodsDescriptionOrTraderRef(term, exactMatch = false)
       )
-    }.getOrElse(Seq(byEori(eori)))
-
-    val additionalFilters: Seq[Bson] = Seq(
-      adviceStatus.map(value => byField("adviceStatus", value, exactMatch = true)),
+    }.getOrElse(Seq(byEori(eori))) ++ Seq(
       countryOfOrigin.map(value => byField("countryOfOrigin", value, exactMatch = true))
+    ).flatten: _*)
+
+    val adviceStatusValues: Seq[String] = Seq(
+      immiReady,
+      notImmiReady,
+      actionNeeded
     ).flatten
 
+    val finalFilters = if (adviceStatusValues.nonEmpty) {
+      Filters.and(filters, Filters.in("adviceStatus", adviceStatusValues: _*))
+    } else {
+      filters
+    }
+
     collection
-      .find[GoodsItemRecord](Filters.and((defaultFilters ++ additionalFilters): _*))
+      .find[GoodsItemRecord](finalFilters)
       .sort(byLatest)
       .toFuture()
+
   }
 }

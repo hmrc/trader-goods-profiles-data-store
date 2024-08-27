@@ -38,13 +38,15 @@ class SearchRecordsAndApplyFiltersController @Inject()(
   def searchAndFilter(
     eori: String,
     searchTerm: Option[String],
-    adviceStatus: Option[String],
+    immiReady: Option[String],
+    notImmiReady: Option[String],
+    actionNeeded: Option[String],
     countryOfOrigin: Option[String],
     page: Option[Int],
     size: Option[Int]
   ): Action[AnyContent] = (identify andThen storeLatest).async { implicit request =>
     for {
-      filteredRecords <- recordsRepository.searchRecordsAndApplyFilters(eori, searchTerm, adviceStatus, countryOfOrigin)
+      filteredRecords <- recordsRepository.searchRecordsAndApplyFilters(eori, searchTerm, immiReady, notImmiReady, actionNeeded, countryOfOrigin)
     } yield {
       val sizeOrDefault             = size.getOrElse(localPageSize)
       val pageOrDefault            = page.getOrElse(localStartingPage)
