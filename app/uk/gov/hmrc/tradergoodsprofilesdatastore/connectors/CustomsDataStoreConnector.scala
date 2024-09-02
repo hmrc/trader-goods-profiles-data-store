@@ -36,15 +36,11 @@ class CustomsDataStoreConnector @Inject() (config: Configuration, httpClient: Ht
   private def emailUrl(eori: String) =
     url"$baseUrlCustomsDataStore/customs-data-store/eori/$eori/verified-email"
 
-  private val headers                                  =
-    Seq("Authorization" -> "secret-token")
-
   def getEmail(
     eori: String
   )(implicit hc: HeaderCarrier): Future[Option[Email]] =
     httpClient
       .get(emailUrl(eori))
-      .setHeader(headers: _*)
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
