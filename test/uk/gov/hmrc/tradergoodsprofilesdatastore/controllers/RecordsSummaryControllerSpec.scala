@@ -38,7 +38,7 @@ class RecordsSummaryControllerSpec extends SpecBase with MockitoSugar with GetRe
   implicit val ec: ExecutionContext = ExecutionContext.global
 
   "recordsSummary" - {
-    "return 200 and the RecordSummary if it exists" in {
+    "return 200 and the RecordsSummary if it exists" in {
 
       val requestEori            = "GB123456789099"
       lazy val recordsSummaryUrl = routes.RecordsSummaryController
@@ -67,7 +67,7 @@ class RecordsSummaryControllerSpec extends SpecBase with MockitoSugar with GetRe
       verify(mockRecordsSummaryRepository, times(1)).get(requestEori)
     }
 
-    "return 404 if the RecordSummary is not present" in {
+    "return 404 if the RecordsSummary is not present" in {
 
       val requestEori            = "GB123456789099"
       lazy val recordsSummaryUrl = routes.RecordsSummaryController

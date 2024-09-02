@@ -59,8 +59,8 @@ class ProfileController @Inject() (
     profileRepository
       .get(eori)
       .map {
-        case Some(profile) => Ok
-        case None          => NotFound
+        case Some(_) => Ok
+        case None    => NotFound
       }
   }
 

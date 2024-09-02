@@ -48,8 +48,8 @@ class RecordsSummaryRepositorySpec
     with MockitoSugar
     with GuiceOneAppPerSuite {
 
-  val testEori = "GB123456789001"
-  val now      = Instant.now().truncatedTo(ChronoUnit.MILLIS)
+  val testEori    = "GB123456789001"
+  private val now = Instant.now().truncatedTo(ChronoUnit.MILLIS)
 
   val sampleRecordsSummary: RecordsSummary = RecordsSummary(
     eori = testEori,
