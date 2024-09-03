@@ -18,3 +18,4 @@ PATCH      /traders/:eori/records/:recordId         uk.gov.hmrc.tradergoodsprofi
 DELETE     /traders/profile                         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.deleteAll()
 POST       /traders/:eori/records/:recordId/advice  uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.RequestAdviceController.requestAdvice(eori: String, recordId: String)
 PUT        /traders/:eori/records/:recordId/advice  uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.WithdrawAdviceController.withdrawAdvice(eori: String, recordId: String)
+GET        /traders/:eori/email                     uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.EmailController.getEmail(eori: String)
