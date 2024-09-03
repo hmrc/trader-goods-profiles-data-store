@@ -36,7 +36,8 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   private val baseUrlRouter: Service         = config.get[Service]("microservice.services.trader-goods-profiles-router")
   private val clientIdAndAcceptHeaders       =
     Seq("X-Client-ID" -> "tgp-frontend", "Accept" -> "application/vnd.hmrc.1.0+json")
-  private def traderProfileUrl(eori: String) = url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori"
+  private def traderProfileUrl(eori: String) =
+    url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori"
 
   private def tgpRecordsUri(
     eori: String,
