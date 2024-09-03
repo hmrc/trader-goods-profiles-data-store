@@ -19,7 +19,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
 import org.apache.pekko.Done
 import play.api.Configuration
-import play.api.http.Status.{ACCEPTED, CREATED, NOT_FOUND, NO_CONTENT, OK}
+import play.api.http.Status.{ACCEPTED, CREATED, NO_CONTENT, OK}
 import play.api.libs.json.Json
 import sttp.model.Uri.UriContext
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -33,11 +33,9 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2)(implicit ec: ExecutionContext) {
 
-  private val baseUrlRouter: Service = config.get[Service]("microservice.services.trader-goods-profiles-router")
-
+  private val baseUrlRouter: Service         = config.get[Service]("microservice.services.trader-goods-profiles-router")
   private val clientIdAndAcceptHeaders       =
     Seq("X-Client-ID" -> "tgp-frontend", "Accept" -> "application/vnd.hmrc.1.0+json")
-
   private def traderProfileUrl(eori: String) = url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori"
 
   private def tgpRecordsUri(
