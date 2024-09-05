@@ -86,7 +86,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   }
 
   def createTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] = {
-    val url = url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori"
+    val url = url"$baseUrlRouter/trader-goods-profiles-router/customs/traders/goods-profiles/$eori"
 
     httpClient
       .post(url)

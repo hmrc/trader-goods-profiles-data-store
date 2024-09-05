@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.{ok, _}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -87,6 +87,37 @@ class RouterConnectorSpec
     updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
   )
 
+  ".createTraderProfile" - {
+
+    "must submit a trader profile" in {
+
+      val traderProfile = ProfileRequest(testEori, "1", Some("2"), None)
+
+      wireMockServer.stubFor(
+        post(urlEqualTo(s"/trader-goods-profiles-router/customs/traders/goods-profiles/$testEori"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
+          .willReturn(ok())
+      )
+
+      connector.createTraderProfile(traderProfile, testEori).futureValue
+    }
+
+    "must return a failed future when the server returns an error" in {
+
+      val traderProfile = ProfileRequest(testEori, "1", Some("2"), None)
+
+      wireMockServer.stubFor(
+        post(urlEqualTo(s"/trader-goods-profiles-router/customs/traders/goods-profiles/$testEori"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
+          .willReturn(serverError())
+      )
+
+      connector.createTraderProfile(traderProfile, testEori).failed.futureValue
+    }
+  }
+
   ".updateTraderProfile" - {
 
     "must submit a trader profile" in {
@@ -115,6 +146,43 @@ class RouterConnectorSpec
       )
 
       connector.updateTraderProfile(traderProfile, testEori).failed.futureValue
+    }
+  }
+
+  ".hasHistoricProfile" - {
+
+    "must return true (profile does exist) when router returns ok" in {
+      wireMockServer.stubFor(
+        get(urlEqualTo(s"/trader-goods-profiles-router/customs/traders/goods-profiles/$testEori"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
+          .willReturn(ok())
+      )
+
+      connector.hasHistoricProfile(testEori).futureValue mustBe true
+    }
+
+    "must return false (profile does not exist) when router returns forbidden" in {
+      wireMockServer.stubFor(
+        get(urlEqualTo(s"/trader-goods-profiles-router/customs/traders/goods-profiles/$testEori"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
+          .willReturn(forbidden())
+      )
+
+      connector.hasHistoricProfile(testEori).futureValue mustBe false
+    }
+
+    "must return a failed future when the server returns an error" in {
+
+      wireMockServer.stubFor(
+        get(urlEqualTo(s"/trader-goods-profiles-router/customs/traders/goods-profiles/$testEori"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
+          .willReturn(serverError())
+      )
+
+      connector.hasHistoricProfile(testEori).failed.futureValue
     }
   }
 
