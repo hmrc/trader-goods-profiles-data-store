@@ -75,7 +75,7 @@ class EmailNotificationRepositorySpec
       result mustEqual Seq(notification)
     }
 
-    "when there are not notifications for this recordId it must not return no records" in {
+    "when there are not notifications for this recordId it must not return records" in {
       val result = repository.getMany(testRecordId).futureValue
       result mustEqual Seq()
     }
