@@ -69,10 +69,10 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
     url"$baseUrlRouter/trader-goods-profiles-router/customs/traders/goods-profiles/$eori/download"
 
   def hasHistoricProfile(eori: String)(implicit hc: HeaderCarrier): Future[Boolean] = {
-    val profileUrl = url"$baseUrlRouter/trader-goods-profiles-router/customs/traders/goods-profiles/$eori"
+    val url = url"$baseUrlRouter/trader-goods-profiles-router/customs/traders/goods-profiles/$eori"
 
     httpClient
-      .get(profileUrl)
+      .get(url)
       .setHeader(clientIdAndAcceptHeaders: _*)
       .execute[HttpResponse]
       .flatMap { response =>
@@ -85,9 +85,11 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
 
   }
 
-  def createTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
+  def createTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] = {
+    val url = url"$baseUrlRouter/trader-goods-profiles-router/traders/$eori"
+
     httpClient
-      .post(traderProfileUrl(eori))
+      .post(url)
       .setHeader(clientIdAndAcceptHeaders: _*)
       .withBody(Json.toJson(traderProfile))
       .execute[HttpResponse]
@@ -97,6 +99,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
           case _  => Future.failed(UpstreamErrorResponse(response.body, response.status))
         }
       }
+  }
 
   def updateTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
     httpClient

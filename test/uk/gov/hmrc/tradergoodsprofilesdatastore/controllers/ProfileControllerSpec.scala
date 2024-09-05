@@ -71,11 +71,11 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
 
   s"PUT $setUrl" - {
 
-    "return 200 when valid data is posted" in {
-
+    "call update profile when historic profile exists and return 200 when valid data is posted" in {
       val mockProfileRepository = mock[ProfileRepository]
       when(mockProfileRepository.set(any(), any())) thenReturn Future.successful(true)
       val mockRouterConnector   = mock[RouterConnector]
+      when(mockRouterConnector.hasHistoricProfile(any())(any())) thenReturn Future.successful(true)
       when(mockRouterConnector.updateTraderProfile(any(), any())(any())) thenReturn Future.successful(Done)
       val application           = applicationBuilder()
         .overrides(
@@ -89,6 +89,26 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
         status(result) shouldBe Status.OK
       }
     }
+
+    "call create profile when historic profile does not exist and return 200 when valid data is posted" in {
+      val mockProfileRepository = mock[ProfileRepository]
+      when(mockProfileRepository.set(any(), any())) thenReturn Future.successful(true)
+      val mockRouterConnector   = mock[RouterConnector]
+      when(mockRouterConnector.hasHistoricProfile(any())(any())) thenReturn Future.successful(false)
+      when(mockRouterConnector.createTraderProfile(any(), any())(any())) thenReturn Future.successful(Done)
+      val application           = applicationBuilder()
+        .overrides(
+          inject.bind[ProfileRepository].toInstance(mockProfileRepository),
+          inject.bind[RouterConnector].toInstance(mockRouterConnector)
+        )
+        .build()
+
+      running(application) {
+        val result = route(application, validFakePutRequest).value
+        status(result) shouldBe Status.OK
+      }
+    }
+
     "return 400 when invalid data is posted" in {
       val mockProfileRepository = mock[ProfileRepository]
       when(mockProfileRepository.set(any(), any())) thenReturn Future.successful(true)
