@@ -19,7 +19,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
 import org.apache.pekko.Done
 import play.api.Configuration
-import play.api.http.Status.{ACCEPTED, CREATED, NO_CONTENT, OK}
+import play.api.http.Status.{ACCEPTED, CREATED, FORBIDDEN, NO_CONTENT, OK}
 import play.api.libs.json.Json
 import sttp.model.Uri.UriContext
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -68,7 +68,37 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   private def getRequestDownloadDataUrl(eori: String) =
     url"$baseUrlRouter/trader-goods-profiles-router/customs/traders/goods-profiles/$eori/download"
 
-  def submitTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
+  def hasHistoricProfile(eori: String)(implicit hc: HeaderCarrier): Future[Boolean] = {
+    val profileUrl = url"$baseUrlRouter/trader-goods-profiles-router/customs/traders/goods-profiles/$eori"
+
+    httpClient
+      .get(profileUrl)
+      .setHeader(clientIdAndAcceptHeaders: _*)
+      .execute[HttpResponse]
+      .flatMap { response =>
+        response.status match {
+          case OK        => Future.successful(true)
+          case FORBIDDEN => Future.successful(false)
+          case _         => Future.failed(UpstreamErrorResponse(response.body, response.status))
+        }
+      }
+
+  }
+
+  def createTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
+    httpClient
+      .post(traderProfileUrl(eori))
+      .setHeader(clientIdAndAcceptHeaders: _*)
+      .withBody(Json.toJson(traderProfile))
+      .execute[HttpResponse]
+      .flatMap { response =>
+        response.status match {
+          case OK => Future.successful(Done)
+          case _  => Future.failed(UpstreamErrorResponse(response.body, response.status))
+        }
+      }
+
+  def updateTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
       .put(traderProfileUrl(eori))
       .setHeader(clientIdAndAcceptHeaders: _*)

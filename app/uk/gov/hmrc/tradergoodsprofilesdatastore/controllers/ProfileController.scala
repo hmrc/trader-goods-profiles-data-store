@@ -41,8 +41,15 @@ class ProfileController @Inject() (
 
   def setProfile(eori: String): Action[ProfileRequest] = identify.async(parse.json[ProfileRequest]) {
     implicit request =>
-      routerConnector.submitTraderProfile(request.body, eori).flatMap { case Done =>
-        profileRepository.set(eori, request.body).map(_ => Ok)
+      routerConnector.hasHistoricProfile(eori).flatMap {
+        case true  =>
+          routerConnector.updateTraderProfile(request.body, eori).flatMap { case Done =>
+            profileRepository.set(eori, request.body).map(_ => Ok)
+          }
+        case false =>
+          routerConnector.createTraderProfile(request.body, eori).flatMap { case Done =>
+            profileRepository.set(eori, request.body).map(_ => Ok)
+          }
       }
   }
 

@@ -76,7 +76,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
       val mockProfileRepository = mock[ProfileRepository]
       when(mockProfileRepository.set(any(), any())) thenReturn Future.successful(true)
       val mockRouterConnector   = mock[RouterConnector]
-      when(mockRouterConnector.submitTraderProfile(any(), any())(any())) thenReturn Future.successful(Done)
+      when(mockRouterConnector.updateTraderProfile(any(), any())(any())) thenReturn Future.successful(Done)
       val application           = applicationBuilder()
         .overrides(
           inject.bind[ProfileRepository].toInstance(mockProfileRepository),
@@ -93,7 +93,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
       val mockProfileRepository = mock[ProfileRepository]
       when(mockProfileRepository.set(any(), any())) thenReturn Future.successful(true)
       val mockRouterConnector   = mock[RouterConnector]
-      when(mockRouterConnector.submitTraderProfile(any(), any())(any())) thenReturn Future.successful(Done)
+      when(mockRouterConnector.updateTraderProfile(any(), any())(any())) thenReturn Future.successful(Done)
       val application           = applicationBuilder()
         .overrides(
           inject.bind[ProfileRepository].toInstance(mockProfileRepository),

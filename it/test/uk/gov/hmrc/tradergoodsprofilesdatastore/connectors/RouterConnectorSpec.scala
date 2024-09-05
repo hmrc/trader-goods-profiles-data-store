@@ -87,7 +87,7 @@ class RouterConnectorSpec
     updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
   )
 
-  ".submitTraderProfile" - {
+  ".updateTraderProfile" - {
 
     "must submit a trader profile" in {
 
@@ -100,7 +100,7 @@ class RouterConnectorSpec
           .willReturn(ok())
       )
 
-      connector.submitTraderProfile(traderProfile, testEori).futureValue
+      connector.updateTraderProfile(traderProfile, testEori).futureValue
     }
 
     "must return a failed future when the server returns an error" in {
@@ -114,7 +114,7 @@ class RouterConnectorSpec
           .willReturn(serverError())
       )
 
-      connector.submitTraderProfile(traderProfile, testEori).failed.futureValue
+      connector.updateTraderProfile(traderProfile, testEori).failed.futureValue
     }
   }
 
