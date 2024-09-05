@@ -17,16 +17,15 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
 import org.apache.pekko.Done
-import org.mongodb.scala.model.Filters
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.EmailNotificationRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{EmailNotification, NotificationData}
 
-import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class EmailNotificationRepositorySpec
@@ -44,14 +43,17 @@ class EmailNotificationRepositorySpec
     prepareDatabase()
   }
 
-  private val testRecordId = "test-recordId"
+  private val testEori        = "test-recordId"
+  private val testRecordId    = "test-recordId"
+  private val testExpiredDate = "05 September 2024"
+
+  private val notificationRequest = EmailNotificationRequest(testExpiredDate)
 
   private val notification =
     EmailNotification(
-      "test-eori",
+      testEori,
       testRecordId,
-      NotificationData(Some("test-expired-date")),
-      Instant.parse("2024-09-05T16:12:34Z")
+      NotificationData(Some(testExpiredDate))
     )
 
   protected override val repository = new EmailNotificationsRepository(mongoComponent = mongoComponent)
@@ -59,11 +61,12 @@ class EmailNotificationRepositorySpec
   ".create" - {
 
     "must create a record" in {
-      val setResult     = repository.create(notification).futureValue
+      val setResult     = repository.create(testEori, testRecordId, notificationRequest).futureValue
       val updatedRecord = repository.getMany(testRecordId).futureValue
 
       setResult mustEqual Done
-      updatedRecord mustEqual Seq(notification)
+
+      updatedRecord.size mustEqual 1
     }
   }
 

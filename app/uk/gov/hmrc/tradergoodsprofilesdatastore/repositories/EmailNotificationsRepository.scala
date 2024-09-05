@@ -22,6 +22,7 @@ import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.EmailNotification
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.EmailNotificationRequest
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -44,11 +45,13 @@ class EmailNotificationsRepository @Inject() (
 
   private def byRecordId(recordId: String): Bson = Filters.equal("recordId", recordId)
 
-  def create(emailNotification: EmailNotification): Future[Done] =
+  def create(eori: String, recordId: String, notificationRequest: EmailNotificationRequest): Future[Done] = {
+    val notificationToBeCreated = EmailNotification.fromRequest(eori, recordId, notificationRequest)
     collection
-      .insertOne(emailNotification)
+      .insertOne(notificationToBeCreated)
       .toFuture()
       .map(_ => Done)
+  }
 
   def getMany(record: String): Future[Seq[EmailNotification]] =
     collection

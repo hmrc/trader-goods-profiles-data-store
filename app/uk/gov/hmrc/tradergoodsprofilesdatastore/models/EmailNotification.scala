@@ -17,7 +17,7 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.models
 
 import play.api.libs.json.{Json, OFormat}
-import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.EmailNotificationRequest
 
 import java.time.Instant
 
@@ -25,9 +25,16 @@ final case class EmailNotification(
   eori: String,
   recordId: String,
   notificationData: NotificationData,
-  createdDateTime: Instant
+  createdDateTime: Instant = Instant.now()
 )
 
-object EmailNotification extends MongoJavatimeFormats.Implicits {
+object EmailNotification {
   implicit lazy val format: OFormat[EmailNotification] = Json.format
+
+  def fromRequest(eori: String, recordId: String, notificationRequest: EmailNotificationRequest): EmailNotification =
+    EmailNotification(
+      eori = eori,
+      recordId = recordId,
+      notificationData = NotificationData(Some(notificationRequest.expiredDate))
+    )
 }
