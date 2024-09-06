@@ -61,6 +61,10 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
   private val validDoesExistRequest = FakeRequest("HEAD", doesExistUrl)
   private val deleteAllRequest      = FakeRequest("DELETE", deleteAllUrl)
 
+  val mockRouterConnector   = mock[RouterConnector]
+  val mockProfileRepository = mock[ProfileRepository]
+  val dataStoreAppConfig    = mock[DataStoreAppConfig]
+
   private val expectedProfileResponse = ProfileResponse(
     eori = "1234567890",
     actorId = "1234567890",
@@ -71,50 +75,71 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
 
   s"PUT $setUrl" - {
 
-    "call update profile when historic profile exists and return 200 when valid data is posted" in {
-      val mockProfileRepository = mock[ProfileRepository]
-      when(mockProfileRepository.set(any(), any())) thenReturn Future.successful(true)
-      val mockRouterConnector   = mock[RouterConnector]
-      when(mockRouterConnector.hasHistoricProfile(any())(any())) thenReturn Future.successful(true)
-      when(mockRouterConnector.updateTraderProfile(any(), any())(any())) thenReturn Future.successful(Done)
-      val application           = applicationBuilder()
-        .overrides(
-          inject.bind[ProfileRepository].toInstance(mockProfileRepository),
-          inject.bind[RouterConnector].toInstance(mockRouterConnector)
-        )
-        .build()
+    "when the checkForHistoricProfile flag is set to true" - {
 
-      running(application) {
-        val result = route(application, validFakePutRequest).value
-        status(result) shouldBe Status.OK
+      "call update profile when historic profile exists, update repository and return 200 when valid data is posted" in {
+        when(dataStoreAppConfig.checkForHistoricProfile) thenReturn true
+        when(mockProfileRepository.set(any(), any())) thenReturn Future.successful(true)
+        when(mockRouterConnector.hasHistoricProfile(any())(any())) thenReturn Future.successful(true)
+        when(mockRouterConnector.updateTraderProfile(any(), any())(any())) thenReturn Future.successful(Done)
+        val application = applicationBuilder()
+          .overrides(
+            inject.bind[ProfileRepository].toInstance(mockProfileRepository),
+            inject.bind[RouterConnector].toInstance(mockRouterConnector),
+            inject.bind[DataStoreAppConfig].toInstance(dataStoreAppConfig)
+          )
+          .build()
+
+        running(application) {
+          val result = route(application, validFakePutRequest).value
+          status(result) shouldBe Status.OK
+        }
+      }
+
+      "call create profile when historic profile does not exist, update repository and return 200 when valid data is posted" in {
+        when(dataStoreAppConfig.checkForHistoricProfile) thenReturn true
+        when(mockProfileRepository.set(any(), any())) thenReturn Future.successful(true)
+        when(mockRouterConnector.hasHistoricProfile(any())(any())) thenReturn Future.successful(false)
+        when(mockRouterConnector.createTraderProfile(any(), any())(any())) thenReturn Future.successful(Done)
+        val application = applicationBuilder()
+          .overrides(
+            inject.bind[ProfileRepository].toInstance(mockProfileRepository),
+            inject.bind[RouterConnector].toInstance(mockRouterConnector),
+            inject.bind[DataStoreAppConfig].toInstance(dataStoreAppConfig)
+          )
+          .build()
+
+        running(application) {
+          val result = route(application, validFakePutRequest).value
+          status(result) shouldBe Status.OK
+        }
       }
     }
 
-    "call create profile when historic profile does not exist and return 200 when valid data is posted" in {
-      val mockProfileRepository = mock[ProfileRepository]
-      when(mockProfileRepository.set(any(), any())) thenReturn Future.successful(true)
-      val mockRouterConnector   = mock[RouterConnector]
-      when(mockRouterConnector.hasHistoricProfile(any())(any())) thenReturn Future.successful(false)
-      when(mockRouterConnector.createTraderProfile(any(), any())(any())) thenReturn Future.successful(Done)
-      val application           = applicationBuilder()
-        .overrides(
-          inject.bind[ProfileRepository].toInstance(mockProfileRepository),
-          inject.bind[RouterConnector].toInstance(mockRouterConnector)
-        )
-        .build()
+    "when the checkForHistoricProfile flag is set to false" - {
+      "call update profile, update repository and return 200 when valid data is posted" in {
+        when(dataStoreAppConfig.checkForHistoricProfile) thenReturn false
+        when(mockProfileRepository.set(any(), any())) thenReturn Future.successful(true)
+        when(mockRouterConnector.updateTraderProfile(any(), any())(any())) thenReturn Future.successful(Done)
+        val application = applicationBuilder()
+          .overrides(
+            inject.bind[ProfileRepository].toInstance(mockProfileRepository),
+            inject.bind[RouterConnector].toInstance(mockRouterConnector),
+            inject.bind[DataStoreAppConfig].toInstance(dataStoreAppConfig)
+          )
+          .build()
 
-      running(application) {
-        val result = route(application, validFakePutRequest).value
-        status(result) shouldBe Status.OK
+        running(application) {
+          val result = route(application, validFakePutRequest).value
+          status(result) shouldBe Status.OK
+        }
       }
     }
 
     "return 400 when invalid data is posted" in {
-      val mockProfileRepository = mock[ProfileRepository]
       when(mockProfileRepository.set(any(), any())) thenReturn Future.successful(true)
-      val mockRouterConnector   = mock[RouterConnector]
       when(mockRouterConnector.updateTraderProfile(any(), any())(any())) thenReturn Future.successful(Done)
-      val application           = applicationBuilder()
+      val application = applicationBuilder()
         .overrides(
           inject.bind[ProfileRepository].toInstance(mockProfileRepository),
           inject.bind[IdentifierAction].to[FakeIdentifierAction]
@@ -131,9 +156,6 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
   s"GET $getUrl" - {
 
     "return 200 when data is found" in {
-
-      val mockProfileRepository = mock[ProfileRepository]
-
       when(mockProfileRepository.get(any())) thenReturn Future.successful(Some(expectedProfileResponse))
 
       val application = applicationBuilder()
@@ -151,8 +173,6 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
     }
 
     "return 404 when data is not found" in {
-
-      val mockProfileRepository = mock[ProfileRepository]
 
       when(mockProfileRepository.get(any())) thenReturn Future.successful(None)
 
@@ -173,9 +193,6 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
   s"HEAD $doesExistUrl" - {
 
     "return 200 when profile exist" in {
-
-      val mockProfileRepository = mock[ProfileRepository]
-
       when(mockProfileRepository.get(any())) thenReturn Future.successful(Some(expectedProfileResponse))
 
       val application = applicationBuilder()
@@ -191,9 +208,6 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
     }
 
     "return 404 when profile does not exist" in {
-
-      val mockProfileRepository = mock[ProfileRepository]
-
       when(mockProfileRepository.get(any())) thenReturn Future.successful(None)
 
       val application = applicationBuilder()
@@ -213,12 +227,9 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
   s"DELETE $deleteAllUrl" - {
 
     "return 200 when the feature flag for dropping profile collection is true" in {
-
-      val mockProfileRepository = mock[ProfileRepository]
-      val dataStoreAppConfig    = mock[DataStoreAppConfig]
       when(mockProfileRepository.deleteAll) thenReturn Future.successful(Done)
       when(dataStoreAppConfig.droppingProfileCollection) thenReturn true
-      val application           = applicationBuilder()
+      val application = applicationBuilder()
         .overrides(
           inject.bind[ProfileRepository].toInstance(mockProfileRepository),
           inject.bind[DataStoreAppConfig].toInstance(dataStoreAppConfig)
@@ -232,12 +243,9 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
     }
 
     "return 500 when the feature flag for dropping profile collection is false" in {
-
-      val mockProfileRepository = mock[ProfileRepository]
-      val dataStoreAppConfig    = mock[DataStoreAppConfig]
       when(mockProfileRepository.deleteAll) thenReturn Future.successful(Done)
       when(dataStoreAppConfig.droppingProfileCollection) thenReturn false
-      val application           = applicationBuilder()
+      val application = applicationBuilder()
         .overrides(
           inject.bind[ProfileRepository].toInstance(mockProfileRepository),
           inject.bind[DataStoreAppConfig].toInstance(dataStoreAppConfig)

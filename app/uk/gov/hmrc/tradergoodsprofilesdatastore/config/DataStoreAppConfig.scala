@@ -23,4 +23,5 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.EnrolmentConfig
 class DataStoreAppConfig @Inject() (configuration: Configuration) {
   val tgpEnrolmentIdentifier: EnrolmentConfig = configuration.get[EnrolmentConfig]("enrolment-config")
   val droppingProfileCollection: Boolean      = configuration.get[Boolean]("features.dropping-profiles-collection")
+  val checkForHistoricProfile: Boolean        = configuration.get[Boolean]("features.check-for-historic-profile")
 }
