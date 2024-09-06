@@ -66,7 +66,6 @@ class CustomsDataStoreConnectorSpec
 
       wireMockServer.stubFor(
         get(urlEqualTo(s"/customs-data-store/eori/$testEori/verified-email"))
-          .withHeader("Authorization", equalTo("secret-token"))
           .willReturn(ok().withBody(Json.toJson(email).toString()))
       )
 
@@ -77,7 +76,6 @@ class CustomsDataStoreConnectorSpec
 
       wireMockServer.stubFor(
         get(urlEqualTo(s"/customs-data-store/eori/$testEori/verified-email"))
-          .withHeader("Authorization", equalTo("secret-token"))
           .willReturn(notFound())
       )
 
@@ -88,7 +86,6 @@ class CustomsDataStoreConnectorSpec
 
       wireMockServer.stubFor(
         get(urlEqualTo(s"/customs-data-store/eori/$testEori/verified-email"))
-          .withHeader("Authorization", equalTo("secret-token"))
           .willReturn(serverError())
       )
 
