@@ -406,6 +406,30 @@ class RecordsRepositorySpec
         result.size mustEqual 4
         result.headOption.value.comcode mustEqual comCodeSearchTerm
       }
+
+      "return case insensitive matches when searching on the Trader Reference field" in {
+        insert(sampleGoodsItemRecord).futureValue
+        insert(sampleGoodsItemRecord.copy(recordId = "2")).futureValue
+        insert(sampleGoodsItemRecord2.copy(recordId = "3")).futureValue
+        insert(sampleGoodsItemRecord2.copy(recordId = "4")).futureValue
+        insert(sampleGoodsItemRecord.copy(recordId = "5")).futureValue
+        insert(latestGoodsItemRecord).futureValue
+        insert(latestGoodsItemRecord.copy(recordId = "6")).futureValue
+        insert(sampleGoodsItemRecord.copy(recordId = "7")).futureValue
+
+        val result = repository
+          .filterRecords(
+            sampleGoodsItemRecord.eori,
+            Some("ban001002"),
+            Some(traderRefSearchField),
+            exactMatch = true
+          )
+          .futureValue
+        result.size mustEqual 2
+        result.headOption.value.traderRef mustEqual traderRefSearchTerm
+        result.reverse.headOption.value.traderRef mustEqual traderRefSearchTerm
+      }
+
     }
 
     "exactMatch is false" - {
