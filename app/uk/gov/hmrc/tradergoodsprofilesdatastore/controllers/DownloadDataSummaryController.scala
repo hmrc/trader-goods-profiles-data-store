@@ -22,7 +22,7 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{RouterConnector, SecureDataExchangeProxyConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, RetireFileAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadySeen, FileReadyUnseen, RequestFile}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadySeen, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataSummary, FileInfo}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.DownloadDataNotification
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummaryRepository
@@ -52,6 +52,15 @@ class DownloadDataSummaryController @Inject() (
           case _             => NotFound
         }
   }
+
+  def submitDownloadDataSummary(eori: String): Action[DownloadDataSummary] =
+    (identify andThen retireFile).async(parse.json[DownloadDataSummary]) { implicit request =>
+      downloadDataSummaryRepository
+        .set(request.body)
+        .map { _ =>
+          NoContent
+        }
+    }
 
   def submitNotification(): Action[DownloadDataNotification] =
     identify.async(parse.json[DownloadDataNotification]) { implicit request =>

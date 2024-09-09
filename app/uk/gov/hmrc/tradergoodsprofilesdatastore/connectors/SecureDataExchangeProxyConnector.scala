@@ -17,12 +17,12 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 
 import play.api.Configuration
-import play.api.http.Status.{NOT_FOUND, OK}
+import play.api.http.Status.OK
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps, UpstreamErrorResponse}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{DownloadData, Email}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.DownloadData
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}

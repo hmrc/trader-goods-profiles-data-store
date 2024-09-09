@@ -19,7 +19,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 import org.apache.pekko.Done
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito.{never, times, verify, when}
+import org.mockito.Mockito.{never, verify, when}
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
@@ -70,7 +70,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         contentAsJson(result) mustEqual Json.toJson(downloadDataSummary)
       }
 
-      verify(mockDownloadDataSummaryRepository, times(1)).get(requestEori)
+      verify(mockDownloadDataSummaryRepository).get(requestEori)
     }
 
     "return 404 if the DownloadDataSummary is not present" in {
@@ -95,7 +95,39 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         status(result) shouldBe Status.NOT_FOUND
       }
 
-      verify(mockDownloadDataSummaryRepository, times(1)).get(requestEori)
+      verify(mockDownloadDataSummaryRepository).get(requestEori)
+    }
+  }
+
+  "submitDownloadDataSummary" - {
+
+    "return 200 and the DownloadDataSummary if it exists" in {
+
+      val requestEori                 = "GB123456789099"
+      lazy val downloadDataSummaryUrl = routes.DownloadDataSummaryController
+        .submitDownloadDataSummary(requestEori)
+        .url
+      val downloadDataSummary         = DownloadDataSummary(requestEori, FileReadySeen, None)
+
+      lazy val validFakePostRequest =
+        FakeRequest("POST", downloadDataSummaryUrl).withJsonBody(Json.toJson(downloadDataSummary))
+
+      val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
+      when(mockDownloadDataSummaryRepository.set(any())) thenReturn Future.successful(
+        Done
+      )
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[DownloadDataSummaryRepository].toInstance(mockDownloadDataSummaryRepository)
+        )
+        .build()
+      running(application) {
+        val result = route(application, validFakePostRequest).value
+        status(result) shouldBe Status.NO_CONTENT
+      }
+
+      verify(mockDownloadDataSummaryRepository).set(eqTo(downloadDataSummary))
     }
   }
 
