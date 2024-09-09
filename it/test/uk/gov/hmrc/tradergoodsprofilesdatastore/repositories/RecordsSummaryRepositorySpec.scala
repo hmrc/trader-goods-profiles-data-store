@@ -31,6 +31,8 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.inject.bind
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
+import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeRetireFileAction, FakeStoreLatestAction}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{RetireFileAction, StoreLatestAction}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary.Update
 
@@ -59,7 +61,9 @@ class RecordsSummaryRepositorySpec
 
   override def fakeApplication(): Application = GuiceApplicationBuilder()
     .overrides(
-      bind[MongoComponent].toInstance(mongoComponent)
+      bind[MongoComponent].toInstance(mongoComponent),
+      bind[StoreLatestAction].to[FakeStoreLatestAction],
+      bind[RetireFileAction].to[FakeRetireFileAction]
     )
     .build()
 

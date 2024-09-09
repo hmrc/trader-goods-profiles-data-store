@@ -21,16 +21,14 @@ import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.Application
-import play.api.http.Status.ACCEPTED
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
-import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeStoreLatestAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests._
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Email, GetRecordsResponse, GoodsItemRecord, Pagination}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeRetireFileAction, FakeStoreLatestAction}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{RetireFileAction, StoreLatestAction}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Email
 
 import java.time.Instant
 
@@ -45,7 +43,8 @@ class CustomsDataStoreConnectorSpec
     new GuiceApplicationBuilder()
       .configure("microservice.services.customs-data-store.port" -> wireMockPort)
       .overrides(
-        bind[StoreLatestAction].to[FakeStoreLatestAction]
+        bind[StoreLatestAction].to[FakeStoreLatestAction],
+        bind[RetireFileAction].to[FakeRetireFileAction]
       )
       .build()
 
@@ -66,7 +65,6 @@ class CustomsDataStoreConnectorSpec
 
       wireMockServer.stubFor(
         get(urlEqualTo(s"/customs-data-store/eori/$testEori/verified-email"))
-          .withHeader("Authorization", equalTo("secret-token"))
           .willReturn(ok().withBody(Json.toJson(email).toString()))
       )
 
@@ -77,7 +75,6 @@ class CustomsDataStoreConnectorSpec
 
       wireMockServer.stubFor(
         get(urlEqualTo(s"/customs-data-store/eori/$testEori/verified-email"))
-          .withHeader("Authorization", equalTo("secret-token"))
           .willReturn(notFound())
       )
 
@@ -88,7 +85,6 @@ class CustomsDataStoreConnectorSpec
 
       wireMockServer.stubFor(
         get(urlEqualTo(s"/customs-data-store/eori/$testEori/verified-email"))
-          .withHeader("Authorization", equalTo("secret-token"))
           .willReturn(serverError())
       )
 
