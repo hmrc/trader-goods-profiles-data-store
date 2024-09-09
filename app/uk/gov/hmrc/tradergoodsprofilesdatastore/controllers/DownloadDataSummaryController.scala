@@ -89,7 +89,7 @@ class DownloadDataSummaryController @Inject() (
 
             case None =>
               logger.error(s"Unable to find the email for EORI: ${request.eori}")
-              Future.successful(BadRequest(s"No email found for EORI: ${request.eori}"))
+              Future.successful(BadRequest(s"Unable to find the email for EORI: ${request.eori}"))
           }
         }
     }
