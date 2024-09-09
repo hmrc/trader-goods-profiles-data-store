@@ -204,7 +204,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       }
     }
 
-    "return error if email service fails" in {
+    "return error if EmailConnector fails" in {
 
       val requestEori                = "GB123456789099"
       lazy val submitNotificationUrl = routes.DownloadDataSummaryController
