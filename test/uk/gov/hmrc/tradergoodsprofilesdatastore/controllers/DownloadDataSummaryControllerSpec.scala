@@ -238,10 +238,10 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       ) thenReturn Future.successful(Seq(downloadData))
 
       val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
-
       when(
         mockDownloadDataSummaryRepository.get(any())
       ) thenReturn Future.successful(Some(downloadDataSummary))
+
       val application = applicationBuilder()
         .overrides(
           bind[SecureDataExchangeProxyConnector].toInstance(mockSecureDataExchangeProxyConnector),
@@ -264,5 +264,155 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         }
       }
     }
+
+    "return 404 when download data is not in list" in {
+
+      val requestEori   = "GB123456789099"
+      val fileName      = "fileName"
+      val fileSize      = 600
+      val fileCreated   = Instant.now.minus(20, ChronoUnit.DAYS)
+      val retentionDays = "30"
+      val fileType      = "CSV"
+
+      val downloadDataSummary = DownloadDataSummary(
+        requestEori,
+        FileReadySeen,
+        Some(FileInfo(fileName, fileSize, fileCreated, retentionDays, fileType))
+      )
+
+      lazy val downloadDataUrl = routes.DownloadDataSummaryController
+        .getDownloadData(requestEori)
+        .url
+
+      lazy val validFakeGetRequest = FakeRequest("GET", downloadDataUrl)
+
+      val mockSecureDataExchangeProxyConnector = mock[SecureDataExchangeProxyConnector]
+      when(
+        mockSecureDataExchangeProxyConnector.getFilesAvailableUrl(any())(any())
+      ) thenReturn Future.successful(Seq.empty)
+
+      val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
+      when(
+        mockDownloadDataSummaryRepository.get(any())
+      ) thenReturn Future.successful(Some(downloadDataSummary))
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[SecureDataExchangeProxyConnector].toInstance(mockSecureDataExchangeProxyConnector),
+          bind[DownloadDataSummaryRepository].toInstance(mockDownloadDataSummaryRepository)
+        )
+        .build()
+
+      running(application) {
+        val request = validFakeGetRequest
+          .withHeaders("Content-Type" -> "application/json")
+        val result  = route(application, request).value
+        status(result) shouldBe NOT_FOUND
+
+        withClue("must call the relevant services with the correct details") {
+          verify(mockSecureDataExchangeProxyConnector)
+            .getFilesAvailableUrl(eqTo(requestEori))(any())
+          verify(mockDownloadDataSummaryRepository)
+            .get(eqTo(requestEori))
+        }
+      }
+    }
+
+    "return 404 when fileInfo is not in summary" in {
+
+      val requestEori = "GB123456789099"
+
+      val downloadDataSummary = DownloadDataSummary(
+        requestEori,
+        FileReadySeen,
+        None
+      )
+
+      lazy val downloadDataUrl = routes.DownloadDataSummaryController
+        .getDownloadData(requestEori)
+        .url
+
+      lazy val validFakeGetRequest = FakeRequest("GET", downloadDataUrl)
+
+      val mockSecureDataExchangeProxyConnector = mock[SecureDataExchangeProxyConnector]
+      when(
+        mockSecureDataExchangeProxyConnector.getFilesAvailableUrl(any())(any())
+      ) thenReturn Future.successful(Seq.empty)
+
+      val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
+      when(
+        mockDownloadDataSummaryRepository.get(any())
+      ) thenReturn Future.successful(Some(downloadDataSummary))
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[SecureDataExchangeProxyConnector].toInstance(mockSecureDataExchangeProxyConnector),
+          bind[DownloadDataSummaryRepository].toInstance(mockDownloadDataSummaryRepository)
+        )
+        .build()
+
+      running(application) {
+        val request = validFakeGetRequest
+          .withHeaders("Content-Type" -> "application/json")
+        val result  = route(application, request).value
+        status(result) shouldBe NOT_FOUND
+
+        withClue("must call the relevant services with the correct details") {
+          verify(mockSecureDataExchangeProxyConnector, never())
+            .getFilesAvailableUrl(eqTo(requestEori))(any())
+          verify(mockDownloadDataSummaryRepository)
+            .get(eqTo(requestEori))
+        }
+      }
+    }
+
+    "return 404 when summary is not the correct status" in {
+
+      val requestEori = "GB123456789099"
+
+      val downloadDataSummary = DownloadDataSummary(
+        requestEori,
+        RequestFile,
+        None
+      )
+
+      lazy val downloadDataUrl = routes.DownloadDataSummaryController
+        .getDownloadData(requestEori)
+        .url
+
+      lazy val validFakeGetRequest = FakeRequest("GET", downloadDataUrl)
+
+      val mockSecureDataExchangeProxyConnector = mock[SecureDataExchangeProxyConnector]
+      when(
+        mockSecureDataExchangeProxyConnector.getFilesAvailableUrl(any())(any())
+      ) thenReturn Future.successful(Seq.empty)
+
+      val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
+      when(
+        mockDownloadDataSummaryRepository.get(any())
+      ) thenReturn Future.successful(Some(downloadDataSummary))
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[SecureDataExchangeProxyConnector].toInstance(mockSecureDataExchangeProxyConnector),
+          bind[DownloadDataSummaryRepository].toInstance(mockDownloadDataSummaryRepository)
+        )
+        .build()
+
+      running(application) {
+        val request = validFakeGetRequest
+          .withHeaders("Content-Type" -> "application/json")
+        val result  = route(application, request).value
+        status(result) shouldBe NOT_FOUND
+
+        withClue("must call the relevant services with the correct details") {
+          verify(mockSecureDataExchangeProxyConnector, never())
+            .getFilesAvailableUrl(eqTo(requestEori))(any())
+          verify(mockDownloadDataSummaryRepository)
+            .get(eqTo(requestEori))
+        }
+      }
+    }
+
   }
 }
