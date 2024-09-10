@@ -185,7 +185,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       captor.getValue.fileInfo.get.retentionDays mustEqual retentionDaysMetaData.value
     }
 
-    "return error if CustomsDataStoreConnector return None" in {
+    "return 404 if CustomsDataStoreConnector return None" in {
 
       val requestEori                = "GB123456789099"
       lazy val submitNotificationUrl = routes.DownloadDataSummaryController
@@ -219,7 +219,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         .build()
       running(application) {
         val result = route(application, validFakePostRequest).value
-        status(result) shouldBe Status.BAD_REQUEST
+        status(result) shouldBe Status.NOT_FOUND
       }
 
       val captor: ArgumentCaptor[DownloadDataSummary] = ArgumentCaptor.forClass(classOf[DownloadDataSummary])
@@ -272,8 +272,9 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         )
         .build()
       running(application) {
-        val result = route(application, validFakePostRequest).value
-        status(result) shouldBe Status.BAD_REQUEST
+        intercept[RuntimeException] {
+          await(route(application, validFakePostRequest).value)
+        }
       }
 
       val captor: ArgumentCaptor[DownloadDataSummary] = ArgumentCaptor.forClass(classOf[DownloadDataSummary])

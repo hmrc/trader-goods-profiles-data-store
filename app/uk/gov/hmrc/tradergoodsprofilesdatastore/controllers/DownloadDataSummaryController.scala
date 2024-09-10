@@ -91,14 +91,9 @@ class DownloadDataSummaryController @Inject() (
                 .map { _ =>
                   NoContent
                 }
-                .recover { case ex =>
-                  logger.error(s"Failed to send download record email: ${ex.getMessage}")
-                  BadRequest(s"Failed to send download record email")
-                }
-
-            case None =>
+            case None        =>
               logger.error(s"Unable to find the email for EORI: ${request.eori}")
-              Future.successful(BadRequest(s"Unable to find the email for EORI: ${request.eori}"))
+              Future.successful(NotFound)
           }
         }
     }
