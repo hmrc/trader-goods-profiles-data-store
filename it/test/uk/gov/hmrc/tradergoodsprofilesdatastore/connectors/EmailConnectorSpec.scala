@@ -53,12 +53,12 @@ class EmailConnectorSpec
 
   ".sendDownloadRecordEmail" - {
 
-    val testEmail                         = "someone@somewher.com"
+    val testEmail                         = "someone@somewhere.com"
     val testExpiredDate                   = "05 Sept 2024"
     val testDownloadRecordEmailParameters = DownloadRecordEmailParameters(testExpiredDate)
     val testDownloadRecordEmailRequest    = DownloadRecordEmailRequest(Seq(testEmail), testDownloadRecordEmailParameters)
 
-    "must send email2" in {
+    "must send email" in {
 
       wireMockServer.stubFor(
         post(urlEqualTo(s"/hmrc/email"))
