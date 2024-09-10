@@ -58,15 +58,13 @@ class SecureDataExchangeProxyConnectorSpec
 
     "must get file list" in {
 
-      val url                       = "/some-url"
-      val filename                  = "filename"
-      val filesize                  = 600
-      val fileRoleMetadata          = Metadata("FileRole", "C79Certificate")
-      val retentionFileTypeMetadata = Metadata("RETENTION_FILE_TYPE", "TraderStatement")
-      val periodStartYearMetadata   = Metadata("PeriodStartYear", "2020")
-      val fileTypeMetadata          = Metadata("FileRole", "CSV")
-      val retentionDaysMetadata     = Metadata("RETENTION_DAYS", "217")
-      val periodStartMonthMetadata  = Metadata("PeriodStartMonth", "08")
+      val url                      = "/some-url"
+      val filename                 = "filename"
+      val filesize                 = 600
+      val fileRoleMetadata         = Metadata("FileRole", "C79Certificate")
+      val periodStartYearMetadata  = Metadata("PeriodStartYear", "2020")
+      val retentionDaysMetadata    = Metadata("RETENTION_DAYS", "217")
+      val periodStartMonthMetadata = Metadata("PeriodStartMonth", "08")
 
       val downloadData = DownloadData(
         url,
@@ -74,9 +72,7 @@ class SecureDataExchangeProxyConnectorSpec
         filesize,
         Seq(
           fileRoleMetadata,
-          retentionFileTypeMetadata,
           periodStartYearMetadata,
-          fileTypeMetadata,
           retentionDaysMetadata,
           periodStartMonthMetadata
         )
