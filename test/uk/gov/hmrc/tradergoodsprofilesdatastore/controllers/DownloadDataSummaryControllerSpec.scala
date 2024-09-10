@@ -30,7 +30,7 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConnector, EmailConnector, RouterConnector, SecureDataExchangeProxyConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadySeen, FileReadyUnseen, RequestFile}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{DownloadData, DownloadDataMetadata, DownloadDataNotification, Email, Metadata}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{DownloadData, DownloadDataNotification, Email, Metadata}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataSummary, FileInfo}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummaryRepository
 
@@ -245,8 +245,8 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
       val fileName              = "fileName"
       val fileSize              = 600
-      val retentionDaysMetaData = DownloadDataMetadata("RETENTION_DAYS", "30")
-      val filetypeMetaData      = DownloadDataMetadata("FILETYPE", "csv")
+      val retentionDaysMetaData = Metadata("RETENTION_DAYS", "30")
+      val filetypeMetaData      = Metadata("FILETYPE", "csv")
 
       val notification =
         DownloadDataNotification(requestEori, fileName, fileSize, Seq(retentionDaysMetaData, filetypeMetaData))
