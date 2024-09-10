@@ -19,17 +19,12 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConnector, RouterConnector}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, StoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{buildPagination, startingPage}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.CustomsDataStoreConnector
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
-import scala.util.{Failure, Success}
 
 class EmailController @Inject() (
   customsDataStoreConnector: CustomsDataStoreConnector,
