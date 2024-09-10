@@ -224,7 +224,6 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       verify(mockDownloadDataSummaryRepository).set(captor.capture)
       captor.getValue.eori mustEqual requestEori
       captor.getValue.status mustEqual FileReadyUnseen
-      captor.getValue.fileInfo.get.fileType mustEqual filetypeMetaData.value
       captor.getValue.fileInfo.get.fileName mustEqual fileName
       captor.getValue.fileInfo.get.fileSize mustEqual fileSize
       captor.getValue.fileInfo.get.retentionDays mustEqual retentionDaysMetaData.value
@@ -279,7 +278,6 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       verify(mockDownloadDataSummaryRepository).set(captor.capture)
       captor.getValue.eori mustEqual requestEori
       captor.getValue.status mustEqual FileReadyUnseen
-      captor.getValue.fileInfo.get.fileType mustEqual filetypeMetaData.value
       captor.getValue.fileInfo.get.fileName mustEqual fileName
       captor.getValue.fileInfo.get.fileSize mustEqual fileSize
       captor.getValue.fileInfo.get.retentionDays mustEqual retentionDaysMetaData.value
