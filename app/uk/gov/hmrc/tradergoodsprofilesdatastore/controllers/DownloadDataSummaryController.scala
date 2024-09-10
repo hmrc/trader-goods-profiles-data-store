@@ -56,6 +56,15 @@ class DownloadDataSummaryController @Inject() (
         }
   }
 
+  def submitDownloadDataSummary(eori: String): Action[DownloadDataSummary] =
+    (identify andThen retireFile).async(parse.json[DownloadDataSummary]) { implicit request =>
+      downloadDataSummaryRepository
+        .set(request.body)
+        .map { _ =>
+          NoContent
+        }
+    }
+
   def submitNotification(): Action[DownloadDataNotification] =
     identify.async(parse.json[DownloadDataNotification]) { implicit request =>
       val notification  = request.body

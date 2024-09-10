@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
+package uk.gov.hmrc.tradergoodsprofilesdatastore.utils
 
-import play.api.libs.json.{Json, OFormat}
+import org.mongodb.scala.model.{Collation, CollationStrength}
 
-case class DownloadDataMetadata(
-  metadata: String,
-  value: String
-)
+object RepositoryHelpers {
 
-object DownloadDataMetadata {
-  implicit val format: OFormat[DownloadDataMetadata] = Json.format[DownloadDataMetadata]
+  val caseInsensitiveCollation: Collation = Collation
+    .builder()
+    .locale("en")
+    .collationStrength(CollationStrength.SECONDARY)
+    .build
+
 }

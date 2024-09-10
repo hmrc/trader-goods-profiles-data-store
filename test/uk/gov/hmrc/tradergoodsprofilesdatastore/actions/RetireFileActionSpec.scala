@@ -20,18 +20,15 @@ import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.{never, verify, when}
 import org.scalatestplus.mockito.MockitoSugar.mock
-import play.api.http.Status.ACCEPTED
 import play.api.mvc.Result
 import play.api.test.FakeRequest
-import play.api.test.Helpers.{defaultAwaitTimeout, status}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.RetireFileActionImpl
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileReadySeen, FileReadyUnseen, RequestFile}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileReadySeen, RequestFile}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataSummary, FileInfo}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.IdentifierRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummaryRepository
-import uk.gov.hmrc.tradergoodsprofilesdatastore.services.StoreRecordsService
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
 
 import java.time.Instant

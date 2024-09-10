@@ -92,7 +92,7 @@ class StoreRecordsServiceSpec
         val result = await(service.storeRecords(requestEori, None)(hc))
         result.value shouldBe true
 
-        verify(mockRouterConnector, times(1))
+        verify(mockRouterConnector)
           .getRecords(eqTo(requestEori), eqTo(None), eqTo(Some(0)), eqTo(Some(pageSize)))(any())
         verify(mockRecordsRepository, times(0)).updateRecords(any(), any())
         verify(mockRecordsSummaryRepository, times(0)).set(any(), any(), any())
@@ -130,10 +130,10 @@ class StoreRecordsServiceSpec
         val result = await(service.storeRecords(requestEori, None)(hc))
         result shouldBe true
 
-        verify(mockRouterConnector, times(1))
+        verify(mockRouterConnector)
           .getRecords(any(), any(), any(), any())(any())
-        verify(mockRecordsRepository, times(1)).updateRecords(any(), any())
-        verify(mockRecordsSummaryRepository, times(1)).set(requestEori, None, now)
+        verify(mockRecordsRepository).updateRecords(any(), any())
+        verify(mockRecordsSummaryRepository).set(requestEori, None, now)
       }
 
       "must store records when there are multiple pages of records" in {
@@ -167,11 +167,11 @@ class StoreRecordsServiceSpec
           verify(mockRouterConnector, times(2)).getRecords(any(), any(), any(), any())(any())
           verify(mockRecordsRepository, times(2)).updateRecords(any(), any())
           verify(mockRecordsSummaryRepository, times(3)).set(any(), any(), any())
-          verify(mockRecordsSummaryRepository, times(1))
+          verify(mockRecordsSummaryRepository)
             .set(requestEori, Some(Update(pageSize, totalRecordsNum)), oldDate)
-          verify(mockRecordsSummaryRepository, times(1))
+          verify(mockRecordsSummaryRepository)
             .set(requestEori, Some(Update(pageSize + 1, totalRecordsNum)), latestRecordUpdate)
-          verify(mockRecordsSummaryRepository, times(1)).set(requestEori, None, now)
+          verify(mockRecordsSummaryRepository).set(requestEori, None, now)
           done.success(Done)
         }
 
@@ -201,10 +201,10 @@ class StoreRecordsServiceSpec
         val done = Promise[Done]
         eventually {
           verify(mockRouterConnector, times(2)).getRecords(any(), any(), any(), any())(any())
-          verify(mockRecordsRepository, times(1)).updateRecords(any(), any())
-          verify(mockRecordsSummaryRepository, times(1)).set(any(), any(), any())
-          verify(mockRecordsSummaryRepository, times(1)).set(requestEori, Some(Update(pageSize, pageSize + 1)), oldDate)
-          verify(mockRecordsSummaryRepository, times(1)).update(requestEori, None, None)
+          verify(mockRecordsRepository).updateRecords(any(), any())
+          verify(mockRecordsSummaryRepository).set(any(), any(), any())
+          verify(mockRecordsSummaryRepository).set(requestEori, Some(Update(pageSize, pageSize + 1)), oldDate)
+          verify(mockRecordsSummaryRepository).update(requestEori, None, None)
           done.success(Done)
         }
 

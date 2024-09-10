@@ -18,13 +18,11 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 
 import play.api.libs.json.{Json, OFormat}
 
-case class DownloadDataNotification(
-  eori: String,
-  fileName: String,
-  fileSize: Int,
-  metadata: Seq[Metadata]
+case class Metadata(
+  metadata: String,
+  value: String
 )
 
-object DownloadDataNotification {
-  implicit val format: OFormat[DownloadDataNotification] = Json.format[DownloadDataNotification]
+object Metadata {
+  implicit val format: OFormat[Metadata] = Json.format[Metadata]
 }

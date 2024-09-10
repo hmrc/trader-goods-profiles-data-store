@@ -17,7 +17,6 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions
 
 import play.api.Logging
-import play.api.mvc.Results.NotFound
 
 import javax.inject.Inject
 import play.api.mvc.{ActionFilter, Result}
@@ -26,8 +25,7 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.RequestFile
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.IdentifierRequest
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{DownloadDataSummaryRepository, RecordsSummaryRepository}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.services.StoreRecordsService
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummaryRepository
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
