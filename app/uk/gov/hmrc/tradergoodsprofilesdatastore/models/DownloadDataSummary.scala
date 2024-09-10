@@ -18,8 +18,6 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.models
 
 import play.api.libs.json.{Json, OFormat}
 
-import java.time.Instant
-
 final case class DownloadDataSummary(
   eori: String,
   status: DownloadDataStatus,

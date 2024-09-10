@@ -22,7 +22,7 @@ case class DownloadData(
   downloadURL: String,
   filename: String,
   filesize: Int,
-  metadata: Seq[DownloadDataMetadata]
+  metadata: Seq[Metadata]
 )
 
 object DownloadData {

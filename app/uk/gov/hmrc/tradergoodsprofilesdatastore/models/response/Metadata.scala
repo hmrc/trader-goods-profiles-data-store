@@ -18,11 +18,11 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 
 import play.api.libs.json.{Json, OFormat}
 
-case class DownloadDataMetadata(
+case class Metadata(
   metadata: String,
   value: String
 )
 
-object DownloadDataMetadata {
-  implicit val format: OFormat[DownloadDataMetadata] = Json.format[DownloadDataMetadata]
+object Metadata {
+  implicit val format: OFormat[Metadata] = Json.format[Metadata]
 }

@@ -22,7 +22,7 @@ case class DownloadDataNotification(
   eori: String,
   fileName: String,
   fileSize: Int,
-  metadata: Seq[DownloadDataMetadata]
+  metadata: Seq[Metadata]
 )
 
 object DownloadDataNotification {

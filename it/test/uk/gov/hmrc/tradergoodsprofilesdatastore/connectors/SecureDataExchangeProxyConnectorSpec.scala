@@ -28,7 +28,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeRetireFileAction, FakeStoreLatestAction}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{RetireFileAction, StoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{DownloadData, DownloadDataMetadata}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{DownloadData, Metadata}
 
 class SecureDataExchangeProxyConnectorSpec
     extends AnyFreeSpec
@@ -61,12 +61,12 @@ class SecureDataExchangeProxyConnectorSpec
       val url                       = "/some-url"
       val filename                  = "filename"
       val filesize                  = 600
-      val fileRoleMetadata          = DownloadDataMetadata("FileRole", "C79Certificate")
-      val retentionFileTypeMetadata = DownloadDataMetadata("RETENTION_FILE_TYPE", "TraderStatement")
-      val periodStartYearMetadata   = DownloadDataMetadata("PeriodStartYear", "2020")
-      val fileTypeMetadata          = DownloadDataMetadata("FileRole", "CSV")
-      val retentionDaysMetadata     = DownloadDataMetadata("RETENTION_DAYS", "217")
-      val periodStartMonthMetadata  = DownloadDataMetadata("PeriodStartMonth", "08")
+      val fileRoleMetadata          = Metadata("FileRole", "C79Certificate")
+      val retentionFileTypeMetadata = Metadata("RETENTION_FILE_TYPE", "TraderStatement")
+      val periodStartYearMetadata   = Metadata("PeriodStartYear", "2020")
+      val fileTypeMetadata          = Metadata("FileRole", "CSV")
+      val retentionDaysMetadata     = Metadata("RETENTION_DAYS", "217")
+      val periodStartMonthMetadata  = Metadata("PeriodStartMonth", "08")
 
       val downloadData = DownloadData(
         url,

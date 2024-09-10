@@ -30,7 +30,7 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{RouterConnector, SecureDataExchangeProxyConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadySeen, FileReadyUnseen, RequestFile}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{DownloadData, DownloadDataMetadata, DownloadDataNotification}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{DownloadData, DownloadDataNotification, Metadata}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataSummary, FileInfo}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummaryRepository
 
@@ -142,8 +142,8 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
       val fileName              = "fileName"
       val fileSize              = 600
-      val retentionDaysMetaData = DownloadDataMetadata("RETENTION_DAYS", "30")
-      val filetypeMetaData      = DownloadDataMetadata("FILETYPE", "csv")
+      val retentionDaysMetaData = Metadata("RETENTION_DAYS", "30")
+      val filetypeMetaData      = Metadata("FILETYPE", "csv")
 
       val notification =
         DownloadDataNotification(requestEori, fileName, fileSize, Seq(retentionDaysMetaData, filetypeMetaData))
@@ -239,12 +239,12 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       )
 
       val url                       = "/some-url"
-      val fileRoleMetadata          = DownloadDataMetadata("FileRole", "C79Certificate")
-      val retentionFileTypeMetadata = DownloadDataMetadata("RETENTION_FILE_TYPE", "TraderStatement")
-      val periodStartYearMetadata   = DownloadDataMetadata("PeriodStartYear", "2020")
-      val fileTypeMetadata          = DownloadDataMetadata("FileType", fileType)
-      val retentionDaysMetadata     = DownloadDataMetadata("RETENTION_DAYS", retentionDays)
-      val periodStartMonthMetadata  = DownloadDataMetadata("PeriodStartMonth", "08")
+      val fileRoleMetadata          = Metadata("FileRole", "C79Certificate")
+      val retentionFileTypeMetadata = Metadata("RETENTION_FILE_TYPE", "TraderStatement")
+      val periodStartYearMetadata   = Metadata("PeriodStartYear", "2020")
+      val fileTypeMetadata          = Metadata("FileType", fileType)
+      val retentionDaysMetadata     = Metadata("RETENTION_DAYS", retentionDays)
+      val periodStartMonthMetadata  = Metadata("PeriodStartMonth", "08")
 
       val downloadData             = DownloadData(
         url,
