@@ -21,7 +21,7 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConnector, EmailConnector, RouterConnector, SecureDataExchangeProxyConnector}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, RetireFileAction}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, NoIdentifierAction, RetireFileAction}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadySeen, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.email.DownloadRecordEmailParameters
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.DownloadDataNotification
@@ -40,6 +40,7 @@ class DownloadDataSummaryController @Inject() (
   emailConnector: EmailConnector,
   cc: ControllerComponents,
   identify: IdentifierAction,
+  noIdentify: NoIdentifierAction,
   retireFile: RetireFileAction
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
@@ -66,20 +67,16 @@ class DownloadDataSummaryController @Inject() (
     }
 
   def submitNotification(): Action[DownloadDataNotification] =
-    identify.async(parse.json[DownloadDataNotification]) { implicit request =>
+    noIdentify.async(parse.json[DownloadDataNotification]) { implicit request =>
       val notification  = request.body
       val retentionDays = notification.metadata.find(x => x.metadata == "RETENTION_DAYS") match {
         case Some(metadata) => metadata.value
-        case None           => ""
-      }
-      val fileType      = notification.metadata.find(x => x.metadata == "FILETYPE") match {
-        case Some(metadata) => metadata.value
-        case None           => ""
+        case None           => "30"
       }
       val summary       = DownloadDataSummary(
         notification.eori,
         FileReadyUnseen,
-        Some(FileInfo(notification.fileName, notification.fileSize, Instant.now, retentionDays, fileType))
+        Some(FileInfo(notification.fileName, notification.fileSize, Instant.now, retentionDays))
       )
       downloadDataSummaryRepository
         .set(summary)
@@ -116,9 +113,6 @@ class DownloadDataSummaryController @Inject() (
               secureDataExchangeProxyConnector.getFilesAvailableUrl(eori).map { downloadDatas =>
                 downloadDatas.find(downloadData =>
                   downloadData.filesize == info.fileSize && downloadData.filename == info.fileName && downloadData.metadata
-                    .find(metadataObject => metadataObject.metadata == "FileType")
-                    .get
-                    .value == info.fileType && downloadData.metadata
                     .find(metadataObject => metadataObject.metadata == "RETENTION_DAYS")
                     .get
                     .value == info.retentionDays

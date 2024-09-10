@@ -82,12 +82,11 @@ class RetireFileActionSpec extends SpecBase with GetRecordsResponseUtil {
       val fileSize      = 600
       val fileCreated   = Instant.now.minus(40, ChronoUnit.DAYS)
       val retentionDays = "30"
-      val fileType      = "CSV"
 
       val downloadDataSummary = DownloadDataSummary(
         requestEori,
         FileReadySeen,
-        Some(FileInfo(fileName, fileSize, fileCreated, retentionDays, fileType))
+        Some(FileInfo(fileName, fileSize, fileCreated, retentionDays))
       )
 
       val newDownloadDataSummary = DownloadDataSummary(
@@ -123,12 +122,11 @@ class RetireFileActionSpec extends SpecBase with GetRecordsResponseUtil {
       val fileSize      = 600
       val fileCreated   = Instant.now.minus(20, ChronoUnit.DAYS)
       val retentionDays = "30"
-      val fileType      = "CSV"
 
       val downloadDataSummary = DownloadDataSummary(
         requestEori,
         FileReadySeen,
-        Some(FileInfo(fileName, fileSize, fileCreated, retentionDays, fileType))
+        Some(FileInfo(fileName, fileSize, fileCreated, retentionDays))
       )
 
       val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]

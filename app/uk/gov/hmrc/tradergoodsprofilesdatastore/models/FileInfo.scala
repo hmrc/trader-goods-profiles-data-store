@@ -24,8 +24,7 @@ final case class FileInfo(
   fileName: String,
   fileSize: Int,
   fileCreated: Instant,
-  retentionDays: String,
-  fileType: String
+  retentionDays: String
 )
 
 object FileInfo {

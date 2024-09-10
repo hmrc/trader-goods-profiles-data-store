@@ -147,10 +147,9 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       val fileName              = "fileName"
       val fileSize              = 600
       val retentionDaysMetaData = Metadata("RETENTION_DAYS", "30")
-      val filetypeMetaData      = Metadata("FILETYPE", "csv")
 
       val notification =
-        DownloadDataNotification(requestEori, fileName, fileSize, Seq(retentionDaysMetaData, filetypeMetaData))
+        DownloadDataNotification(requestEori, fileName, fileSize, Seq(retentionDaysMetaData))
 
       lazy val validFakePostRequest = FakeRequest("POST", submitNotificationUrl)
         .withJsonBody(Json.toJson(notification))
@@ -179,7 +178,6 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       verify(mockDownloadDataSummaryRepository).set(captor.capture)
       captor.getValue.eori mustEqual requestEori
       captor.getValue.status mustEqual FileReadyUnseen
-      captor.getValue.fileInfo.get.fileType mustEqual filetypeMetaData.value
       captor.getValue.fileInfo.get.fileName mustEqual fileName
       captor.getValue.fileInfo.get.fileSize mustEqual fileSize
       captor.getValue.fileInfo.get.retentionDays mustEqual retentionDaysMetaData.value
@@ -341,21 +339,18 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       val fileSize      = 600
       val fileCreated   = Instant.now.minus(20, ChronoUnit.DAYS)
       val retentionDays = "30"
-      val fileType      = "CSV"
 
       val downloadDataSummary = DownloadDataSummary(
         requestEori,
         FileReadySeen,
-        Some(FileInfo(fileName, fileSize, fileCreated, retentionDays, fileType))
+        Some(FileInfo(fileName, fileSize, fileCreated, retentionDays))
       )
 
-      val url                       = "/some-url"
-      val fileRoleMetadata          = Metadata("FileRole", "C79Certificate")
-      val retentionFileTypeMetadata = Metadata("RETENTION_FILE_TYPE", "TraderStatement")
-      val periodStartYearMetadata   = Metadata("PeriodStartYear", "2020")
-      val fileTypeMetadata          = Metadata("FileType", fileType)
-      val retentionDaysMetadata     = Metadata("RETENTION_DAYS", retentionDays)
-      val periodStartMonthMetadata  = Metadata("PeriodStartMonth", "08")
+      val url                      = "/some-url"
+      val fileRoleMetadata         = Metadata("FileRole", "C79Certificate")
+      val periodStartYearMetadata  = Metadata("PeriodStartYear", "2020")
+      val retentionDaysMetadata    = Metadata("RETENTION_DAYS", retentionDays)
+      val periodStartMonthMetadata = Metadata("PeriodStartMonth", "08")
 
       val downloadData             = DownloadData(
         url,
@@ -363,9 +358,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         fileSize,
         Seq(
           fileRoleMetadata,
-          retentionFileTypeMetadata,
           periodStartYearMetadata,
-          fileTypeMetadata,
           retentionDaysMetadata,
           periodStartMonthMetadata
         )
@@ -415,12 +408,11 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       val fileSize      = 600
       val fileCreated   = Instant.now.minus(20, ChronoUnit.DAYS)
       val retentionDays = "30"
-      val fileType      = "CSV"
 
       val downloadDataSummary = DownloadDataSummary(
         requestEori,
         FileReadySeen,
-        Some(FileInfo(fileName, fileSize, fileCreated, retentionDays, fileType))
+        Some(FileInfo(fileName, fileSize, fileCreated, retentionDays))
       )
 
       lazy val downloadDataUrl = routes.DownloadDataSummaryController
