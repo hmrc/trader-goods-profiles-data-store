@@ -80,7 +80,7 @@ class DownloadDataSummaryController @Inject() (
       downloadDataSummaryRepository
         .set(summary)
         .flatMap { _ =>
-          customsDataStoreConnector.getEmail(request.eori).flatMap {
+          customsDataStoreConnector.getEmail(request.body.eori).flatMap {
             case Some(email) =>
               emailConnector
                 .sendDownloadRecordEmail(email.address, DownloadRecordEmailParameters(retentionDays))
@@ -88,7 +88,7 @@ class DownloadDataSummaryController @Inject() (
                   NoContent
                 }
             case None        =>
-              logger.error(s"Unable to find the email for EORI: ${request.eori}")
+              logger.error(s"Unable to find the email for EORI: ${request.body.eori}")
               Future.successful(NotFound)
           }
         }
