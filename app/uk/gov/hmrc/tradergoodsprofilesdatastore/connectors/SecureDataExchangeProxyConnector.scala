@@ -34,11 +34,8 @@ class SecureDataExchangeProxyConnector @Inject() (config: Configuration, httpCli
   private val baseSecureDataExchangeProxy: Service =
     config.get[Service]("microservice.services.secure-data-exchange-proxy")
 
-  //TODO obtain information type from SDES
-  private val informationType = "placeholder"
-
-  //TODO obtain server token from SDES
-  private val serverToken = "placeholder"
+  private val informationType = config.get[String]("secure-data-exchange-proxy-config.information-type")
+  private val serverToken     = config.get[String]("secure-data-exchange-proxy-config.server-token")
 
   private def headers(eori: String) =
     Seq("x-client-id" -> serverToken, "X-SDES-Key" -> eori)
