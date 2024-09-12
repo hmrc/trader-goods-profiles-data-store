@@ -53,15 +53,6 @@ class DownloadDataSummaryController @Inject() (
         }
   }
 
-  def submitDownloadDataSummary(eori: String): Action[DownloadDataSummary] =
-    (identify andThen retireFile).async(parse.json[DownloadDataSummary]) { implicit request =>
-      downloadDataSummaryRepository
-        .set(request.body)
-        .map { _ =>
-          NoContent
-        }
-    }
-
   def submitNotification(): Action[DownloadDataNotification] =
     Action.async(parse.json[DownloadDataNotification]) { implicit request =>
       val notification  = request.body
@@ -95,15 +86,24 @@ class DownloadDataSummaryController @Inject() (
         case Some(summary) if summary.status == FileReadyUnseen || summary.status == FileReadySeen =>
           summary.fileInfo match {
             case Some(info) =>
-              secureDataExchangeProxyConnector.getFilesAvailableUrl(eori).map { downloadDatas =>
+              secureDataExchangeProxyConnector.getFilesAvailableUrl(eori).flatMap { downloadDatas =>
                 downloadDatas.find(downloadData =>
                   downloadData.filesize == info.fileSize && downloadData.filename == info.fileName && downloadData.metadata
                     .find(metadataObject => metadataObject.metadata == "RETENTION_DAYS")
                     .get
                     .value == info.retentionDays
                 ) match {
-                  case Some(downloadData) => Ok(Json.toJson(downloadData))
-                  case None               => NotFound
+                  case Some(downloadData) =>
+                    summary.status match {
+                      case FileReadyUnseen =>
+                        downloadDataSummaryRepository
+                          .set(DownloadDataSummary(request.eori, FileReadySeen, summary.fileInfo))
+                          .map { _ =>
+                            Ok(Json.toJson(downloadData))
+                          }
+                      case _               => Future.successful(Ok(Json.toJson(downloadData)))
+                    }
+                  case None               => Future.successful(NotFound)
                 }
               }
             case _          => Future.successful(NotFound)

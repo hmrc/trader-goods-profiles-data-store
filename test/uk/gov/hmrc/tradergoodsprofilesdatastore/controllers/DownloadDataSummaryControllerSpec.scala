@@ -28,6 +28,7 @@ import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
+import uk.gov.hmrc.tradergoodsprofilesdatastore.base.TestConstants.testEori
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{RouterConnector, SecureDataExchangeProxyConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadySeen, FileReadyUnseen, RequestFile}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{DownloadData, DownloadDataNotification, Metadata}
@@ -46,13 +47,12 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
     "return 200 and the DownloadDataSummary if it exists" in {
 
-      val requestEori                 = "GB123456789099"
       lazy val downloadDataSummaryUrl = routes.DownloadDataSummaryController
-        .getDownloadDataSummary(requestEori)
+        .getDownloadDataSummary(testEori)
         .url
 
       lazy val validFakeGetRequest = FakeRequest("GET", downloadDataSummaryUrl)
-      val downloadDataSummary      = DownloadDataSummary(requestEori, FileInProgress, None)
+      val downloadDataSummary      = DownloadDataSummary(testEori, FileInProgress, None)
 
       val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
       when(mockDownloadDataSummaryRepository.get(any())) thenReturn Future.successful(
@@ -70,14 +70,13 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         contentAsJson(result) mustEqual Json.toJson(downloadDataSummary)
       }
 
-      verify(mockDownloadDataSummaryRepository).get(requestEori)
+      verify(mockDownloadDataSummaryRepository).get(testEori)
     }
 
     "return 404 if the DownloadDataSummary is not present" in {
 
-      val requestEori                 = "GB123456789099"
       lazy val downloadDataSummaryUrl = routes.DownloadDataSummaryController
-        .getDownloadDataSummary(requestEori)
+        .getDownloadDataSummary(testEori)
         .url
 
       lazy val validFakeGetRequest = FakeRequest("GET", downloadDataSummaryUrl)
@@ -95,39 +94,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         status(result) shouldBe Status.NOT_FOUND
       }
 
-      verify(mockDownloadDataSummaryRepository).get(requestEori)
-    }
-  }
-
-  "submitDownloadDataSummary" - {
-
-    "return 200 and the DownloadDataSummary if it exists" in {
-
-      val requestEori                 = "GB123456789099"
-      lazy val downloadDataSummaryUrl = routes.DownloadDataSummaryController
-        .submitDownloadDataSummary(requestEori)
-        .url
-      val downloadDataSummary         = DownloadDataSummary(requestEori, FileReadySeen, None)
-
-      lazy val validFakePostRequest =
-        FakeRequest("POST", downloadDataSummaryUrl).withJsonBody(Json.toJson(downloadDataSummary))
-
-      val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
-      when(mockDownloadDataSummaryRepository.set(any())) thenReturn Future.successful(
-        Done
-      )
-
-      val application = applicationBuilder()
-        .overrides(
-          bind[DownloadDataSummaryRepository].toInstance(mockDownloadDataSummaryRepository)
-        )
-        .build()
-      running(application) {
-        val result = route(application, validFakePostRequest).value
-        status(result) shouldBe Status.NO_CONTENT
-      }
-
-      verify(mockDownloadDataSummaryRepository).set(eqTo(downloadDataSummary))
+      verify(mockDownloadDataSummaryRepository).get(testEori)
     }
   }
 
@@ -135,7 +102,6 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
     "return 204 if the notification is submitted successfully" in {
 
-      val requestEori                = "GB123456789099"
       lazy val submitNotificationUrl = routes.DownloadDataSummaryController
         .submitNotification()
         .url
@@ -145,7 +111,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       val retentionDaysMetaData = Metadata("RETENTION_DAYS", "30")
 
       val notification =
-        DownloadDataNotification(requestEori, fileName, fileSize, Seq(retentionDaysMetaData))
+        DownloadDataNotification(testEori, fileName, fileSize, Seq(retentionDaysMetaData))
 
       lazy val validFakePostRequest = FakeRequest("POST", submitNotificationUrl)
         .withJsonBody(Json.toJson(notification))
@@ -167,7 +133,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
       val captor: ArgumentCaptor[DownloadDataSummary] = ArgumentCaptor.forClass(classOf[DownloadDataSummary])
       verify(mockDownloadDataSummaryRepository).set(captor.capture)
-      captor.getValue.eori mustEqual requestEori
+      captor.getValue.eori mustEqual testEori
       captor.getValue.status mustEqual FileReadyUnseen
       captor.getValue.fileInfo.get.fileName mustEqual fileName
       captor.getValue.fileInfo.get.fileSize mustEqual fileSize
@@ -178,11 +144,10 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
   "requestDownloadData" - {
 
     "return 202 when data is successfully requested" in {
-      val requestEori         = "GB123456789099"
-      val downloadDataSummary = DownloadDataSummary(requestEori, FileInProgress, None)
+      val downloadDataSummary = DownloadDataSummary(testEori, FileInProgress, None)
 
       lazy val downloadDataSummaryUrl = routes.DownloadDataSummaryController
-        .requestDownloadData(requestEori)
+        .requestDownloadData(testEori)
         .url
       lazy val validFakePostRequest   = FakeRequest("POST", downloadDataSummaryUrl)
 
@@ -211,7 +176,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
         withClue("must call the relevant services with the correct details") {
           verify(mockRouterConnector)
-            .getRequestDownloadData(eqTo(requestEori))(any())
+            .getRequestDownloadData(eqTo(testEori))(any())
           verify(mockDownloadDataSummaryRepository)
             .set(eqTo(downloadDataSummary))
         }
@@ -223,14 +188,19 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
     "return 200 when download data is successfully requested" in {
 
-      val requestEori   = "GB123456789099"
       val fileName      = "fileName"
       val fileSize      = 600
       val fileCreated   = Instant.now.minus(20, ChronoUnit.DAYS)
       val retentionDays = "30"
 
-      val downloadDataSummary = DownloadDataSummary(
-        requestEori,
+      val downloadDataSummaryUnseen = DownloadDataSummary(
+        testEori,
+        FileReadyUnseen,
+        Some(FileInfo(fileName, fileSize, fileCreated, retentionDays))
+      )
+
+      val downloadDataSummarySeen = DownloadDataSummary(
+        testEori,
         FileReadySeen,
         Some(FileInfo(fileName, fileSize, fileCreated, retentionDays))
       )
@@ -253,7 +223,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         )
       )
       lazy val downloadDataUrl     = routes.DownloadDataSummaryController
-        .getDownloadData(requestEori)
+        .getDownloadData(testEori)
         .url
       lazy val validFakeGetRequest = FakeRequest("GET", downloadDataUrl)
 
@@ -265,7 +235,11 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
       when(
         mockDownloadDataSummaryRepository.get(any())
-      ) thenReturn Future.successful(Some(downloadDataSummary))
+      ) thenReturn Future.successful(Some(downloadDataSummaryUnseen))
+
+      when(
+        mockDownloadDataSummaryRepository.set(any())
+      ) thenReturn Future.successful(Done)
 
       val application = applicationBuilder()
         .overrides(
@@ -283,29 +257,30 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
         withClue("must call the relevant services with the correct details") {
           verify(mockSecureDataExchangeProxyConnector)
-            .getFilesAvailableUrl(eqTo(requestEori))(any())
+            .getFilesAvailableUrl(eqTo(testEori))(any())
           verify(mockDownloadDataSummaryRepository)
-            .get(eqTo(requestEori))
+            .get(eqTo(testEori))
+          verify(mockDownloadDataSummaryRepository)
+            .set(eqTo(downloadDataSummarySeen))
         }
       }
     }
 
     "return 404 when download data is not in list" in {
 
-      val requestEori   = "GB123456789099"
       val fileName      = "fileName"
       val fileSize      = 600
       val fileCreated   = Instant.now.minus(20, ChronoUnit.DAYS)
       val retentionDays = "30"
 
       val downloadDataSummary = DownloadDataSummary(
-        requestEori,
+        testEori,
         FileReadySeen,
         Some(FileInfo(fileName, fileSize, fileCreated, retentionDays))
       )
 
       lazy val downloadDataUrl = routes.DownloadDataSummaryController
-        .getDownloadData(requestEori)
+        .getDownloadData(testEori)
         .url
 
       lazy val validFakeGetRequest = FakeRequest("GET", downloadDataUrl)
@@ -335,25 +310,23 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
         withClue("must call the relevant services with the correct details") {
           verify(mockSecureDataExchangeProxyConnector)
-            .getFilesAvailableUrl(eqTo(requestEori))(any())
+            .getFilesAvailableUrl(eqTo(testEori))(any())
           verify(mockDownloadDataSummaryRepository)
-            .get(eqTo(requestEori))
+            .get(eqTo(testEori))
         }
       }
     }
 
     "return 404 when fileInfo is not in summary" in {
 
-      val requestEori = "GB123456789099"
-
       val downloadDataSummary = DownloadDataSummary(
-        requestEori,
+        testEori,
         FileReadySeen,
         None
       )
 
       lazy val downloadDataUrl = routes.DownloadDataSummaryController
-        .getDownloadData(requestEori)
+        .getDownloadData(testEori)
         .url
 
       lazy val validFakeGetRequest = FakeRequest("GET", downloadDataUrl)
@@ -383,25 +356,23 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
         withClue("must call the relevant services with the correct details") {
           verify(mockSecureDataExchangeProxyConnector, never())
-            .getFilesAvailableUrl(eqTo(requestEori))(any())
+            .getFilesAvailableUrl(eqTo(testEori))(any())
           verify(mockDownloadDataSummaryRepository)
-            .get(eqTo(requestEori))
+            .get(eqTo(testEori))
         }
       }
     }
 
     "return 404 when summary is not the correct status" in {
 
-      val requestEori = "GB123456789099"
-
       val downloadDataSummary = DownloadDataSummary(
-        requestEori,
+        testEori,
         RequestFile,
         None
       )
 
       lazy val downloadDataUrl = routes.DownloadDataSummaryController
-        .getDownloadData(requestEori)
+        .getDownloadData(testEori)
         .url
 
       lazy val validFakeGetRequest = FakeRequest("GET", downloadDataUrl)
@@ -431,9 +402,9 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
         withClue("must call the relevant services with the correct details") {
           verify(mockSecureDataExchangeProxyConnector, never())
-            .getFilesAvailableUrl(eqTo(requestEori))(any())
+            .getFilesAvailableUrl(eqTo(testEori))(any())
           verify(mockDownloadDataSummaryRepository)
-            .get(eqTo(requestEori))
+            .get(eqTo(testEori))
         }
       }
     }
