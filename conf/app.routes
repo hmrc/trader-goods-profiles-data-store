@@ -19,5 +19,4 @@ GET        /traders/:eori/email                     uk.gov.hmrc.tradergoodsprofi
 POST       /download-data-notification              uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DownloadDataSummaryController.submitNotification()
 GET        /traders/:eori/download-data             uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DownloadDataSummaryController.getDownloadData(eori: String)
 POST       /traders/:eori/download-data             uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DownloadDataSummaryController.requestDownloadData(eori: String)
-POST       /traders/:eori/download-data-summary     uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DownloadDataSummaryController.submitDownloadDataSummary(eori: String)
 GET        /traders/:eori/download-data-summary     uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DownloadDataSummaryController.getDownloadDataSummary(eori: String)

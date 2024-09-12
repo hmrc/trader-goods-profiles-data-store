@@ -34,19 +34,19 @@ class SecureDataExchangeProxyConnector @Inject() (config: Configuration, httpCli
   private val baseSecureDataExchangeProxy: Service =
     config.get[Service]("microservice.services.secure-data-exchange-proxy")
 
-  private val informationType = "placeholder"
-  private val serverToken     = "placeholder"
+  private val informationType = config.get[String]("secure-data-exchange-proxy-config.information-type")
+  private val serverToken     = config.get[String]("secure-data-exchange-proxy-config.server-token")
 
   private def headers(eori: String) =
     Seq("x-client-id" -> serverToken, "X-SDES-Key" -> eori)
-  private def filesAvailableUrl()   =
+  private val filesAvailableUrl     =
     url"$baseSecureDataExchangeProxy/secure-data-exchange-proxy/files-available/list/$informationType"
 
   def getFilesAvailableUrl(
     eori: String
   )(implicit hc: HeaderCarrier): Future[Seq[DownloadData]] =
     httpClient
-      .get(filesAvailableUrl())
+      .get(filesAvailableUrl)
       .setHeader(headers(eori): _*)
       .execute[HttpResponse]
       .flatMap { response =>
