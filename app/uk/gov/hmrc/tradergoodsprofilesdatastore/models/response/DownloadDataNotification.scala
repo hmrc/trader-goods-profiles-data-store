@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.tradergoodsprofilesdatastore.models
+package uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 
 import play.api.libs.json.{Json, OFormat}
 
-final case class DownloadDataSummary(
+case class DownloadDataNotification(
   eori: String,
-  status: DownloadDataStatus,
-  fileInfo: Option[FileInfo]
+  fileName: String,
+  fileSize: Int,
+  metadata: Seq[Metadata]
 )
 
-object DownloadDataSummary {
-  implicit val format: OFormat[DownloadDataSummary] = Json.format[DownloadDataSummary]
+object DownloadDataNotification {
+  implicit val format: OFormat[DownloadDataNotification] = Json.format[DownloadDataNotification]
 }

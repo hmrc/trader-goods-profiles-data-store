@@ -28,11 +28,9 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeRetireFileAction, FakeStoreLatestAction}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{RetireFileAction, StoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Email
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{DownloadData, Metadata}
 
-import java.time.Instant
-
-class CustomsDataStoreConnectorSpec
+class SecureDataExchangeProxyConnectorSpec
     extends AnyFreeSpec
     with Matchers
     with WireMockSupport
@@ -41,54 +39,65 @@ class CustomsDataStoreConnectorSpec
 
   private lazy val app: Application =
     new GuiceApplicationBuilder()
-      .configure("microservice.services.customs-data-store.port" -> wireMockPort)
+      .configure("microservice.services.secure-data-exchange-proxy.port" -> wireMockPort)
       .overrides(
         bind[StoreLatestAction].to[FakeStoreLatestAction],
         bind[RetireFileAction].to[FakeRetireFileAction]
       )
       .build()
 
-  private lazy val connector = app.injector.instanceOf[CustomsDataStoreConnector]
+  private lazy val connector = app.injector.instanceOf[SecureDataExchangeProxyConnector]
 
   implicit private lazy val hc: HeaderCarrier = HeaderCarrier()
 
-  private val testEori = "1122334455"
+  private val testEori        = "1122334455"
+  private val informationType = "placeholder"
+  private val serverToken     = "placeholder"
 
-  ".getEmail" - {
+  ".getFilesAvailable" - {
 
-    "must get email" in {
+    "must get file list" in {
 
-      val address   = "email@address.co.uk"
-      val timestamp = Instant.now
+      val url                      = "/some-url"
+      val filename                 = "filename"
+      val filesize                 = 600
+      val fileRoleMetadata         = Metadata("FileRole", "C79Certificate")
+      val periodStartYearMetadata  = Metadata("PeriodStartYear", "2020")
+      val retentionDaysMetadata    = Metadata("RETENTION_DAYS", "217")
+      val periodStartMonthMetadata = Metadata("PeriodStartMonth", "08")
 
-      val email = Email(address, timestamp)
-
-      wireMockServer.stubFor(
-        get(urlEqualTo(s"/customs-data-store/eori/$testEori/verified-email"))
-          .willReturn(ok().withBody(Json.toJson(email).toString()))
+      val downloadData = DownloadData(
+        url,
+        filename,
+        filesize,
+        Seq(
+          fileRoleMetadata,
+          periodStartYearMetadata,
+          retentionDaysMetadata,
+          periodStartMonthMetadata
+        )
       )
 
-      connector.getEmail(testEori).futureValue mustEqual Some(email)
-    }
-
-    "must return None if not found" in {
-
       wireMockServer.stubFor(
-        get(urlEqualTo(s"/customs-data-store/eori/$testEori/verified-email"))
-          .willReturn(notFound())
+        get(urlEqualTo(s"/secure-data-exchange-proxy/files-available/list/$informationType"))
+          .withHeader("x-client-id", equalTo(serverToken))
+          .withHeader("X-SDES-Key", equalTo(testEori))
+          .willReturn(ok().withBody(Json.toJson(Seq(downloadData)).toString()))
       )
 
-      connector.getEmail(testEori).futureValue mustEqual None
+      connector.getFilesAvailableUrl(testEori).futureValue mustEqual Seq(downloadData)
     }
 
     "must return a failed future when the server returns an error" in {
 
       wireMockServer.stubFor(
-        get(urlEqualTo(s"/customs-data-store/eori/$testEori/verified-email"))
+        get(urlEqualTo(s"/secure-data-exchange-proxy/files-available/list/$informationType"))
+          .withHeader("x-client-id", equalTo(serverToken))
+          .withHeader("X-SDES-Key", equalTo(testEori))
           .willReturn(serverError())
       )
 
-      connector.getEmail(testEori).failed.futureValue
+      connector.getFilesAvailableUrl(testEori).failed.futureValue
     }
   }
 }

@@ -27,8 +27,8 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
-import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeStoreLatestAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestAction
+import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeRetireFileAction, FakeStoreLatestAction}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{RetireFileAction, StoreLatestAction}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.{AdviceRequest, CreateRecordRequest, ProfileRequest, UpdateRecordRequest, WithdrawReasonRequest}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, GoodsItemRecord, Pagination}
 
@@ -45,7 +45,8 @@ class RouterConnectorSpec
     new GuiceApplicationBuilder()
       .configure("microservice.services.trader-goods-profiles-router.port" -> wireMockPort)
       .overrides(
-        bind[StoreLatestAction].to[FakeStoreLatestAction]
+        bind[StoreLatestAction].to[FakeStoreLatestAction],
+        bind[RetireFileAction].to[FakeRetireFileAction]
       )
       .build()
 
