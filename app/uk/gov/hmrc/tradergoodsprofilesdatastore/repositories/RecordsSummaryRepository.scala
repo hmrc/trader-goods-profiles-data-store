@@ -66,6 +66,21 @@ class RecordsSummaryRepository @Inject() (
       .headOption()
   }
 
+  def getByLastUpdatedBefore(lastUpdated: Instant): Future[Seq[RecordsSummary]] = Mdc.preservingMdc {
+    collection
+      .find[RecordsSummary](byLastUpdated(lastUpdated))
+      .toFuture()
+  }
+
+  def deleteByEori(eori: String): Future[Long] = Mdc.preservingMdc {
+    collection
+      .deleteOne(byEori(eori))
+      .toFuture()
+      .map(_.getDeletedCount)
+  }
+
+  private def byLastUpdated(lastUpdated: Instant): Bson = Filters.lt("lastUpdated", lastUpdated)
+
   def set(eori: String, update: Option[Update], lastUpdated: Instant): Future[Done] = Mdc.preservingMdc {
     val recordsSummary = RecordsSummary(eori, update, lastUpdated)
     collection

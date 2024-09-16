@@ -140,6 +140,13 @@ class RecordsRepository @Inject() (
       .toFuture()
   }
 
+  def deleteRecordsByEori(eori: String): Future[Long] = Mdc.preservingMdc {
+    collection
+      .deleteMany(byEori(eori))
+      .toFuture()
+      .map(_.getDeletedCount)
+  }
+
   // TODO need to add an appropriate index for this to search
   def filterRecords(
     eori: String,

@@ -19,9 +19,15 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.config
 import com.google.inject.{Inject, Singleton}
 import play.api.Configuration
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.EnrolmentConfig
+
+import scala.concurrent.duration.FiniteDuration
 @Singleton
 class DataStoreAppConfig @Inject() (configuration: Configuration) {
   val tgpEnrolmentIdentifier: EnrolmentConfig = configuration.get[EnrolmentConfig]("enrolment-config")
   val droppingProfileCollection: Boolean      = configuration.get[Boolean]("features.dropping-profiles-collection")
   val checkForHistoricProfile: Boolean        = configuration.get[Boolean]("features.check-for-historic-profile")
+  val clearCacheWorkerEnabled                 = configuration.get[Boolean]("workers.clear-cache-worker.enabled")
+  val clearCacheWorkerInterval                = configuration.get[FiniteDuration]("workers.clear-cache-worker.interval")
+  val clearCacheWorkerInitialDelay            = configuration.get[FiniteDuration]("workers.clear-cache-worker.initial-delay")
+  val dataToClearOlderThanDays                = configuration.get[FiniteDuration]("workers.clear-cache-worker.older-than-days")
 }
