@@ -28,6 +28,8 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
+import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeRetireFileAction, FakeStoreLatestAction}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{RetireFileAction, StoreLatestAction}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.UpdateRecordRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GoodsItemRecord}
 
@@ -217,7 +219,9 @@ class RecordsRepositorySpec
 
   override def fakeApplication(): Application = GuiceApplicationBuilder()
     .overrides(
-      bind[MongoComponent].to(mongoComponent)
+      bind[MongoComponent].to(mongoComponent),
+      bind[StoreLatestAction].to[FakeStoreLatestAction],
+      bind[RetireFileAction].to[FakeRetireFileAction]
     )
     .build()
 
@@ -406,6 +410,30 @@ class RecordsRepositorySpec
         result.size mustEqual 4
         result.headOption.value.comcode mustEqual comCodeSearchTerm
       }
+
+      "return case insensitive matches when searching on the Trader Reference field" in {
+        insert(sampleGoodsItemRecord).futureValue
+        insert(sampleGoodsItemRecord.copy(recordId = "2")).futureValue
+        insert(sampleGoodsItemRecord2.copy(recordId = "3")).futureValue
+        insert(sampleGoodsItemRecord2.copy(recordId = "4")).futureValue
+        insert(sampleGoodsItemRecord.copy(recordId = "5")).futureValue
+        insert(latestGoodsItemRecord).futureValue
+        insert(latestGoodsItemRecord.copy(recordId = "6")).futureValue
+        insert(sampleGoodsItemRecord.copy(recordId = "7")).futureValue
+
+        val result = repository
+          .filterRecords(
+            sampleGoodsItemRecord.eori,
+            Some("ban001002"),
+            Some(traderRefSearchField),
+            exactMatch = true
+          )
+          .futureValue
+        result.size mustEqual 2
+        result.headOption.value.traderRef mustEqual traderRefSearchTerm
+        result.reverse.headOption.value.traderRef mustEqual traderRefSearchTerm
+      }
+
     }
 
     "exactMatch is false" - {

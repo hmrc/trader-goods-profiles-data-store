@@ -25,6 +25,7 @@ import uk.gov.hmrc.mongo.transaction.{TransactionConfiguration, Transactions}
 import uk.gov.hmrc.play.http.logging.Mdc
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GoodsItemRecord
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{localPageSize, localStartingPage}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.RepositoryHelpers.caseInsensitiveCollation
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.StringHelper.escapeRegexSpecialChars
 
 import javax.inject.{Inject, Singleton}
@@ -46,6 +47,12 @@ class RecordsRepository @Inject() (
           ),
           IndexOptions()
             .name("eori_recordId_idx")
+        ),
+        IndexModel(
+          Indexes.ascending("traderRef"),
+          IndexOptions().collation(
+            caseInsensitiveCollation
+          )
         )
       )
     )
@@ -69,9 +76,9 @@ class RecordsRepository @Inject() (
   private def byLatest: Bson = Sorts.descending("updatedDateTime")
 
   private def byField(field: String, searchTerm: String, exactMatch: Boolean): Bson =
-    if (exactMatch)
+    if (exactMatch) {
       Filters.equal(field, searchTerm)
-    else {
+    } else {
       // TODO we must not allow people to give us regexes to execute
       Filters.regex(field, searchTerm, "i")
     }
@@ -150,6 +157,21 @@ class RecordsRepository @Inject() (
     searchTerm match {
       case Some(value) =>
         field match {
+
+          case Some("traderRef") =>
+            collection
+              .find[GoodsItemRecord](
+                Filters.and(
+                  byEori(eori),
+                  byField("traderRef", value, exactMatch)
+                )
+              )
+              .collation(
+                caseInsensitiveCollation
+              )
+              .sort(byLatest)
+              .toFuture()
+
           case Some(searchField) =>
             collection
               .find[GoodsItemRecord](

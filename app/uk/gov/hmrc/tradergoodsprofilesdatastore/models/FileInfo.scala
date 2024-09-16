@@ -18,12 +18,15 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.models
 
 import play.api.libs.json.{Json, OFormat}
 
-final case class DownloadDataSummary(
-  eori: String,
-  status: DownloadDataStatus,
-  fileInfo: Option[FileInfo]
+import java.time.Instant
+
+final case class FileInfo(
+  fileName: String,
+  fileSize: Int,
+  fileCreated: Instant,
+  retentionDays: String
 )
 
-object DownloadDataSummary {
-  implicit val format: OFormat[DownloadDataSummary] = Json.format[DownloadDataSummary]
+object FileInfo {
+  implicit val format: OFormat[FileInfo] = Json.format[FileInfo]
 }
