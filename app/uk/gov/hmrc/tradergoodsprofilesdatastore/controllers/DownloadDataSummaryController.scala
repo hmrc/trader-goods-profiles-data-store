@@ -20,11 +20,12 @@ import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{RouterConnector, SecureDataExchangeProxyConnector}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConnector, EmailConnector, RouterConnector, SecureDataExchangeProxyConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, RetireFileAction}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadySeen, FileReadyUnseen}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataSummary, FileInfo}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.email.DownloadRecordEmailParameters
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.DownloadDataNotification
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataSummary, FileInfo}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummaryRepository
 
 import java.time.Instant
@@ -35,6 +36,8 @@ class DownloadDataSummaryController @Inject() (
   downloadDataSummaryRepository: DownloadDataSummaryRepository,
   routerConnector: RouterConnector,
   secureDataExchangeProxyConnector: SecureDataExchangeProxyConnector,
+  customsDataStoreConnector: CustomsDataStoreConnector,
+  emailConnector: EmailConnector,
   cc: ControllerComponents,
   identify: IdentifierAction,
   retireFile: RetireFileAction
@@ -65,10 +68,21 @@ class DownloadDataSummaryController @Inject() (
         FileReadyUnseen,
         Some(FileInfo(notification.fileName, notification.fileSize, Instant.now, retentionDays))
       )
-      downloadDataSummaryRepository.set(summary).map { _ =>
-        //TODO send email
-        NoContent
-      }
+      downloadDataSummaryRepository
+        .set(summary)
+        .flatMap { _ =>
+          customsDataStoreConnector.getEmail(request.body.eori).flatMap {
+            case Some(email) =>
+              emailConnector
+                .sendDownloadRecordEmail(email.address, DownloadRecordEmailParameters(retentionDays))
+                .map { _ =>
+                  NoContent
+                }
+            case None        =>
+              logger.error(s"Unable to find the email for EORI: ${request.body.eori}")
+              Future.successful(NotFound)
+          }
+        }
     }
 
   def requestDownloadData(eori: String): Action[AnyContent] = identify.async { implicit request =>
