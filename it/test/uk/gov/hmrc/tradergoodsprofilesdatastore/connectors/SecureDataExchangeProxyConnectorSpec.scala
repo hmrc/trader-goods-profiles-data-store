@@ -51,8 +51,8 @@ class SecureDataExchangeProxyConnectorSpec
   implicit private lazy val hc: HeaderCarrier = HeaderCarrier()
 
   private val testEori        = "1122334455"
-  private val informationType = "placeholder"
-  private val serverToken     = "placeholder"
+  private val informationType = "1722779512141"
+  private val serverToken     = "ygR8dU8knJORDqRqiAgTVhGoRoDi"
 
   ".getFilesAvailable" - {
 
