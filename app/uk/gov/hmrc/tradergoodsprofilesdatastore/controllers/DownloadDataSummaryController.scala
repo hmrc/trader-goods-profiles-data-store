@@ -27,8 +27,10 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.email.DownloadRecordEmail
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.DownloadDataNotification
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataSummary, FileInfo}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummaryRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.DateTimeFormats.dateTimeFormat
 
-import java.time.Instant
+import java.time.temporal.ChronoUnit
+import java.time.{Instant, ZoneOffset}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -59,6 +61,8 @@ class DownloadDataSummaryController @Inject() (
   def submitNotification(): Action[DownloadDataNotification] =
     Action.async(parse.json[DownloadDataNotification]) { implicit request =>
       val notification  = request.body
+      //TODO determine when to send email in english or welsh (default is english)
+      val isWelsh       = false
       val retentionDays = notification.metadata.find(x => x.metadata == "RETENTION_DAYS") match {
         case Some(metadata) => metadata.value
         case None           => "30"
@@ -74,7 +78,12 @@ class DownloadDataSummaryController @Inject() (
           customsDataStoreConnector.getEmail(request.body.eori).flatMap {
             case Some(email) =>
               emailConnector
-                .sendDownloadRecordEmail(email.address, DownloadRecordEmailParameters(retentionDays))
+                .sendDownloadRecordEmail(
+                  email.address,
+                  DownloadRecordEmailParameters(
+                    convertToDateString(Instant.now.plus(retentionDays.toInt, ChronoUnit.DAYS), isWelsh)
+                  )
+                )
                 .map { _ =>
                   NoContent
                 }
@@ -84,6 +93,13 @@ class DownloadDataSummaryController @Inject() (
           }
         }
     }
+
+  def convertToDateString(instant: Instant, isWelsh: Boolean): String =
+    instant
+      .atZone(ZoneOffset.UTC)
+      .toLocalDate
+      .format(dateTimeFormat(if (isWelsh) { "cy" }
+      else { "en" }))
 
   def requestDownloadData(eori: String): Action[AnyContent] = identify.async { implicit request =>
     routerConnector.getRequestDownloadData(eori).flatMap { _ =>
