@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
-import org.apache.pekko.Done
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo.MongoComponent
@@ -62,7 +61,5 @@ class ProfileRepository @Inject() (
       .map(_ => true)
   }
 
-  def deleteAll: Future[Done] =
-    collection.drop().toFuture().map(_ => Done)
 
 }

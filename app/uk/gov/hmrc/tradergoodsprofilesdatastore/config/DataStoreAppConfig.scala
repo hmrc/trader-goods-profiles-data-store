@@ -24,7 +24,6 @@ import scala.concurrent.duration.FiniteDuration
 @Singleton
 class DataStoreAppConfig @Inject() (configuration: Configuration) {
   val tgpEnrolmentIdentifier: EnrolmentConfig = configuration.get[EnrolmentConfig]("enrolment-config")
-  val droppingProfileCollection: Boolean      = configuration.get[Boolean]("features.dropping-profiles-collection")
   val checkForHistoricProfile: Boolean        = configuration.get[Boolean]("features.check-for-historic-profile")
   val clearCacheWorkerEnabled                 = configuration.get[Boolean]("workers.clear-cache-worker.enabled")
   val clearCacheWorkerInterval                = configuration.get[FiniteDuration]("workers.clear-cache-worker.interval")
