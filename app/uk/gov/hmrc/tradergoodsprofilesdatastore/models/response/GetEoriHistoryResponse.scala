@@ -19,15 +19,20 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 import play.api.libs.json._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 
+import java.time.Instant
+
 case class GetEoriHistoryResponse(
   eoriHistory: Seq[EoriHistoryItem]
-)
+) {
+  def sortedByValidFrom: GetEoriHistoryResponse =
+    this.copy(eoriHistory = eoriHistory.sortBy(_.validFrom)(Ordering[Instant].reverse))
+}
 
 object GetEoriHistoryResponse {
   implicit val recordsReads: Reads[GetEoriHistoryResponse] = (json: JsValue) =>
     JsSuccess(
       response.GetEoriHistoryResponse(
-        (json \ "eoriHistory").as[Seq[EoriHistoryItem]]
+        (json \ "eoriHistory").as[Seq[EoriHistoryItem]].sortBy(_.validFrom)(Ordering[Instant].reverse)
       )
     )
 

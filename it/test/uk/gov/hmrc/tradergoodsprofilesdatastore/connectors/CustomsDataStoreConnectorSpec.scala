@@ -98,7 +98,8 @@ class CustomsDataStoreConnectorSpec
 
       val mockEoriHistoryResponse = GetEoriHistoryResponse(
         Seq(
-          EoriHistoryItem("eori1", Instant.parse("2024-01-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z")),
+          EoriHistoryItem("eori1", Instant.parse("2024-02-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z")),
+          EoriHistoryItem("eori1", Instant.parse("2024-03-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z")),
           EoriHistoryItem("eori1", Instant.parse("2024-01-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z"))
         )
       )
@@ -107,7 +108,15 @@ class CustomsDataStoreConnectorSpec
           .willReturn(ok().withBody(Json.toJson(mockEoriHistoryResponse).toString()))
       )
 
-      connector.getEoriHistory(testEori).futureValue mustEqual Some(mockEoriHistoryResponse)
+      val expectedResponse = GetEoriHistoryResponse(
+        Seq(
+          EoriHistoryItem("eori1", Instant.parse("2024-03-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z")),
+          EoriHistoryItem("eori1", Instant.parse("2024-02-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z")),
+          EoriHistoryItem("eori1", Instant.parse("2024-01-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z"))
+        )
+      )
+
+      connector.getEoriHistory(testEori).futureValue mustEqual Some(expectedResponse)
     }
 
     "must return a failed future when the server returns an error" in {
