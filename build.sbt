@@ -26,3 +26,7 @@ lazy val it = project
   .dependsOn(microservice % "test->test")
   .settings(DefaultBuildSettings.itSettings())
   .settings(libraryDependencies ++= AppDependencies.it)
+
+addCommandAlias("testAndCoverage", ";clean;coverage;test;it/test;coverageReport")
+addCommandAlias("prePR", ";scalafmt;test:scalafmt;testAndCoverage")
+addCommandAlias("preMerge", ";scalafmtCheckAll;testAndCoverage")
