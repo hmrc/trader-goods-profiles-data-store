@@ -95,32 +95,6 @@ Before raising a PR, to run all unit and IT tests, format the code, check code c
 
 Before merging, to run all unit and IT tests, verify code formatting, check code coverage, and generate a report: Use `sbt preMerge`
 
-### Testing
-
-Run this to check unit tests: `sbt test`
-
-Run this to check integration tests: `sbt it/test`
-
-Run this to run all tests, check code coverage, and generate a report: `sbt clean coverage test it/test coverageReport`
-
-### Formatting
-
-Run this to check all scala files are formatted: `sbt scalafmtCheckAll`
-
-Run this to format non-test scala files: `sbt scalafmt`
-
-Run this to format test scala files: `sbt test:scalafmt`
-
-### SBT Alias Commands
-
-To run all unit and IT tests, check code coverage, and generate a report: Use `sbt testAndCoverage`
-
-Before raising a PR, to run all unit and IT tests, format the code, check code coverage, and generate a report: Use `sbt prePR`
-
-Before merging, to run all unit and IT tests, verify code formatting, check code coverage, and generate a report: Use `sbt preMerge`
-
-
-
 ### License
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").
