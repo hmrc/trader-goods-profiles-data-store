@@ -253,7 +253,39 @@ class RouterConnectorSpec
           .willReturn(noContent())
       )
 
-      connector.deleteRecord(eori, recordId).futureValue
+      connector.deleteRecord(eori, recordId).futureValue mustBe true
+    }
+
+    "must return false when record is not found" in {
+
+      wireMockServer.stubFor(
+        delete(
+          urlEqualTo(
+            s"/trader-goods-profiles-router/traders/$eori/records/$recordId?actorId=$eori"
+          )
+        )
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
+          .willReturn(notFound())
+      )
+
+      connector.deleteRecord(eori, recordId).futureValue mustBe false
+    }
+
+    "must return false when response is bad request" in {
+
+      wireMockServer.stubFor(
+        delete(
+          urlEqualTo(
+            s"/trader-goods-profiles-router/traders/$eori/records/$recordId?actorId=$eori"
+          )
+        )
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
+          .willReturn(badRequest())
+      )
+
+      connector.deleteRecord(eori, recordId).futureValue mustBe false
     }
 
     "must return a failed future when the server returns an error" in {
@@ -261,7 +293,7 @@ class RouterConnectorSpec
       wireMockServer.stubFor(
         delete(
           urlEqualTo(
-            s"/trader-goods-profiles-router/traders/invalid-eori/records/invalid-recordId?actorId=invalid-eori"
+            s"/trader-goods-profiles-router/traders/$eori/records/$recordId?actorId=$eori"
           )
         )
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
