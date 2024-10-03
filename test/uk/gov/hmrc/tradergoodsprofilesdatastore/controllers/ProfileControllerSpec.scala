@@ -53,7 +53,6 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
   private val setUrl                = routes.ProfileController.setProfile(requestEori).url
   private val getUrl                = routes.ProfileController.getProfile(requestEori).url
   private val doesExistUrl          = routes.ProfileController.doesProfileExist(requestEori).url
-  private val deleteAllUrl          = routes.ProfileController.deleteAll().url
   private val validFakePutRequest   =
     FakeRequest("PUT", setUrl, FakeHeaders(Seq(CONTENT_TYPE -> JSON)), Json.toJson(profileRequest))
   private val invalidFakePutRequest = FakeRequest("PUT", setUrl, FakeHeaders(Seq(CONTENT_TYPE -> JSON)), "{}")
