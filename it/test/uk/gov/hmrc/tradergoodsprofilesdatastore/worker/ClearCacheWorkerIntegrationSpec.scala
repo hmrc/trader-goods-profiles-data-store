@@ -45,8 +45,7 @@ class ClearCacheWorkerIntegrationSpec
     with DefaultPlayMongoRepositorySupport[RecordsSummary]
     with CleanMongoCollectionSupport
     with IntegrationPatience
-    with Eventually
-{
+    with Eventually {
 
   implicit val ec: ExecutionContext                                = ExecutionContext.global
   protected override lazy val repository: RecordsSummaryRepository = new RecordsSummaryRepository(mongoComponent)
@@ -59,12 +58,14 @@ class ClearCacheWorkerIntegrationSpec
     val app: Application = buildApplication(repository, recordsRepository)
 
     running(app) {
-
-      val recordSummaryresult = find(Filters.eq("eori", testEori)).futureValue
-      recordSummaryresult.size mustBe 0
-
-      val recordsResult = recordsRepository.getMany(testEori, None, None).futureValue
-      recordsResult.size mustBe 0
+      eventually {
+        val recordSummaryresult = find(Filters.eq("eori", testEori)).futureValue
+        recordSummaryresult.size mustBe 0
+      }
+      eventually {
+        val recordsResult = recordsRepository.getMany(testEori, None, None).futureValue
+        recordsResult.size mustBe 0
+      }
     }
   }
 
@@ -93,11 +94,10 @@ class ClearCacheWorkerIntegrationSpec
     }
   }
 
-
   private def buildApplication(
     mockRecordsSummaryRepository: RecordsSummaryRepository,
     mockRecordsRepository: RecordsRepository
-  ): Application = {
+  ): Application =
     GuiceApplicationBuilder()
       .overrides(
         bind[MongoComponent].toInstance(mongoComponent),
@@ -107,12 +107,12 @@ class ClearCacheWorkerIntegrationSpec
       .configure(
         Map(
           "workers.clear-cache-worker.initial-delay" -> "1 milliseconds",
-          "workers.clear-cache-worker.interval" -> "1 milliseconds")
+          "workers.clear-cache-worker.interval"      -> "1 milliseconds"
+        )
       )
       .build()
-  }
 
-  private def goodsItemRecord = {
+  private def goodsItemRecord =
     GoodsItemRecord(
       eori = testEori,
       actorId = "GB098765432112",
@@ -139,13 +139,11 @@ class ClearCacheWorkerIntegrationSpec
       createdDateTime = Instant.parse("2024-10-12T16:12:34Z"),
       updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
     )
-  }
 
-  private def sampleRecordSummary = {
+  private def sampleRecordSummary =
     RecordsSummary(
       eori = testEori,
       currentUpdate = Some(Update(0, 0)),
       lastUpdated = Instant.now().minus(182, ChronoUnit.DAYS)
     )
-  }
 }
