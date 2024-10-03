@@ -18,15 +18,19 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
 import org.apache.pekko.Done
 import org.mongodb.scala.model.Filters
+import org.scalactic.source.Position
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import org.slf4j.MDC
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.ProfileResponse
 
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class ProfileRepositorySpec
@@ -122,6 +126,33 @@ class ProfileRepositorySpec
 
       updateResult mustEqual false
       result mustBe None
+    }
+  }
+
+  ".delete" - {
+    "when there is a profile for this eori" in {
+      insert(profileResponse).futureValue
+
+      val result = repository.deleteByEori(profileResponse.eori).futureValue
+
+      result mustEqual 1
+
+    }
+
+    "when there are multiple profiles for different eori's" in {
+      insert(profileResponse).futureValue
+      insert(profileResponse.copy(eori = "GB123456789002")).futureValue
+
+      val result = repository.deleteByEori(profileResponse.eori).futureValue
+
+      result mustEqual 1
+
+    }
+
+    "when there is a no profile for this eori it must return 0" in {
+      val result = repository.deleteByEori(profileResponse.eori).futureValue
+
+      result mustEqual 0
     }
   }
 }
