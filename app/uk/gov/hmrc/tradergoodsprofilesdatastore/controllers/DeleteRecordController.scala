@@ -16,38 +16,25 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
-import play.api.Logging
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
-import scala.util.{Failure, Success}
 
 class DeleteRecordController @Inject() (
   cc: ControllerComponents,
   routerConnector: RouterConnector,
   identify: IdentifierAction
 )(implicit ec: ExecutionContext)
-    extends BackendController(cc)
-    with Logging {
+    extends BackendController(cc) {
 
   def deleteRecord(eori: String, recordId: String): Action[AnyContent] = identify.async { implicit request =>
-    routerConnector.deleteRecord(eori, recordId) transform {
-      case Success(_)                                                                                                => Success(NoContent)
-      case Failure(cause: UpstreamErrorResponse) if cause.statusCode == NOT_FOUND || cause.statusCode == BAD_REQUEST =>
-        logger.error(
-          s"Delete record returned ${cause.statusCode} with message: ${cause.message}"
-        )
-        Success(NotFound)
-      case Failure(cause: UpstreamErrorResponse)                                                                     =>
-        logger.error(
-          s"Delete record failed with ${cause.statusCode} with message: ${cause.message}"
-        )
-        Success(InternalServerError)
+    routerConnector.deleteRecord(eori, recordId).map {
+      case true  => NoContent
+      case false => NotFound
     }
   }
 }

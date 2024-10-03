@@ -16,9 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
-import play.api.Logging
 import play.api.mvc.{Action, ControllerComponents}
-import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
@@ -26,23 +24,16 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.CreateRecordRequ
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
-import scala.util.{Failure, Success}
 
 class CreateRecordController @Inject() (
   cc: ControllerComponents,
   routerConnector: RouterConnector,
   identify: IdentifierAction
 )(implicit ec: ExecutionContext)
-    extends BackendController(cc)
-    with Logging {
+    extends BackendController(cc) {
 
   def createRecord(eori: String): Action[CreateRecordRequest] =
     identify.async(parse.json[CreateRecordRequest]) { implicit request =>
-      routerConnector.createRecord(request.body, eori).map(record => Ok(record.recordId)) transform {
-        case s @ Success(_)                        => s
-        case Failure(cause: UpstreamErrorResponse) =>
-          logger.error(s"Create record failed with ${cause.statusCode} with message: ${cause.message}")
-          Success(InternalServerError)
-      }
+      routerConnector.createRecord(request.body, eori).map(record => Ok(record.recordId))
     }
 }

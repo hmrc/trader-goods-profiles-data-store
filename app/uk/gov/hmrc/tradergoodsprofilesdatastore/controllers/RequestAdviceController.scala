@@ -16,9 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
-import play.api.Logging
 import play.api.mvc.{Action, ControllerComponents}
-import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
@@ -26,23 +24,16 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.AdviceRequest
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
-import scala.util.{Failure, Success}
 
 class RequestAdviceController @Inject() (
   cc: ControllerComponents,
   routerConnector: RouterConnector,
   identify: IdentifierAction
 )(implicit ec: ExecutionContext)
-    extends BackendController(cc)
-    with Logging {
+    extends BackendController(cc) {
 
   def requestAdvice(eori: String, recordId: String): Action[AdviceRequest] =
     identify.async(parse.json[AdviceRequest]) { implicit request =>
-      routerConnector.requestAdvice(eori, recordId, request.body).map(_ => Created) transform {
-        case s @ Success(_)                        => s
-        case Failure(cause: UpstreamErrorResponse) =>
-          logger.error(s"Request advice failed with ${cause.statusCode} with message: ${cause.message}")
-          Success(InternalServerError)
-      }
+      routerConnector.requestAdvice(eori, recordId, request.body).map(_ => Created)
     }
 }
