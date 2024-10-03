@@ -16,13 +16,14 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 
+import org.apache.pekko.Done
 import play.api.Configuration
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps, UpstreamErrorResponse}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
 import play.api.http.Status.{NOT_FOUND, OK}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Email
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Email, GetEoriHistoryResponse}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -36,6 +37,9 @@ class CustomsDataStoreConnector @Inject() (config: Configuration, httpClient: Ht
   private def emailUrl(eori: String) =
     url"$baseUrlCustomsDataStore/customs-data-store/eori/$eori/verified-email"
 
+  private def eoriHistoryUrl(eori: String) =
+    url"$baseUrlCustomsDataStore/customs-data-store/eori/$eori/eori-history"
+
   def getEmail(
     eori: String
   )(implicit hc: HeaderCarrier): Future[Option[Email]] =
@@ -47,6 +51,19 @@ class CustomsDataStoreConnector @Inject() (config: Configuration, httpClient: Ht
           case OK        => Future.successful(Some(response.json.as[Email]))
           case NOT_FOUND => Future.successful(None)
           case _         => Future.failed(UpstreamErrorResponse(response.body, response.status))
+        }
+      }
+
+  def getEoriHistory(
+    eori: String
+  )(implicit hc: HeaderCarrier): Future[Option[GetEoriHistoryResponse]] =
+    httpClient
+      .get(eoriHistoryUrl(eori))
+      .execute[HttpResponse]
+      .flatMap { response =>
+        response.status match {
+          case OK => Future.successful(Some(response.json.as[GetEoriHistoryResponse]))
+          case _  => Future.failed(UpstreamErrorResponse(response.body, response.status))
         }
       }
 }

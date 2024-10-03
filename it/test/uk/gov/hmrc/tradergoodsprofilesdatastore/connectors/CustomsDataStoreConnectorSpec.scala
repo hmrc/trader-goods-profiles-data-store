@@ -28,7 +28,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeRetireFileAction, FakeStoreLatestAction}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{RetireFileAction, StoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Email
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Email, EoriHistoryItem, GetEoriHistoryResponse}
 
 import java.time.Instant
 
@@ -89,6 +89,34 @@ class CustomsDataStoreConnectorSpec
       )
 
       connector.getEmail(testEori).failed.futureValue
+    }
+  }
+
+  ".getEoriHistory" - {
+
+    "must return eori history" in {
+
+      val mockEoriHistoryResponse = GetEoriHistoryResponse(
+        Seq(
+          EoriHistoryItem("eori1", Instant.parse("2024-01-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z")),
+          EoriHistoryItem("eori1", Instant.parse("2024-01-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z"))
+        )
+      )
+      wireMockServer.stubFor(
+        get(urlEqualTo(s"/customs-data-store/eori/$testEori/eori-history"))
+          .willReturn(ok().withBody(Json.toJson(mockEoriHistoryResponse).toString()))
+      )
+
+      connector.getEoriHistory(testEori).futureValue mustEqual Some(mockEoriHistoryResponse)
+    }
+
+    "must return a failed future when the server returns an error" in {
+      wireMockServer.stubFor(
+        get(urlEqualTo(s"/customs-data-store/eori/$testEori/eori-history"))
+          .willReturn(serverError())
+      )
+
+      connector.getEoriHistory(testEori).failed.futureValue
     }
   }
 }
