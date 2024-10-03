@@ -98,7 +98,7 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
       val mockRouterConnector = mock[RouterConnector]
       when(
         mockRouterConnector.updateRecord(any(), any(), any())(any())
-      ) thenReturn Future.successful(Done)
+      ) thenReturn Future.successful(true)
 
       val application = applicationBuilder()
         .overrides(

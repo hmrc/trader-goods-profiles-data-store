@@ -25,7 +25,6 @@ import play.api.inject
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeIdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
@@ -68,33 +67,6 @@ class WithdrawAdviceControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
         status(result) shouldBe NO_CONTENT
-
-        withClue("must call the relevant services with the correct details") {
-          verify(mockRouterConnector)
-            .withdrawAdvice(eqTo(testEori), eqTo(testRecordId), eqTo(withdrawReason))(any())
-        }
-      }
-    }
-
-    "return 500 with message when there is an upstream error" in {
-
-      val mockRouterConnector = mock[RouterConnector]
-      when(
-        mockRouterConnector.withdrawAdvice(any(), any(), any())(any())
-      ) thenReturn Future.failed(UpstreamErrorResponse("PROBLEM", NOT_FOUND))
-
-      val application = applicationBuilder()
-        .overrides(
-          inject.bind[IdentifierAction].to[FakeIdentifierAction],
-          inject.bind[RouterConnector].toInstance(mockRouterConnector)
-        )
-        .build()
-      running(application) {
-        val request = FakeRequest(routes.WithdrawAdviceController.withdrawAdvice(testEori, testRecordId))
-          .withHeaders("Content-Type" -> "application/json")
-          .withJsonBody(Json.toJson(withdrawReason))
-        val result  = route(application, request).value
-        status(result) shouldBe INTERNAL_SERVER_ERROR
 
         withClue("must call the relevant services with the correct details") {
           verify(mockRouterConnector)

@@ -19,7 +19,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
 import org.apache.pekko.Done
 import play.api.Configuration
-import play.api.http.Status.{ACCEPTED, CREATED, FORBIDDEN, NO_CONTENT, OK}
+import play.api.http.Status.{ACCEPTED, BAD_REQUEST, CREATED, FORBIDDEN, NOT_FOUND, NO_CONTENT, OK}
 import play.api.libs.json.Json
 import sttp.model.Uri.UriContext
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -152,30 +152,32 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   def getRecord(
     eori: String,
     recordId: String
-  )(implicit hc: HeaderCarrier): Future[GoodsItemRecord] =
+  )(implicit hc: HeaderCarrier): Future[Option[GoodsItemRecord]] =
     httpClient
       .get(tgpGetOrUpdateRecordUrl(eori, recordId))
       .setHeader(clientIdAndAcceptHeaders: _*)
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
-          case OK => Future.successful(response.json.as[GoodsItemRecord])
-          case _  => Future.failed(UpstreamErrorResponse(response.body, response.status))
+          case OK                      => Future.successful(Some(response.json.as[GoodsItemRecord]))
+          case NOT_FOUND | BAD_REQUEST => Future.successful(None)
+          case _                       => Future.failed(UpstreamErrorResponse(response.body, response.status))
         }
       }
 
   def deleteRecord(
     eori: String,
     recordId: String
-  )(implicit hc: HeaderCarrier): Future[Done] =
+  )(implicit hc: HeaderCarrier): Future[Boolean] =
     httpClient
       .delete(tgpDeleteRecordUrl(eori, recordId))
       .setHeader(clientIdAndAcceptHeaders: _*)
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
-          case NO_CONTENT => Future.successful(Done)
-          case _          => Future.failed(UpstreamErrorResponse(response.body, response.status))
+          case NO_CONTENT              => Future.successful(true)
+          case NOT_FOUND | BAD_REQUEST => Future.successful(false)
+          case _                       => Future.failed(UpstreamErrorResponse(response.body, response.status))
         }
       }
 
@@ -183,7 +185,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
     updateRecord: UpdateRecordRequest,
     eori: String,
     recordId: String
-  )(implicit hc: HeaderCarrier): Future[Done] =
+  )(implicit hc: HeaderCarrier): Future[Boolean] =
     httpClient
       .patch(tgpGetOrUpdateRecordUrl(eori, recordId))
       .setHeader(clientIdAndAcceptHeaders: _*)
@@ -191,8 +193,9 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
-          case OK => Future.successful(Done)
-          case _  => Future.failed(UpstreamErrorResponse(response.body, response.status))
+          case OK        => Future.successful(true)
+          case NOT_FOUND => Future.successful(false)
+          case _         => Future.failed(UpstreamErrorResponse(response.body, response.status))
         }
       }
 
