@@ -61,5 +61,4 @@ class ProfileRepository @Inject() (
       .map(_ => true)
   }
 
-
 }
