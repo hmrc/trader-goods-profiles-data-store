@@ -62,7 +62,19 @@ class ProfileRepository @Inject() (
       .map(_ => true)
   }
 
-  def deleteAll: Future[Done] =
+  def deleteAll(): Future[Done] =
     collection.drop().toFuture().map(_ => Done)
+
+  def updateEori(oldEori: String, newEori: String): Future[Boolean] = {
+    val updateQuery  = byEori(oldEori)
+    val updateAction = Updates.set("eori", newEori)
+    collection
+      .updateOne(
+        filter = updateQuery,
+        update = updateAction
+      )
+      .toFuture()
+      .map(result => result.getModifiedCount > 0)
+  }
 
 }

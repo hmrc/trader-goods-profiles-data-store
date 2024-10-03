@@ -94,11 +94,34 @@ class ProfileRepositorySpec
   ".deleteAll" - {
     "it mush drop the profiles collection" in {
       insert(profileResponse).futureValue
-      val result      = repository.deleteAll.futureValue
+      val result      = repository.deleteAll().futureValue
       val recordCheck = repository.get(profileEori).futureValue
       result mustEqual Done
-      recordCheck mustEqual None
+      recordCheck mustBe None
     }
   }
 
+  ".updateEori" - {
+
+    "must update profile when there is a one" in {
+      val newEori      = "new-eori"
+      insert(profileResponse).futureValue
+      val updateResult = repository.updateEori(profileResponse.eori, newEori).futureValue
+
+      val result = repository.get(newEori).futureValue
+
+      updateResult mustEqual true
+      result.value.eori mustEqual newEori
+    }
+
+    "must not update profile when there is none" in {
+      val newEori      = "new-eori"
+      val updateResult = repository.updateEori(profileResponse.eori, newEori).futureValue
+
+      val result = repository.get(newEori).futureValue
+
+      updateResult mustEqual false
+      result mustBe None
+    }
+  }
 }
