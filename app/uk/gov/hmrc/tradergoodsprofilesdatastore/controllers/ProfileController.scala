@@ -21,10 +21,10 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
-import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
+import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConnector, RouterConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.ProfileRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{ProfileRepository, RecordsRepository}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -34,6 +34,8 @@ class ProfileController @Inject() (
   profileRepository: ProfileRepository,
   cc: ControllerComponents,
   routerConnector: RouterConnector,
+  customsDataStoreConnector: CustomsDataStoreConnector,
+  recordsRepository: RecordsRepository,
   config: DataStoreAppConfig,
   identify: IdentifierAction
 )(implicit ec: ExecutionContext)
@@ -68,18 +70,54 @@ class ProfileController @Inject() (
       }
   }
 
-  def doesProfileExist(eori: String): Action[AnyContent] = identify.async {
+  def doesProfileExist(eori: String): Action[AnyContent] = identify.async { implicit request =>
     profileRepository
       .get(eori)
-      .map {
-        case Some(_) => Ok
-        case None    => NotFound
+      .flatMap {
+        case Some(_) => Future.successful(Ok)
+        case None    =>
+          customsDataStoreConnector.getEoriHistory(eori).flatMap {
+            case Some(eoriHistoryData) if eoriHistoryData.eoriHistory.isEmpty =>
+              Future.successful(NotFound)
+
+            case Some(eoriHistoryData) if eoriHistoryData.eoriHistory.nonEmpty =>
+              var foundFirstProfile = false
+
+              val updatesFutures = eoriHistoryData.eoriHistory.map { historyItem =>
+                profileRepository.get(historyItem.eori).flatMap {
+                  case Some(historyProfile) if !foundFirstProfile =>
+                    // First profile found: update its eori and delete associated records
+                    foundFirstProfile = true
+                    for {
+                      _ <- profileRepository.updateEori(historyProfile.eori, eori) // update first matching profile
+                      _ <- recordsRepository.deleteRecordsByEori(historyProfile.eori) // delete records
+                    } yield true // track success
+
+                  case Some(historyProfile) if foundFirstProfile =>
+                    // any profiles finds after first match, delete both profile and records
+                    for {
+                      _ <- profileRepository
+                             .deleteByEori(historyProfile.eori) // delete profile - repo method yet to implement
+                      _ <- recordsRepository.deleteRecordsByEori(historyProfile.eori) // delete records
+                    } yield true // Indicate success for deletions
+
+                  case None => Future.successful(false) // No profile found for this historyItem
+                }
+              }
+
+              Future.sequence(updatesFutures).map { updates =>
+                if (updates.contains(true)) Ok
+                else NotFound
+              }
+
+            case None => Future.successful(NotFound)
+          }
       }
   }
 
   def deleteAll(): Action[AnyContent] = identify.async {
     if (config.droppingProfileCollection)
-      profileRepository.deleteAll.map(_ => Ok)
+      profileRepository.deleteAll().map(_ => Ok)
     else
       Future.successful(InternalServerError)
   }

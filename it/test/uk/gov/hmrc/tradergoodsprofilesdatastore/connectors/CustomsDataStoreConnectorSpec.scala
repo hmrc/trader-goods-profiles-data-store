@@ -28,7 +28,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeRetireFileAction, FakeStoreLatestAction}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{RetireFileAction, StoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Email, EoriHistoryItem, GetEoriHistoryResponse}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Email, EoriHistoricItem, GetEoriHistoryResponse}
 
 import java.time.Instant
 
@@ -98,9 +98,9 @@ class CustomsDataStoreConnectorSpec
 
       val mockEoriHistoryResponse = GetEoriHistoryResponse(
         Seq(
-          EoriHistoryItem("eori1", Instant.parse("2024-02-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z")),
-          EoriHistoryItem("eori1", Instant.parse("2024-03-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z")),
-          EoriHistoryItem("eori1", Instant.parse("2024-01-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z"))
+          EoriHistoricItem("eori1", Instant.parse("2024-02-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z")),
+          EoriHistoricItem("eori1", Instant.parse("2024-03-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z")),
+          EoriHistoricItem("eori1", Instant.parse("2024-01-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z"))
         )
       )
       wireMockServer.stubFor(
@@ -110,9 +110,9 @@ class CustomsDataStoreConnectorSpec
 
       val expectedResponse = GetEoriHistoryResponse(
         Seq(
-          EoriHistoryItem("eori1", Instant.parse("2024-03-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z")),
-          EoriHistoryItem("eori1", Instant.parse("2024-02-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z")),
-          EoriHistoryItem("eori1", Instant.parse("2024-01-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z"))
+          EoriHistoricItem("eori1", Instant.parse("2024-03-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z")),
+          EoriHistoricItem("eori1", Instant.parse("2024-02-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z")),
+          EoriHistoricItem("eori1", Instant.parse("2024-01-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z"))
         )
       )
 

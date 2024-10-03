@@ -19,23 +19,23 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 import play.api.libs.json._
 
 import java.time.Instant
-case class EoriHistoryItem(
+case class EoriHistoricItem(
   eori: String,
   validFrom: Instant,
   validTo: Instant
 )
 
-object EoriHistoryItem {
-  implicit val reads: Reads[EoriHistoryItem] = (json: JsValue) =>
+object EoriHistoricItem {
+  implicit val reads: Reads[EoriHistoricItem] = (json: JsValue) =>
     JsSuccess(
-      EoriHistoryItem(
+      EoriHistoricItem(
         (json \ "eori").as[String],
         (json \ "validFrom").as[Instant],
         (json \ "validTo").as[Instant]
       )
     )
 
-  implicit val writes: Writes[EoriHistoryItem] = (historyItem: EoriHistoryItem) =>
+  implicit val writes: Writes[EoriHistoricItem] = (historyItem: EoriHistoricItem) =>
     Json.obj(
       "eori"      -> historyItem.eori,
       "validFrom" -> historyItem.validFrom,
