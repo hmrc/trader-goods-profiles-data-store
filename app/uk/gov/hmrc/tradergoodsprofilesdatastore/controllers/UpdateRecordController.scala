@@ -16,9 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
-import play.api.Logging
 import play.api.mvc.{Action, ControllerComponents}
-import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
@@ -26,25 +24,19 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.UpdateRecordRequ
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
-import scala.util.{Failure, Success}
 
 class UpdateRecordController @Inject() (
   cc: ControllerComponents,
   routerConnector: RouterConnector,
   identify: IdentifierAction
 )(implicit ec: ExecutionContext)
-    extends BackendController(cc)
-    with Logging {
+    extends BackendController(cc) {
 
   def updateRecord(eori: String, recordId: String): Action[UpdateRecordRequest] =
     identify.async(parse.json[UpdateRecordRequest]) { implicit request =>
-      routerConnector.updateRecord(request.body, eori, recordId) transform {
-        case Success(_)                                                             => Success(Ok)
-        case Failure(cause: UpstreamErrorResponse) if cause.statusCode == NOT_FOUND => Success(NotFound)
-        case Failure(cause: UpstreamErrorResponse)                                  =>
-          logger.error(s"Update record failed with ${cause.statusCode} with message: ${cause.message}")
-          Success(InternalServerError)
+      routerConnector.updateRecord(request.body, eori, recordId).map {
+        case true  => Ok
+        case false => NotFound
       }
     }
-
 }

@@ -16,10 +16,8 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
-import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, StoreLatestAction}
@@ -29,7 +27,6 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
-import scala.util.{Failure, Success}
 
 class GetRecordsController @Inject() (
   routerConnector: RouterConnector,
@@ -38,8 +35,7 @@ class GetRecordsController @Inject() (
   identify: IdentifierAction,
   storeLatest: StoreLatestAction
 )(implicit ec: ExecutionContext)
-    extends BackendController(cc)
-    with Logging {
+    extends BackendController(cc) {
 
   def getLocalRecords(
     eori: String,
@@ -58,20 +54,10 @@ class GetRecordsController @Inject() (
   def getRecord(eori: String, recordId: String): Action[AnyContent] = identify.async { implicit request =>
     routerConnector
       .getRecord(eori, recordId)
-      .map(record =>
-        if (record.active) {
-          Ok(Json.toJson(record))
-        } else {
-          NotFound
-        }
-      ) transform {
-      case s @ Success(_)                                                                                            => s
-      case Failure(cause: UpstreamErrorResponse) if cause.statusCode == NOT_FOUND || cause.statusCode == BAD_REQUEST =>
-        Success(NotFound)
-      case Failure(cause: UpstreamErrorResponse)                                                                     =>
-        logger.error(s"Get record failed with ${cause.statusCode} with message: ${cause.message}")
-        Success(InternalServerError)
-    }
+      .map {
+        case Some(record) if record.active => Ok(Json.toJson(record))
+        case _                             => NotFound
+      }
   }
 
   def getRecordsCount(
@@ -79,11 +65,6 @@ class GetRecordsController @Inject() (
   ): Action[AnyContent] = identify.async { implicit request =>
     routerConnector
       .getRecords(eori, page = Some(startingPage), size = Some(1))
-      .map(recordsResponse => Ok(Json.toJson(recordsResponse.pagination.totalRecords))) transform {
-      case s @ Success(_)                        => s
-      case Failure(cause: UpstreamErrorResponse) =>
-        logger.error(s"Get records count failed with ${cause.statusCode} with message: ${cause.message}")
-        Success(InternalServerError)
-    }
+      .map(recordsResponse => Ok(Json.toJson(recordsResponse.pagination.totalRecords)))
   }
 }

@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
-import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.{verify, when}
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
@@ -98,7 +97,7 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
       val mockRouterConnector = mock[RouterConnector]
       when(
         mockRouterConnector.updateRecord(any(), any(), any())(any())
-      ) thenReturn Future.successful(Done)
+      ) thenReturn Future.successful(true)
 
       val application = applicationBuilder()
         .overrides(

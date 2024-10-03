@@ -26,7 +26,7 @@ import play.api.inject.ApplicationLifecycle
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.services.ClearCacheService
 
-import scala.concurrent.duration.{FiniteDuration, _}
+import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
 class ClearCacheWorkerSpec extends AnyWordSpecLike with BeforeAndAfterEach {

@@ -253,7 +253,39 @@ class RouterConnectorSpec
           .willReturn(noContent())
       )
 
-      connector.deleteRecord(eori, recordId).futureValue
+      connector.deleteRecord(eori, recordId).futureValue mustBe true
+    }
+
+    "must return false when record is not found" in {
+
+      wireMockServer.stubFor(
+        delete(
+          urlEqualTo(
+            s"/trader-goods-profiles-router/traders/$eori/records/$recordId?actorId=$eori"
+          )
+        )
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
+          .willReturn(notFound())
+      )
+
+      connector.deleteRecord(eori, recordId).futureValue mustBe false
+    }
+
+    "must return false when response is bad request" in {
+
+      wireMockServer.stubFor(
+        delete(
+          urlEqualTo(
+            s"/trader-goods-profiles-router/traders/$eori/records/$recordId?actorId=$eori"
+          )
+        )
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
+          .willReturn(badRequest())
+      )
+
+      connector.deleteRecord(eori, recordId).futureValue mustBe false
     }
 
     "must return a failed future when the server returns an error" in {
@@ -261,7 +293,7 @@ class RouterConnectorSpec
       wireMockServer.stubFor(
         delete(
           urlEqualTo(
-            s"/trader-goods-profiles-router/traders/invalid-eori/records/invalid-recordId?actorId=invalid-eori"
+            s"/trader-goods-profiles-router/traders/$eori/records/$recordId?actorId=$eori"
           )
         )
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
@@ -284,7 +316,31 @@ class RouterConnectorSpec
           .willReturn(ok().withBody(Json.toJson(goodsItemRecord).toString()))
       )
 
-      connector.getRecord(testEori, recordId).futureValue
+      connector.getRecord(testEori, recordId).futureValue mustEqual Some(goodsItemRecord)
+    }
+
+    "must return None when not found" in {
+
+      wireMockServer.stubFor(
+        get(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
+          .willReturn(notFound())
+      )
+
+      connector.getRecord(testEori, recordId).futureValue mustEqual None
+    }
+
+    "must return None when bad request" in {
+
+      wireMockServer.stubFor(
+        get(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
+          .willReturn(badRequest())
+      )
+
+      connector.getRecord(testEori, recordId).futureValue mustEqual None
     }
 
     "must return a failed future when the server returns an error" in {
@@ -339,7 +395,21 @@ class RouterConnectorSpec
           .willReturn(ok())
       )
 
-      connector.updateRecord(updateRecord, testEori, recordId).futureValue
+      connector.updateRecord(updateRecord, testEori, recordId).futureValue mustBe true
+    }
+
+    "must return false when not found" in {
+
+      val updateRecord = UpdateRecordRequest(testEori, Some("updated-trader-ref"))
+
+      wireMockServer.stubFor(
+        patch(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
+          .willReturn(notFound())
+      )
+
+      connector.updateRecord(updateRecord, testEori, recordId).futureValue mustBe false
     }
 
     "must return a failed future when the server returns an error" in {

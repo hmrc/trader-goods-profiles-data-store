@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
-import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
@@ -24,7 +23,6 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeIdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
@@ -121,7 +119,7 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
 
       when(
         mockRouterConnector.deleteRecord(any(), any())(any())
-      ) thenReturn Future.successful(Done)
+      ) thenReturn Future.successful(true)
 
       val application = applicationBuilder()
         .overrides(
@@ -135,13 +133,13 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
       }
     }
 
-    "return 404 when record does not exist or is inactive (400)" in {
+    "return 404 when record does not exist or is inactive" in {
 
       val mockRouterConnector = mock[RouterConnector]
 
       when(
         mockRouterConnector.deleteRecord(any(), any())(any())
-      ) thenReturn Future.failed(UpstreamErrorResponse("could not get", BAD_REQUEST))
+      ) thenReturn Future.successful(false)
 
       val application = applicationBuilder()
         .overrides(
@@ -153,46 +151,6 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
       running(application) {
         val result = route(application, validFakeGetRequest).value
         status(result) shouldBe NOT_FOUND
-      }
-    }
-
-    "return 404 when record does not exist (404)" in {
-
-      val mockRouterConnector = mock[RouterConnector]
-
-      when(
-        mockRouterConnector.deleteRecord(any(), any())(any())
-      ) thenReturn Future.failed(UpstreamErrorResponse("could not get", NOT_FOUND))
-
-      val application = applicationBuilder()
-        .overrides(
-          inject.bind[IdentifierAction].to[FakeIdentifierAction],
-          inject.bind[RouterConnector].toInstance(mockRouterConnector)
-        )
-        .build()
-
-      running(application) {
-        val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe NOT_FOUND
-      }
-    }
-
-    "return 500 when there is an error when deleting on the router" in {
-      val mockRouterConnector = mock[RouterConnector]
-      when(
-        mockRouterConnector.deleteRecord(any(), any())(any())
-      ) thenReturn Future.failed(UpstreamErrorResponse("Internal server error", INTERNAL_SERVER_ERROR))
-
-      val application = applicationBuilder()
-        .overrides(
-          inject.bind[IdentifierAction].to[FakeIdentifierAction],
-          inject.bind[RouterConnector].toInstance(mockRouterConnector)
-        )
-        .build()
-
-      running(application) {
-        val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe INTERNAL_SERVER_ERROR
       }
     }
   }
