@@ -21,13 +21,13 @@ import play.api.libs.json._
 import java.time.Instant
 
 case class EoriHistoryResponse(
-                                eoriHistory: Seq[EoriHistoricItem]
-                              )
+  eoriHistory: Seq[EoriHistoricItem]
+)
 
 object EoriHistoryResponse {
   implicit val reads: Reads[EoriHistoryResponse] = (
     (__ \ "eoriHistory").read[Seq[EoriHistoricItem]].map(_.sortBy(_.validFrom)(Ordering[Instant].reverse))
-    ).map(EoriHistoryResponse.apply)
+  ).map(EoriHistoryResponse.apply)
 
   implicit val writes: Writes[EoriHistoryResponse] = Json.writes[EoriHistoryResponse]
 }
