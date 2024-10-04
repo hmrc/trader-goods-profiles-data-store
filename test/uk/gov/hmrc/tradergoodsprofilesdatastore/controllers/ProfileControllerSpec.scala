@@ -256,7 +256,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
           }
         }
 
-        "eori history is does exist, but profile does not exist for head of eori history" in {
+        "and eori history does exist, but latest historical eori profile does not exist" in {
           when(mockProfileRepository.get(eqTo(requestEori))) thenReturn Future.successful(None)
           when(mockCustomDataStoreConnector.getEoriHistory(any())(any())) thenReturn Future.successful(
             Some(
@@ -283,7 +283,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
           }
         }
 
-        "and historic eori does not exist in database on update" in {
+        "and updating historic eori with the new eori fails" in {
           when(mockProfileRepository.get(eqTo(requestEori))) thenReturn Future.successful(None)
           when(mockCustomDataStoreConnector.getEoriHistory(any())(any())) thenReturn Future.successful(
             Some(
@@ -322,7 +322,6 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
         }
       }
     }
-
   }
 
   s"DELETE $deleteAllUrl" - {
