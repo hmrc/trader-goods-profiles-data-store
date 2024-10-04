@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
-import org.apache.pekko.Done
 import org.mongodb.scala.model.Filters
 import org.scalactic.source.Position
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
@@ -93,16 +92,6 @@ class ProfileRepositorySpec
       repository.get("eori that does not exist").futureValue must not be defined
     }
 
-  }
-
-  ".deleteAll" - {
-    "it mush drop the profiles collection" in {
-      insert(profileResponse).futureValue
-      val result      = repository.deleteAll().futureValue
-      val recordCheck = repository.get(profileEori).futureValue
-      result mustEqual Done
-      recordCheck mustBe None
-    }
   }
 
   ".updateEori" - {
