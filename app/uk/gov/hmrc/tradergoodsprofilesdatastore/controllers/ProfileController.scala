@@ -83,9 +83,9 @@ class ProfileController @Inject() (
                 val latestEoriResult = profileRepository.get(eoriHistoryResponse.eoriHistory.head.eori).flatMap {
                   case Some(historicProfile) =>
                     for {
-                      updateResult   <- profileRepository.updateEori(historicProfile.eori, eori)
-                      deletedRecords <- recordsRepository.deleteRecordsByEori(historicProfile.eori)
-                    } yield updateResult || deletedRecords > 0
+                      updateResult <- profileRepository.updateEori(historicProfile.eori, eori)
+                      _            <- recordsRepository.deleteRecordsByEori(historicProfile.eori)
+                    } yield updateResult
                   case None                  => Future.successful(NotFound)
                 }
 
