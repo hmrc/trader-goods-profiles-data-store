@@ -53,13 +53,11 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
   private val setUrl                = routes.ProfileController.setProfile(requestEori).url
   private val getUrl                = routes.ProfileController.getProfile(requestEori).url
   private val doesExistUrl          = routes.ProfileController.doesProfileExist(requestEori).url
-  private val deleteAllUrl          = routes.ProfileController.deleteAll().url
   private val validFakePutRequest   =
     FakeRequest("PUT", setUrl, FakeHeaders(Seq(CONTENT_TYPE -> JSON)), Json.toJson(profileRequest))
   private val invalidFakePutRequest = FakeRequest("PUT", setUrl, FakeHeaders(Seq(CONTENT_TYPE -> JSON)), "{}")
   private val validFakeGetRequest   = FakeRequest("GET", getUrl)
   private val validDoesExistRequest = FakeRequest("HEAD", doesExistUrl)
-  private val deleteAllRequest      = FakeRequest("DELETE", deleteAllUrl)
 
   val mockRouterConnector   = mock[RouterConnector]
   val mockProfileRepository = mock[ProfileRepository]
@@ -222,40 +220,5 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
       }
     }
 
-  }
-
-  s"DELETE $deleteAllUrl" - {
-
-    "return 200 when the feature flag for dropping profile collection is true" in {
-      when(mockProfileRepository.deleteAll) thenReturn Future.successful(Done)
-      when(dataStoreAppConfig.droppingProfileCollection) thenReturn true
-      val application = applicationBuilder()
-        .overrides(
-          inject.bind[ProfileRepository].toInstance(mockProfileRepository),
-          inject.bind[DataStoreAppConfig].toInstance(dataStoreAppConfig)
-        )
-        .build()
-
-      running(application) {
-        val result = route(application, deleteAllRequest).value
-        status(result) shouldBe Status.OK
-      }
-    }
-
-    "return 500 when the feature flag for dropping profile collection is false" in {
-      when(mockProfileRepository.deleteAll) thenReturn Future.successful(Done)
-      when(dataStoreAppConfig.droppingProfileCollection) thenReturn false
-      val application = applicationBuilder()
-        .overrides(
-          inject.bind[ProfileRepository].toInstance(mockProfileRepository),
-          inject.bind[DataStoreAppConfig].toInstance(dataStoreAppConfig)
-        )
-        .build()
-
-      running(application) {
-        val result = route(application, deleteAllRequest).value
-        status(result) shouldBe Status.INTERNAL_SERVER_ERROR
-      }
-    }
   }
 }
