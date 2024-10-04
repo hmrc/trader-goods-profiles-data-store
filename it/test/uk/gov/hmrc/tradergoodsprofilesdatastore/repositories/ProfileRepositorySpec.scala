@@ -129,7 +129,7 @@ class ProfileRepositorySpec
     }
   }
 
-  ".delete" - {
+  ".deleteEori" - {
     "when there is a profile for this eori" in {
       insert(profileResponse).futureValue
 

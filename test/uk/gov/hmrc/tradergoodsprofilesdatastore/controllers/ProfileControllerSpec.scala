@@ -18,6 +18,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchersSugar.eqTo
 import org.mockito.Mockito.when
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
@@ -28,13 +29,15 @@ import play.api.test.Helpers._
 import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeIdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
+import uk.gov.hmrc.tradergoodsprofilesdatastore.base.TestConstants.testEori
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
-import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
+import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConnector, RouterConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.ProfileResponse
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.ProfileRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{EoriHistoricItem, EoriHistoryResponse, ProfileResponse}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{ProfileRepository, RecordsRepository}
 
+import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 
 class ProfileControllerSpec extends SpecBase with MockitoSugar {
@@ -61,9 +64,11 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
   private val validDoesExistRequest = FakeRequest("HEAD", doesExistUrl)
   private val deleteAllRequest      = FakeRequest("DELETE", deleteAllUrl)
 
-  val mockRouterConnector   = mock[RouterConnector]
-  val mockProfileRepository = mock[ProfileRepository]
-  val dataStoreAppConfig    = mock[DataStoreAppConfig]
+  val mockRouterConnector: RouterConnector                    = mock[RouterConnector]
+  val mockCustomDataStoreConnector: CustomsDataStoreConnector = mock[CustomsDataStoreConnector]
+  val mockProfileRepository: ProfileRepository                = mock[ProfileRepository]
+  val mockRecordsRepository: RecordsRepository                = mock[RecordsRepository]
+  val dataStoreAppConfig: DataStoreAppConfig                  = mock[DataStoreAppConfig]
 
   private val expectedProfileResponse = ProfileResponse(
     eori = "1234567890",
@@ -192,34 +197,165 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
 
   s"HEAD $doesExistUrl" - {
 
-    "return 200 when profile exist" in {
-      when(mockProfileRepository.get(any())) thenReturn Future.successful(Some(expectedProfileResponse))
+    "return 200" - {
 
-      val application = applicationBuilder()
-        .overrides(
-          inject.bind[ProfileRepository].toInstance(mockProfileRepository)
-        )
-        .build()
+      "when profile exist" in {
+        when(mockProfileRepository.get(any())) thenReturn Future.successful(Some(expectedProfileResponse))
 
-      running(application) {
-        val result = route(application, validDoesExistRequest).value
-        status(result) shouldBe Status.OK
+        val application = applicationBuilder()
+          .overrides(
+            inject.bind[ProfileRepository].toInstance(mockProfileRepository)
+          )
+          .build()
+
+        running(application) {
+          val result = route(application, validDoesExistRequest).value
+          status(result) shouldBe Status.OK
+        }
       }
+
     }
 
-    "return 404 when profile does not exist" in {
-      when(mockProfileRepository.get(any())) thenReturn Future.successful(None)
+    "return 404" - {
 
-      val application = applicationBuilder()
-        .overrides(
-          inject.bind[ProfileRepository].toInstance(mockProfileRepository)
+      "when profile and history data does not exists" in {
+        when(mockProfileRepository.get(any())) thenReturn Future.successful(None)
+        when(mockCustomDataStoreConnector.getEoriHistory(any())(any())) thenReturn Future.successful(
+          Some(EoriHistoryResponse(eoriHistory = Seq.empty))
         )
-        .build()
 
-      running(application) {
-        val result = route(application, validDoesExistRequest).value
-        status(result) shouldBe Status.NOT_FOUND
+        val application = applicationBuilder()
+          .overrides(
+            inject.bind[ProfileRepository].toInstance(mockProfileRepository),
+            inject.bind[CustomsDataStoreConnector].toInstance(mockCustomDataStoreConnector)
+          )
+          .build()
+
+        running(application) {
+          val result = route(application, validDoesExistRequest).value
+          status(result) shouldBe Status.NOT_FOUND
+        }
       }
+
+      "when profile does not exists and eori history response is empty" in {
+        when(mockProfileRepository.get(any())) thenReturn Future.successful(None)
+        when(mockCustomDataStoreConnector.getEoriHistory(any())(any())) thenReturn Future.successful(
+          None
+        )
+
+        val application = applicationBuilder()
+          .overrides(
+            inject.bind[ProfileRepository].toInstance(mockProfileRepository),
+            inject.bind[CustomsDataStoreConnector].toInstance(mockCustomDataStoreConnector)
+          )
+          .build()
+
+        running(application) {
+          val result = route(application, validDoesExistRequest).value
+          status(result) shouldBe Status.NOT_FOUND
+        }
+      }
+
+      "when profile does not exists and eori history is does exist, but profile does not exist for head of eori history" in {
+        when(mockProfileRepository.get(eqTo(requestEori))) thenReturn Future.successful(None)
+        when(mockCustomDataStoreConnector.getEoriHistory(any())(any())) thenReturn Future.successful(
+          Some(
+            EoriHistoryResponse(
+              Seq(
+                EoriHistoricItem("eori1", Instant.parse("2024-04-20T00:00:00Z"), Instant.parse("2024-10-20T00:00:00Z"))
+              )
+            )
+          )
+        )
+
+        when(mockProfileRepository.get(eqTo("eori1"))) thenReturn Future.successful(None)
+
+        val application = applicationBuilder()
+          .overrides(
+            inject.bind[ProfileRepository].toInstance(mockProfileRepository),
+            inject.bind[CustomsDataStoreConnector].toInstance(mockCustomDataStoreConnector)
+          )
+          .build()
+
+        running(application) {
+          val result = route(application, validDoesExistRequest).value
+          status(result) shouldBe Status.NOT_FOUND
+        }
+      }
+
+//      "when profile does not exists and historic eori does not exist in database on update" in {
+//        when(mockProfileRepository.get(eqTo(requestEori))) thenReturn Future.successful(None)
+//        when(mockCustomDataStoreConnector.getEoriHistory(any())(any())) thenReturn Future.successful(
+//          Some(
+//            EoriHistoryResponse(
+//              Seq(
+//                EoriHistoricItem("eori1", Instant.parse("2024-04-20T00:00:00Z"), Instant.parse("2024-10-20T00:00:00Z")),
+//                EoriHistoricItem("eori2", Instant.parse("2024-03-20T00:00:00Z"), Instant.parse("2024-09-20T00:00:00Z")),
+//                EoriHistoricItem("eori3", Instant.parse("2024-02-20T00:00:00Z"), Instant.parse("2024-08-20T00:00:00Z"))
+//              )
+//            )
+//          )
+//        )
+//
+//        when(mockProfileRepository.updateEori(any(), any())) thenReturn Future.successful(false)
+//
+//        val mockProfileHead = ProfileResponse(
+//          eori = "eori1",
+//          actorId = "eori1",
+//          ukimsNumber = "XIUKIM47699357400020231115081800",
+//          nirmsNumber = Some("RMS-GB-123456"),
+//          niphlNumber = Some("6 S12345")
+//        )
+//
+//        when(mockProfileRepository.get(eqTo("eori1"))) thenReturn Future.successful(mockProfileHead)
+//        when(mockProfileRepository.get(eqTo("eori2"))) thenReturn Future.successful(None)
+//        when(mockProfileRepository.get(eqTo("eori3"))) thenReturn Future.successful(None)
+//
+//        val application = applicationBuilder()
+//          .overrides(
+//            inject.bind[ProfileRepository].toInstance(mockProfileRepository),
+//            inject.bind[CustomsDataStoreConnector].toInstance(mockCustomDataStoreConnector)
+//          )
+//          .build()
+//
+//        running(application) {
+//          val result = route(application, validDoesExistRequest).value
+//          status(result) shouldBe Status.NOT_FOUND
+//        }
+//      }
+
+//      "when profile does not exists and historic eori does not exist in database on goods deletion" in {
+//        when(mockProfileRepository.get(a)) thenReturn Future.successful(None)
+//        when(mockCustomDataStoreConnector.getEoriHistory(any())(any())) thenReturn Future.successful(
+//          Some(
+//            EoriHistoryResponse(
+//              Seq(
+//                EoriHistoricItem("eori1", Instant.parse("2024-04-20T00:00:00Z"), Instant.parse("2024-10-20T00:00:00Z")),
+//                EoriHistoricItem("eori2", Instant.parse("2024-03-20T00:00:00Z"), Instant.parse("2024-09-20T00:00:00Z")),
+//                EoriHistoricItem("eori3", Instant.parse("2024-02-20T00:00:00Z"), Instant.parse("2024-08-20T00:00:00Z"))
+//              )
+//            )
+//          )
+//        )
+//        when(mockProfileRepository.get(eqTo(testEori))) thenReturn Future.successful(None)
+//
+//        when(mockProfileRepository.updateEori(any(), any())) thenReturn Future.successful(false)
+//        when(mockRecordsRepository.deleteRecordsByEori(any())) thenReturn Future.successful(0)
+//
+//        val application = applicationBuilder()
+//          .overrides(
+//            inject.bind[ProfileRepository].toInstance(mockProfileRepository),
+//            inject.bind[RecordsRepository].toInstance(mockRecordsRepository),
+//            inject.bind[CustomsDataStoreConnector].toInstance(mockCustomDataStoreConnector)
+//          )
+//          .build()
+//
+//        running(application) {
+//          val result = route(application, validDoesExistRequest).value
+//          status(result) shouldBe Status.NOT_FOUND
+//        }
+//      }
+
     }
 
   }
