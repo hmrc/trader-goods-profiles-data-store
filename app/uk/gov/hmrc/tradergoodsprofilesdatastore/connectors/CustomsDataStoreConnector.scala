@@ -23,7 +23,7 @@ import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps, UpstreamErrorResponse}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
 import play.api.http.Status.{NOT_FOUND, OK}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Email, GetEoriHistoryResponse}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Email, EoriHistoryResponse}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -56,13 +56,13 @@ class CustomsDataStoreConnector @Inject() (config: Configuration, httpClient: Ht
 
   def getEoriHistory(
     eori: String
-  )(implicit hc: HeaderCarrier): Future[Option[GetEoriHistoryResponse]] =
+  )(implicit hc: HeaderCarrier): Future[Option[EoriHistoryResponse]] =
     httpClient
       .get(eoriHistoryUrl(eori))
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
-          case OK => Future.successful(Some(response.json.as[GetEoriHistoryResponse]))
+          case OK => Future.successful(Some(response.json.as[EoriHistoryResponse]))
           case _  => Future.failed(UpstreamErrorResponse(response.body, response.status))
         }
       }

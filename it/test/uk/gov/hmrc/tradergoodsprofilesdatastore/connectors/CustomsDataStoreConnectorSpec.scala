@@ -28,7 +28,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeRetireFileAction, FakeStoreLatestAction}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{RetireFileAction, StoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Email, EoriHistoricItem, GetEoriHistoryResponse}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Email, EoriHistoricItem, EoriHistoryResponse}
 
 import java.time.Instant
 
@@ -96,7 +96,7 @@ class CustomsDataStoreConnectorSpec
 
     "must return eori history" in {
 
-      val mockEoriHistoryResponse = GetEoriHistoryResponse(
+      val mockEoriHistoryResponse = EoriHistoryResponse(
         Seq(
           EoriHistoricItem("eori1", Instant.parse("2024-02-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z")),
           EoriHistoricItem("eori1", Instant.parse("2024-03-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z")),
@@ -108,7 +108,7 @@ class CustomsDataStoreConnectorSpec
           .willReturn(ok().withBody(Json.toJson(mockEoriHistoryResponse).toString()))
       )
 
-      val expectedResponse = GetEoriHistoryResponse(
+      val expectedResponse = EoriHistoryResponse(
         Seq(
           EoriHistoricItem("eori1", Instant.parse("2024-03-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z")),
           EoriHistoricItem("eori1", Instant.parse("2024-02-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z")),
