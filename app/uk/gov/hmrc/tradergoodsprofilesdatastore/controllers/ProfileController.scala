@@ -24,7 +24,6 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConnector, RouterConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.EoriHistoryResponse
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{ProfileRepository, RecordsRepository}
 
 import javax.inject.{Inject, Singleton}
@@ -107,40 +106,40 @@ class ProfileController @Inject()(
               }
             case None => Future.successful(NotFound)
           }
-        //            case Some(eoriHistoryData) if eoriHistoryData.eoriHistory.isEmpty =>
-        //              Future.successful(NotFound)
-        //
-        //            case Some(eoriHistoryData) if eoriHistoryData.eoriHistory.nonEmpty =>
-        //              var foundFirstProfile = false
-        //
-        //              val updatesFutures = eoriHistoryData.eoriHistory.map { historyItem =>
-        //                profileRepository.get(historyItem.eori).flatMap {
-        //                  case Some(historyProfile) if !foundFirstProfile =>
-        //                    // First profile found: update its eori and delete associated records
-        //                    foundFirstProfile = true
-        //                    for {
-        //                      _ <- profileRepository.updateEori(historyProfile.eori, eori) // update first matching profile
-        //                      _ <- recordsRepository.deleteRecordsByEori(historyProfile.eori) // delete records
-        //                    } yield true // track success
-        //
-        //                  case Some(historyProfile) if foundFirstProfile =>
-        //                    // any profiles finds after first match, delete both profile and records
-        //                    for {
-        //                      _ <- profileRepository
-        //                             .deleteByEori(historyProfile.eori) // delete profile - repo method yet to implement
-        //                      _ <- recordsRepository.deleteRecordsByEori(historyProfile.eori) // delete records
-        //                    } yield true // Indicate success for deletions
-        //
-        //                  case None => Future.successful(false) // No profile found for this historyItem
-        //                }
-        //              }
-        //
-        //              Future.sequence(updatesFutures).map { updates =>
-        //                if (updates.contains(true)) Ok
-        //                else NotFound
-        //              }
-        //
-        //            case None => Future.successful(NotFound)
+//                    case Some(eoriHistoryData) if eoriHistoryData.eoriHistory.isEmpty =>
+//                      Future.successful(NotFound)
+//
+//                    case Some(eoriHistoryData) if eoriHistoryData.eoriHistory.nonEmpty =>
+//                      var foundFirstProfile = false
+//
+//                      val updatesFutures = eoriHistoryData.eoriHistory.map { historyItem =>
+//                        profileRepository.get(historyItem.eori).flatMap {
+//                          case Some(historyProfile) if !foundFirstProfile =>
+//                            // First profile found: update its eori and delete associated records
+//                            foundFirstProfile = true
+//                            for {
+//                              _ <- profileRepository.updateEori(historyProfile.eori, eori) // update first matching profile
+//                              _ <- recordsRepository.deleteRecordsByEori(historyProfile.eori) // delete records
+//                            } yield true // track success
+//
+//                          case Some(historyProfile) if foundFirstProfile =>
+//                            // any profiles finds after first match, delete both profile and records
+//                            for {
+//                              _ <- profileRepository
+//                                     .deleteByEori(historyProfile.eori) // delete profile - repo method yet to implement
+//                              _ <- recordsRepository.deleteRecordsByEori(historyProfile.eori) // delete records
+//                            } yield true // Indicate success for deletions
+//
+//                          case None => Future.successful(false) // No profile found for this historyItem
+//                        }
+//                      }
+//
+//                      Future.sequence(updatesFutures).map { updates =>
+//                        if (updates.contains(true)) Ok
+//                        else NotFound
+//                      }
+//
+//                    case None => Future.successful(NotFound)
       }
   }
 
