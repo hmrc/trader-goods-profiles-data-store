@@ -20,6 +20,8 @@ import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchersSugar.eqTo
 import org.mockito.Mockito.{times, verify, when}
+import org.mockito.MockitoSugar.reset
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
@@ -29,7 +31,6 @@ import play.api.test.Helpers._
 import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeIdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
-import uk.gov.hmrc.tradergoodsprofilesdatastore.base.TestConstants.testEori
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConnector, RouterConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
@@ -40,7 +41,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{ProfileRepository,
 import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 
-class ProfileControllerSpec extends SpecBase with MockitoSugar {
+class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
 
@@ -77,6 +78,15 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
     nirmsNumber = Some("123456"),
     niphlNumber = Some("123456")
   )
+
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+
+    reset(mockRouterConnector)
+    reset(mockCustomDataStoreConnector)
+    reset(mockProfileRepository)
+    reset(mockRecordsRepository)
+  }
 
   s"PUT $setUrl" - {
 
@@ -285,9 +295,6 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
             )
           )
 
-          when(mockProfileRepository.updateEori(any(), any())) thenReturn Future.successful(true)
-          when(mockRecordsRepository.deleteRecordsByEori(eqTo("eori1"))) thenReturn Future.successful(1)
-
           val historicEoriProfile = ProfileResponse(
             eori = "eori1",
             actorId = "eori1",
@@ -297,7 +304,18 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
           )
 
           when(mockProfileRepository.get(eqTo("eori1"))) thenReturn Future.successful(Some(historicEoriProfile))
+          when(mockProfileRepository.updateEori(any(), any())) thenReturn Future.successful(true)
+          when(mockRecordsRepository.deleteRecordsByEori(eqTo("eori1"))) thenReturn Future.successful(1)
 
+          val olderHistoricEoriProfile = ProfileResponse(
+            eori = "eori2",
+            actorId = "eori2",
+            ukimsNumber = "XIUKIM47699357400020231115081800",
+            nirmsNumber = Some("RMS-GB-123456"),
+            niphlNumber = Some("6 S12345")
+          )
+
+          when(mockProfileRepository.get(eqTo("eori2"))) thenReturn Future.successful(Some(olderHistoricEoriProfile))
           when(mockProfileRepository.deleteByEori(eqTo("eori2"))) thenReturn Future.successful(1)
           when(mockRecordsRepository.deleteRecordsByEori(eqTo("eori2"))) thenReturn Future.successful(1)
 
@@ -315,7 +333,62 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
 
             withClue("must called delete records twice and delete eori profile once") {
               verify(mockRecordsRepository, times(2)).deleteRecordsByEori(any)
+              verify(mockProfileRepository).updateEori(any, any)
               verify(mockProfileRepository).deleteByEori(any)
+            }
+          }
+        }
+
+        "and historic eori data does exist and does not delete older historic profiles" in {
+          when(mockProfileRepository.get(eqTo(requestEori))) thenReturn Future.successful(None)
+          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())) thenReturn Future.successful(
+            Some(
+              EoriHistoryResponse(
+                Seq(
+                  EoriHistoricItem(
+                    "eori1",
+                    Instant.parse("2024-04-20T00:00:00Z"),
+                    Instant.parse("2024-10-20T00:00:00Z")
+                  ),
+                  EoriHistoricItem(
+                    "eori2",
+                    Instant.parse("2024-03-20T00:00:00Z"),
+                    Instant.parse("2024-09-20T00:00:00Z")
+                  )
+                )
+              )
+            )
+          )
+
+          when(mockProfileRepository.updateEori(any(), any())) thenReturn Future.successful(true)
+          when(mockRecordsRepository.deleteRecordsByEori(eqTo("eori1"))) thenReturn Future.successful(1)
+
+          val historicEoriProfile = ProfileResponse(
+            eori = "eori1",
+            actorId = "eori1",
+            ukimsNumber = "XIUKIM47699357400020231115081800",
+            nirmsNumber = Some("RMS-GB-123456"),
+            niphlNumber = Some("6 S12345")
+          )
+
+          when(mockProfileRepository.get(eqTo("eori1"))) thenReturn Future.successful(Some(historicEoriProfile))
+          when(mockProfileRepository.get(eqTo("eori2"))) thenReturn Future.successful(None)
+
+          val application = applicationBuilder()
+            .overrides(
+              inject.bind[ProfileRepository].toInstance(mockProfileRepository),
+              inject.bind[CustomsDataStoreConnector].toInstance(mockCustomDataStoreConnector),
+              inject.bind[RecordsRepository].toInstance(mockRecordsRepository)
+            )
+            .build()
+
+          running(application) {
+            val result = route(application, validDoesExistRequest).value
+            status(result) shouldBe Status.OK
+
+            withClue("must called delete records twice and delete eori profile once") {
+              verify(mockRecordsRepository).deleteRecordsByEori(any)
+              verify(mockProfileRepository).updateEori(any, any)
             }
           }
         }

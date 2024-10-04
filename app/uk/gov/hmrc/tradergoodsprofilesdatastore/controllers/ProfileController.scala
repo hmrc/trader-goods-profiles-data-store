@@ -80,13 +80,14 @@ class ProfileController @Inject() (
             case Some(eoriHistoryResponse) =>
               if (eoriHistoryResponse.eoriHistory.isEmpty) Future.successful(NotFound)
               else {
+
                 val latestEoriResult = profileRepository.get(eoriHistoryResponse.eoriHistory.head.eori).flatMap {
                   case Some(historicProfile) =>
                     for {
                       updateResult <- profileRepository.updateEori(historicProfile.eori, eori)
                       _            <- recordsRepository.deleteRecordsByEori(historicProfile.eori)
                     } yield updateResult
-                  case None                  => Future.successful(NotFound)
+                  case None                  => Future.successful(false)
                 }
 
                 eoriHistoryResponse.eoriHistory.tail.map { historyItem =>
@@ -116,5 +117,4 @@ class ProfileController @Inject() (
     else
       Future.successful(InternalServerError)
   }
-
 }
