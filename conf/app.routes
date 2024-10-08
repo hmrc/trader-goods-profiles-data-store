@@ -8,8 +8,6 @@ POST       /traders/:eori/records                   uk.gov.hmrc.tradergoodsprofi
 GET        /traders/:eori/records/filter            uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.FilterRecordsController.filterLocalRecords(eori: String, searchTerm: Option[String], exactMatch: Option[Boolean], field: Option[String], page: Option[Int], size: Option[Int])
 GET        /traders/:eori/records-summary           uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.RecordsSummaryController.recordsSummary(eori: String)
 HEAD       /traders/:eori/checkRecords              uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.RecordsSummaryController.recordsSummary(eori: String)
-HEAD       /traders/:eori/records/store             uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.StoreRecordsController.storeAllRecords(eori: String)
-GET        /traders/:eori/records/count             uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.GetRecordsController.getRecordsCount(eori: String)
 GET        /traders/:eori/records/:recordId         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.GetRecordsController.getRecord(eori: String, recordId: String)
 PATCH      /traders/:eori/records/:recordId         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.UpdateRecordController.updateRecord(eori: String, recordId: String)
 POST       /traders/:eori/records/:recordId/advice  uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.RequestAdviceController.requestAdvice(eori: String, recordId: String)
