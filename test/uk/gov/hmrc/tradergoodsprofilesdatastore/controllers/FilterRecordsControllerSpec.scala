@@ -44,10 +44,9 @@ class FilterRecordsControllerSpec
 
   implicit val ec: ExecutionContext = ExecutionContext.global
 
-  var mockRecordsRepository: RecordsRepository           = _
-  var mockStoreRecordsController: StoreRecordsController = _
-  var mockRouterConnector: RouterConnector               = _
-  var mockAction: Action[AnyContent]                     = _
+  var mockRecordsRepository: RecordsRepository = _
+  var mockRouterConnector: RouterConnector     = _
+  var mockAction: Action[AnyContent]           = _
 
   override def beforeEach(): Unit = {
     super.beforeEach()
