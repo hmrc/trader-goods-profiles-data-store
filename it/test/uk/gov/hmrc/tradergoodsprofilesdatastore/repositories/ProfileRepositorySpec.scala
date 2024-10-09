@@ -105,6 +105,7 @@ class ProfileRepositorySpec
 
       updateResult mustEqual true
       result.value.eori mustEqual newEori
+      result.value.actorId mustEqual newEori
     }
 
     "must not update profile when there is none" in {

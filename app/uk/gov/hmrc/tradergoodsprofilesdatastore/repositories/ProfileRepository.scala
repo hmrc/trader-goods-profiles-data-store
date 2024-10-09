@@ -64,7 +64,10 @@ class ProfileRepository @Inject() (
 
   def updateEori(oldEori: String, newEori: String): Future[Boolean] = {
     val updateQuery  = byEori(oldEori)
-    val updateAction = Updates.set("eori", newEori)
+    val updateAction = Updates.combine(
+      Updates.set("eori", newEori),
+      Updates.set("actorId", newEori)
+    )
     collection
       .updateOne(
         filter = updateQuery,

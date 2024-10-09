@@ -24,7 +24,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConnector, RouterConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{ProfileRepository, RecordsRepository}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{ProfileRepository, RecordsRepository, RecordsSummaryRepository}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -36,6 +36,7 @@ class ProfileController @Inject() (
   routerConnector: RouterConnector,
   customsDataStoreConnector: CustomsDataStoreConnector,
   recordsRepository: RecordsRepository,
+  recordsSummaryRepository: RecordsSummaryRepository,
   config: DataStoreAppConfig,
   identify: IdentifierAction
 )(implicit ec: ExecutionContext)
@@ -86,6 +87,7 @@ class ProfileController @Inject() (
                   for {
                     updateResult <- profileRepository.updateEori(historicProfile.eori, eori)
                     _            <- recordsRepository.deleteRecordsByEori(historicProfile.eori)
+                    _            <- recordsSummaryRepository.deleteByEori(historicProfile.eori)
                   } yield updateResult
                 case None                  => Future.successful(false)
               }
@@ -96,6 +98,7 @@ class ProfileController @Inject() (
                     for {
                       _ <- profileRepository.deleteByEori(historyProfile.eori)
                       _ <- recordsRepository.deleteRecordsByEori(historyProfile.eori)
+                      _ <- recordsSummaryRepository.deleteByEori(historyProfile.eori)
                     } yield true
                   case None                 => Future.successful(false)
                 }

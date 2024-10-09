@@ -36,7 +36,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConn
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{EoriHistoricItem, EoriHistoryResponse, ProfileResponse}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{ProfileRepository, RecordsRepository}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{ProfileRepository, RecordsRepository, RecordsSummaryRepository}
 
 import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
@@ -67,6 +67,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
   val mockCustomDataStoreConnector: CustomsDataStoreConnector = mock[CustomsDataStoreConnector]
   val mockProfileRepository: ProfileRepository                = mock[ProfileRepository]
   val mockRecordsRepository: RecordsRepository                = mock[RecordsRepository]
+  val mockRecordsSummaryRepository: RecordsSummaryRepository  = mock[RecordsSummaryRepository]
   val dataStoreAppConfig: DataStoreAppConfig                  = mock[DataStoreAppConfig]
 
   private val expectedProfileResponse = ProfileResponse(
@@ -84,6 +85,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
     reset(mockCustomDataStoreConnector)
     reset(mockProfileRepository)
     reset(mockRecordsRepository)
+    reset(mockRecordsSummaryRepository)
   }
 
   s"PUT $setUrl" - {
@@ -245,6 +247,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
 
           when(mockProfileRepository.updateEori(any(), any())) thenReturn Future.successful(true)
           when(mockRecordsRepository.deleteRecordsByEori(any())) thenReturn Future.successful(1)
+          when(mockRecordsSummaryRepository.deleteByEori(any())) thenReturn Future.successful(1)
 
           val historicEoriProfile = ProfileResponse(
             eori = "previousEori",
@@ -260,7 +263,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
             .overrides(
               inject.bind[ProfileRepository].toInstance(mockProfileRepository),
               inject.bind[CustomsDataStoreConnector].toInstance(mockCustomDataStoreConnector),
-              inject.bind[RecordsRepository].toInstance(mockRecordsRepository)
+              inject.bind[RecordsRepository].toInstance(mockRecordsRepository),
+              inject.bind[RecordsSummaryRepository].toInstance(mockRecordsSummaryRepository)
             )
             .build()
 
@@ -271,6 +275,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
             withClue("must call update eori and delete records") {
               verify(mockProfileRepository).updateEori(any, any)
               verify(mockRecordsRepository).deleteRecordsByEori(any)
+              verify(mockRecordsSummaryRepository).deleteByEori(any)
             }
           }
         }
@@ -310,6 +315,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
           when(mockProfileRepository.get(eqTo("previousEori"))) thenReturn Future.successful(Some(historicEoriProfile))
           when(mockProfileRepository.updateEori(any(), any())) thenReturn Future.successful(true)
           when(mockRecordsRepository.deleteRecordsByEori(eqTo("previousEori"))) thenReturn Future.successful(1)
+          when(mockRecordsSummaryRepository.deleteByEori(eqTo("previousEori"))) thenReturn Future.successful(1)
 
           val olderHistoricEoriProfile = ProfileResponse(
             eori = "eori2",
@@ -322,12 +328,14 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
           when(mockProfileRepository.get(eqTo("eori2"))) thenReturn Future.successful(Some(olderHistoricEoriProfile))
           when(mockProfileRepository.deleteByEori(eqTo("eori2"))) thenReturn Future.successful(1)
           when(mockRecordsRepository.deleteRecordsByEori(eqTo("eori2"))) thenReturn Future.successful(1)
+          when(mockRecordsSummaryRepository.deleteByEori(eqTo("eori2"))) thenReturn Future.successful(1)
 
           val application = applicationBuilder()
             .overrides(
               inject.bind[ProfileRepository].toInstance(mockProfileRepository),
               inject.bind[CustomsDataStoreConnector].toInstance(mockCustomDataStoreConnector),
-              inject.bind[RecordsRepository].toInstance(mockRecordsRepository)
+              inject.bind[RecordsRepository].toInstance(mockRecordsRepository),
+              inject.bind[RecordsSummaryRepository].toInstance(mockRecordsSummaryRepository)
             )
             .build()
 
@@ -339,6 +347,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
               verify(mockProfileRepository).updateEori(any, any)
               verify(mockRecordsRepository, times(2)).deleteRecordsByEori(any)
               verify(mockProfileRepository).deleteByEori(any)
+              verify(mockRecordsSummaryRepository, times(2)).deleteByEori(any)
             }
           }
         }
@@ -369,6 +378,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
 
           when(mockProfileRepository.updateEori(any(), any())) thenReturn Future.successful(true)
           when(mockRecordsRepository.deleteRecordsByEori(eqTo("previousEori"))) thenReturn Future.successful(1)
+          when(mockRecordsSummaryRepository.deleteByEori(eqTo("previousEori"))) thenReturn Future.successful(1)
 
           val historicEoriProfile = ProfileResponse(
             eori = "previousEori",
@@ -385,7 +395,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
             .overrides(
               inject.bind[ProfileRepository].toInstance(mockProfileRepository),
               inject.bind[CustomsDataStoreConnector].toInstance(mockCustomDataStoreConnector),
-              inject.bind[RecordsRepository].toInstance(mockRecordsRepository)
+              inject.bind[RecordsRepository].toInstance(mockRecordsRepository),
+              inject.bind[RecordsSummaryRepository].toInstance(mockRecordsSummaryRepository)
             )
             .build()
 
@@ -396,6 +407,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
             withClue("must called delete records and delete eori profile once") {
               verify(mockProfileRepository).updateEori(any, any)
               verify(mockRecordsRepository).deleteRecordsByEori(any)
+              verify(mockRecordsSummaryRepository).deleteByEori(any)
             }
           }
         }
@@ -485,9 +497,6 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
             )
           )
 
-          when(mockProfileRepository.updateEori(any(), any())) thenReturn Future.successful(false)
-          when(mockRecordsRepository.deleteRecordsByEori(any())) thenReturn Future.successful(0)
-
           val historicEoriProfile = ProfileResponse(
             eori = "previousEori",
             actorId = "previousEori",
@@ -497,6 +506,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
           )
 
           when(mockProfileRepository.get(eqTo("previousEori"))) thenReturn Future.successful(Some(historicEoriProfile))
+          when(mockProfileRepository.updateEori(any(), any())) thenReturn Future.successful(false)
+          when(mockRecordsRepository.deleteRecordsByEori(any())) thenReturn Future.successful(0)
 
           val application = applicationBuilder()
             .overrides(
