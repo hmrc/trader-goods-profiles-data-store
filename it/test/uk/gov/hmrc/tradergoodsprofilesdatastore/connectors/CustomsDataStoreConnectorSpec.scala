@@ -116,7 +116,7 @@ class CustomsDataStoreConnectorSpec
         )
       )
 
-      connector.getEoriHistory(testEori).futureValue mustEqual Some(expectedResponse)
+      connector.getEoriHistory(testEori).futureValue mustEqual expectedResponse
     }
 
     "must return a failed future when the server returns an error" in {
