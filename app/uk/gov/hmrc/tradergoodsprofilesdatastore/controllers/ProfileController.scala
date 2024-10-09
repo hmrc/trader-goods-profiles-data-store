@@ -21,10 +21,10 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
-import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
+import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConnector, RouterConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.ProfileRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{ProfileRepository, RecordsRepository, RecordsSummaryRepository}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -34,6 +34,9 @@ class ProfileController @Inject() (
   profileRepository: ProfileRepository,
   cc: ControllerComponents,
   routerConnector: RouterConnector,
+  customsDataStoreConnector: CustomsDataStoreConnector,
+  recordsRepository: RecordsRepository,
+  recordsSummaryRepository: RecordsSummaryRepository,
   config: DataStoreAppConfig,
   identify: IdentifierAction
 )(implicit ec: ExecutionContext)
@@ -68,13 +71,45 @@ class ProfileController @Inject() (
       }
   }
 
-  def doesProfileExist(eori: String): Action[AnyContent] = identify.async {
+  def doesProfileExist(eori: String): Action[AnyContent] = identify.async { implicit request =>
     profileRepository
       .get(eori)
-      .map {
-        case Some(_) => Ok
-        case None    => NotFound
+      .flatMap {
+        case Some(_) => Future.successful(Ok)
+        case None    =>
+          customsDataStoreConnector.getEoriHistory(eori).flatMap { eoriHistoryResponse =>
+            val filteredEoriHistory = eoriHistoryResponse.eoriHistory.filterNot(_.eori == eori)
+            if (filteredEoriHistory.isEmpty) {
+              Future.successful(NotFound)
+            } else {
+              val latestEoriResult = profileRepository.get(filteredEoriHistory.head.eori).flatMap {
+                case Some(historicProfile) =>
+                  for {
+                    updateResult <- profileRepository.updateEori(historicProfile.eori, eori)
+                    _            <- recordsRepository.deleteRecordsByEori(historicProfile.eori)
+                    _            <- recordsSummaryRepository.deleteByEori(historicProfile.eori)
+                  } yield updateResult
+                case None                  => Future.successful(false)
+              }
+
+              filteredEoriHistory.tail.map { historyItem =>
+                profileRepository.get(historyItem.eori).flatMap {
+                  case Some(historyProfile) =>
+                    for {
+                      _ <- profileRepository.deleteByEori(historyProfile.eori)
+                      _ <- recordsRepository.deleteRecordsByEori(historyProfile.eori)
+                      _ <- recordsSummaryRepository.deleteByEori(historyProfile.eori)
+                    } yield true
+                  case None                 => Future.successful(false)
+                }
+              }
+
+              latestEoriResult.flatMap {
+                case true => Future.successful(Ok)
+                case _    => Future.successful(NotFound)
+              }
+            }
+          }
       }
   }
-
 }

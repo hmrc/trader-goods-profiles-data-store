@@ -18,7 +18,10 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
+import org.mockito.ArgumentMatchersSugar.eqTo
+import org.mockito.Mockito.{times, verify, when}
+import org.mockito.MockitoSugar.reset
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
@@ -29,15 +32,16 @@ import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeIdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
-import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
+import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConnector, RouterConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.ProfileResponse
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.ProfileRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{EoriHistoricItem, EoriHistoryResponse, ProfileResponse}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{ProfileRepository, RecordsRepository, RecordsSummaryRepository}
 
+import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 
-class ProfileControllerSpec extends SpecBase with MockitoSugar {
+class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
 
@@ -59,9 +63,12 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
   private val validFakeGetRequest   = FakeRequest("GET", getUrl)
   private val validDoesExistRequest = FakeRequest("HEAD", doesExistUrl)
 
-  val mockRouterConnector   = mock[RouterConnector]
-  val mockProfileRepository = mock[ProfileRepository]
-  val dataStoreAppConfig    = mock[DataStoreAppConfig]
+  val mockRouterConnector: RouterConnector                    = mock[RouterConnector]
+  val mockCustomDataStoreConnector: CustomsDataStoreConnector = mock[CustomsDataStoreConnector]
+  val mockProfileRepository: ProfileRepository                = mock[ProfileRepository]
+  val mockRecordsRepository: RecordsRepository                = mock[RecordsRepository]
+  val mockRecordsSummaryRepository: RecordsSummaryRepository  = mock[RecordsSummaryRepository]
+  val dataStoreAppConfig: DataStoreAppConfig                  = mock[DataStoreAppConfig]
 
   private val expectedProfileResponse = ProfileResponse(
     eori = "1234567890",
@@ -70,6 +77,16 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
     nirmsNumber = Some("123456"),
     niphlNumber = Some("123456")
   )
+
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+
+    reset(mockRouterConnector)
+    reset(mockCustomDataStoreConnector)
+    reset(mockProfileRepository)
+    reset(mockRecordsRepository)
+    reset(mockRecordsSummaryRepository)
+  }
 
   s"PUT $setUrl" - {
 
@@ -190,35 +207,322 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar {
 
   s"HEAD $doesExistUrl" - {
 
-    "return 200 when profile exist" in {
-      when(mockProfileRepository.get(any())) thenReturn Future.successful(Some(expectedProfileResponse))
+    "return 200" - {
 
-      val application = applicationBuilder()
-        .overrides(
-          inject.bind[ProfileRepository].toInstance(mockProfileRepository)
-        )
-        .build()
+      "when initial profile exists" in {
+        when(mockProfileRepository.get(any())) thenReturn Future.successful(Some(expectedProfileResponse))
 
-      running(application) {
-        val result = route(application, validDoesExistRequest).value
-        status(result) shouldBe Status.OK
+        val application = applicationBuilder()
+          .overrides(
+            inject.bind[ProfileRepository].toInstance(mockProfileRepository)
+          )
+          .build()
+
+        running(application) {
+          val result = route(application, validDoesExistRequest).value
+          status(result) shouldBe Status.OK
+        }
+      }
+
+      "when initial profile does not exist" - {
+
+        "and historic eori data does exist and older historic profiles not found" in {
+          when(mockProfileRepository.get(eqTo(requestEori))) thenReturn Future.successful(None)
+          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())) thenReturn Future.successful(
+            EoriHistoryResponse(
+              Seq(
+                EoriHistoricItem(
+                  requestEori,
+                  Instant.parse("2024-04-20T00:00:00Z"),
+                  Instant.parse("2024-10-20T00:00:00Z")
+                ),
+                EoriHistoricItem(
+                  "previousEori",
+                  Instant.parse("2024-03-20T00:00:00Z"),
+                  Instant.parse("2024-10-20T00:00:00Z")
+                )
+              )
+            )
+          )
+
+          when(mockProfileRepository.updateEori(any(), any())) thenReturn Future.successful(true)
+          when(mockRecordsRepository.deleteRecordsByEori(any())) thenReturn Future.successful(1)
+          when(mockRecordsSummaryRepository.deleteByEori(any())) thenReturn Future.successful(1)
+
+          val historicEoriProfile = ProfileResponse(
+            eori = "previousEori",
+            actorId = "previousEori",
+            ukimsNumber = "XIUKIM47699357400020231115081800",
+            nirmsNumber = Some("RMS-GB-123456"),
+            niphlNumber = Some("6 S12345")
+          )
+
+          when(mockProfileRepository.get(eqTo("previousEori"))) thenReturn Future.successful(Some(historicEoriProfile))
+
+          val application = applicationBuilder()
+            .overrides(
+              inject.bind[ProfileRepository].toInstance(mockProfileRepository),
+              inject.bind[CustomsDataStoreConnector].toInstance(mockCustomDataStoreConnector),
+              inject.bind[RecordsRepository].toInstance(mockRecordsRepository),
+              inject.bind[RecordsSummaryRepository].toInstance(mockRecordsSummaryRepository)
+            )
+            .build()
+
+          running(application) {
+            val result = route(application, validDoesExistRequest).value
+            status(result) shouldBe Status.OK
+
+            withClue("must call update eori and delete records") {
+              verify(mockProfileRepository).updateEori(any, any)
+              verify(mockRecordsRepository).deleteRecordsByEori(any)
+              verify(mockRecordsSummaryRepository).deleteByEori(any)
+            }
+          }
+        }
+
+        "and historic eori data does exist and should delete older historic profiles" in {
+          when(mockProfileRepository.get(eqTo(requestEori))) thenReturn Future.successful(None)
+          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())) thenReturn Future.successful(
+            EoriHistoryResponse(
+              Seq(
+                EoriHistoricItem(
+                  requestEori,
+                  Instant.parse("2024-05-20T00:00:00Z"),
+                  Instant.parse("2024-10-20T00:00:00Z")
+                ),
+                EoriHistoricItem(
+                  "previousEori",
+                  Instant.parse("2024-04-20T00:00:00Z"),
+                  Instant.parse("2024-10-20T00:00:00Z")
+                ),
+                EoriHistoricItem(
+                  "eori2",
+                  Instant.parse("2024-03-20T00:00:00Z"),
+                  Instant.parse("2024-09-20T00:00:00Z")
+                )
+              )
+            )
+          )
+
+          val historicEoriProfile = ProfileResponse(
+            eori = "previousEori",
+            actorId = "previousEori",
+            ukimsNumber = "XIUKIM47699357400020231115081800",
+            nirmsNumber = Some("RMS-GB-123456"),
+            niphlNumber = Some("6 S12345")
+          )
+
+          when(mockProfileRepository.get(eqTo("previousEori"))) thenReturn Future.successful(Some(historicEoriProfile))
+          when(mockProfileRepository.updateEori(any(), any())) thenReturn Future.successful(true)
+          when(mockRecordsRepository.deleteRecordsByEori(eqTo("previousEori"))) thenReturn Future.successful(1)
+          when(mockRecordsSummaryRepository.deleteByEori(eqTo("previousEori"))) thenReturn Future.successful(1)
+
+          val olderHistoricEoriProfile = ProfileResponse(
+            eori = "eori2",
+            actorId = "eori2",
+            ukimsNumber = "XIUKIM47699357400020231115081800",
+            nirmsNumber = Some("RMS-GB-123456"),
+            niphlNumber = Some("6 S12345")
+          )
+
+          when(mockProfileRepository.get(eqTo("eori2"))) thenReturn Future.successful(Some(olderHistoricEoriProfile))
+          when(mockProfileRepository.deleteByEori(eqTo("eori2"))) thenReturn Future.successful(1)
+          when(mockRecordsRepository.deleteRecordsByEori(eqTo("eori2"))) thenReturn Future.successful(1)
+          when(mockRecordsSummaryRepository.deleteByEori(eqTo("eori2"))) thenReturn Future.successful(1)
+
+          val application = applicationBuilder()
+            .overrides(
+              inject.bind[ProfileRepository].toInstance(mockProfileRepository),
+              inject.bind[CustomsDataStoreConnector].toInstance(mockCustomDataStoreConnector),
+              inject.bind[RecordsRepository].toInstance(mockRecordsRepository),
+              inject.bind[RecordsSummaryRepository].toInstance(mockRecordsSummaryRepository)
+            )
+            .build()
+
+          running(application) {
+            val result = route(application, validDoesExistRequest).value
+            status(result) shouldBe Status.OK
+
+            withClue("must called delete records twice and delete eori profile once") {
+              verify(mockProfileRepository).updateEori(any, any)
+              verify(mockRecordsRepository, times(2)).deleteRecordsByEori(any)
+              verify(mockProfileRepository).deleteByEori(any)
+              verify(mockRecordsSummaryRepository, times(2)).deleteByEori(any)
+            }
+          }
+        }
+
+        "and historic eori data does exist and does not delete older historic profiles" in {
+          when(mockProfileRepository.get(eqTo(requestEori))) thenReturn Future.successful(None)
+          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())) thenReturn Future.successful(
+            EoriHistoryResponse(
+              Seq(
+                EoriHistoricItem(
+                  requestEori,
+                  Instant.parse("2024-05-20T00:00:00Z"),
+                  Instant.parse("2024-10-20T00:00:00Z")
+                ),
+                EoriHistoricItem(
+                  "previousEori",
+                  Instant.parse("2024-04-20T00:00:00Z"),
+                  Instant.parse("2024-10-20T00:00:00Z")
+                ),
+                EoriHistoricItem(
+                  "eori2",
+                  Instant.parse("2024-03-20T00:00:00Z"),
+                  Instant.parse("2024-09-20T00:00:00Z")
+                )
+              )
+            )
+          )
+
+          when(mockProfileRepository.updateEori(any(), any())) thenReturn Future.successful(true)
+          when(mockRecordsRepository.deleteRecordsByEori(eqTo("previousEori"))) thenReturn Future.successful(1)
+          when(mockRecordsSummaryRepository.deleteByEori(eqTo("previousEori"))) thenReturn Future.successful(1)
+
+          val historicEoriProfile = ProfileResponse(
+            eori = "previousEori",
+            actorId = "previousEori",
+            ukimsNumber = "XIUKIM47699357400020231115081800",
+            nirmsNumber = Some("RMS-GB-123456"),
+            niphlNumber = Some("6 S12345")
+          )
+
+          when(mockProfileRepository.get(eqTo("previousEori"))) thenReturn Future.successful(Some(historicEoriProfile))
+          when(mockProfileRepository.get(eqTo("eori2"))) thenReturn Future.successful(None)
+
+          val application = applicationBuilder()
+            .overrides(
+              inject.bind[ProfileRepository].toInstance(mockProfileRepository),
+              inject.bind[CustomsDataStoreConnector].toInstance(mockCustomDataStoreConnector),
+              inject.bind[RecordsRepository].toInstance(mockRecordsRepository),
+              inject.bind[RecordsSummaryRepository].toInstance(mockRecordsSummaryRepository)
+            )
+            .build()
+
+          running(application) {
+            val result = route(application, validDoesExistRequest).value
+            status(result) shouldBe Status.OK
+
+            withClue("must called delete records and delete eori profile once") {
+              verify(mockProfileRepository).updateEori(any, any)
+              verify(mockRecordsRepository).deleteRecordsByEori(any)
+              verify(mockRecordsSummaryRepository).deleteByEori(any)
+            }
+          }
+        }
       }
     }
 
-    "return 404 when profile does not exist" in {
-      when(mockProfileRepository.get(any())) thenReturn Future.successful(None)
+    "return 404" - {
+      "when initial profile does not exist" - {
 
-      val application = applicationBuilder()
-        .overrides(
-          inject.bind[ProfileRepository].toInstance(mockProfileRepository)
-        )
-        .build()
+        "and historic eori data does not exist" in {
+          when(mockProfileRepository.get(any())) thenReturn Future.successful(None)
+          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())) thenReturn Future.successful(
+            EoriHistoryResponse(
+              Seq(
+                EoriHistoricItem(
+                  requestEori,
+                  Instant.parse("2024-04-20T00:00:00Z"),
+                  Instant.parse("2024-10-20T00:00:00Z")
+                )
+              )
+            )
+          )
 
-      running(application) {
-        val result = route(application, validDoesExistRequest).value
-        status(result) shouldBe Status.NOT_FOUND
+          val application = applicationBuilder()
+            .overrides(
+              inject.bind[ProfileRepository].toInstance(mockProfileRepository),
+              inject.bind[CustomsDataStoreConnector].toInstance(mockCustomDataStoreConnector)
+            )
+            .build()
+
+          running(application) {
+            val result = route(application, validDoesExistRequest).value
+            status(result) shouldBe Status.NOT_FOUND
+          }
+        }
+
+        "and eori history does exist, but latest historical eori profile does not exist" in {
+          when(mockProfileRepository.get(eqTo(requestEori))) thenReturn Future.successful(None)
+          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())) thenReturn Future.successful(
+            EoriHistoryResponse(
+              Seq(
+                EoriHistoricItem(
+                  requestEori,
+                  Instant.parse("2024-04-20T00:00:00Z"),
+                  Instant.parse("2024-10-20T00:00:00Z")
+                ),
+                EoriHistoricItem(
+                  "previousEori",
+                  Instant.parse("2024-04-20T00:00:00Z"),
+                  Instant.parse("2024-10-20T00:00:00Z")
+                )
+              )
+            )
+          )
+
+          when(mockProfileRepository.get(eqTo("previousEori"))) thenReturn Future.successful(None)
+
+          val application = applicationBuilder()
+            .overrides(
+              inject.bind[ProfileRepository].toInstance(mockProfileRepository),
+              inject.bind[CustomsDataStoreConnector].toInstance(mockCustomDataStoreConnector)
+            )
+            .build()
+
+          running(application) {
+            val result = route(application, validDoesExistRequest).value
+            status(result) shouldBe Status.NOT_FOUND
+          }
+        }
+
+        "and updating historic eori with the new eori fails" in {
+          when(mockProfileRepository.get(eqTo(requestEori))) thenReturn Future.successful(None)
+          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())) thenReturn Future.successful(
+            EoriHistoryResponse(
+              Seq(
+                EoriHistoricItem(
+                  requestEori,
+                  Instant.parse("2024-04-20T00:00:00Z"),
+                  Instant.parse("2024-10-20T00:00:00Z")
+                ),
+                EoriHistoricItem(
+                  "previousEori",
+                  Instant.parse("2024-04-20T00:00:00Z"),
+                  Instant.parse("2024-10-20T00:00:00Z")
+                )
+              )
+            )
+          )
+
+          val historicEoriProfile = ProfileResponse(
+            eori = "previousEori",
+            actorId = "previousEori",
+            ukimsNumber = "XIUKIM47699357400020231115081800",
+            nirmsNumber = Some("RMS-GB-123456"),
+            niphlNumber = Some("6 S12345")
+          )
+
+          when(mockProfileRepository.get(eqTo("previousEori"))) thenReturn Future.successful(Some(historicEoriProfile))
+          when(mockProfileRepository.updateEori(any(), any())) thenReturn Future.successful(false)
+          when(mockRecordsRepository.deleteRecordsByEori(any())) thenReturn Future.successful(0)
+
+          val application = applicationBuilder()
+            .overrides(
+              inject.bind[ProfileRepository].toInstance(mockProfileRepository),
+              inject.bind[CustomsDataStoreConnector].toInstance(mockCustomDataStoreConnector),
+              inject.bind[RecordsRepository].toInstance(mockRecordsRepository)
+            )
+            .build()
+
+          running(application) {
+            val result = route(application, validDoesExistRequest).value
+            status(result) shouldBe Status.NOT_FOUND
+          }
+        }
       }
     }
-
   }
 }
