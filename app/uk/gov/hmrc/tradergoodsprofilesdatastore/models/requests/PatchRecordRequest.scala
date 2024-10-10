@@ -21,7 +21,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Assessment
 
 import java.time.Instant
 
-case class UpdateRecordRequest(
+case class PatchRecordRequest(
   actorId: String,
   traderRef: Option[String] = None,
   comcode: Option[String] = None,
@@ -35,6 +35,6 @@ case class UpdateRecordRequest(
   comcodeEffectiveToDate: Option[Instant] = None
 )
 
-object UpdateRecordRequest {
-  implicit val format: OFormat[UpdateRecordRequest] = Json.format[UpdateRecordRequest]
+object PatchRecordRequest {
+  implicit val format: OFormat[PatchRecordRequest] = Json.format[PatchRecordRequest]
 }

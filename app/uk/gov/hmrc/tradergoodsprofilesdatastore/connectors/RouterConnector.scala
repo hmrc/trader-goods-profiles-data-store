@@ -16,16 +16,16 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 
-import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
 import org.apache.pekko.Done
 import play.api.Configuration
-import play.api.http.Status.{ACCEPTED, BAD_REQUEST, CREATED, FORBIDDEN, NOT_FOUND, NO_CONTENT, OK}
+import play.api.http.Status._
 import play.api.libs.json.Json
 import sttp.model.Uri.UriContext
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps, UpstreamErrorResponse}
-import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.{AdviceRequest, CreateRecordRequest, ProfileRequest, UpdateRecordRequest, WithdrawReasonRequest}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, GoodsItemRecord}
 
 import javax.inject.Inject
@@ -181,13 +181,31 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
         }
       }
 
-  def updateRecord(
-    updateRecord: UpdateRecordRequest,
+  def patchRecord(
+    updateRecord: PatchRecordRequest,
     eori: String,
     recordId: String
   )(implicit hc: HeaderCarrier): Future[Boolean] =
     httpClient
       .patch(tgpGetOrUpdateRecordUrl(eori, recordId))
+      .setHeader(clientIdAndAcceptHeaders: _*)
+      .withBody(Json.toJson(updateRecord))
+      .execute[HttpResponse]
+      .flatMap { response =>
+        response.status match {
+          case OK        => Future.successful(true)
+          case NOT_FOUND => Future.successful(false)
+          case _         => Future.failed(UpstreamErrorResponse(response.body, response.status))
+        }
+      }
+
+  def putRecord(
+    updateRecord: PutRecordRequest,
+    eori: String,
+    recordId: String
+  )(implicit hc: HeaderCarrier): Future[Boolean] =
+    httpClient
+      .put(tgpGetOrUpdateRecordUrl(eori, recordId))
       .setHeader(clientIdAndAcceptHeaders: _*)
       .withBody(Json.toJson(updateRecord))
       .execute[HttpResponse]
