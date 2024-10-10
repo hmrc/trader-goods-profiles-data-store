@@ -199,6 +199,24 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
         }
       }
 
+  def putRecord(
+    updateRecord: PutRecordRequest,
+    eori: String,
+    recordId: String
+  )(implicit hc: HeaderCarrier): Future[Boolean] =
+    httpClient
+      .put(tgpGetOrUpdateRecordUrl(eori, recordId))
+      .setHeader(clientIdAndAcceptHeaders: _*)
+      .withBody(Json.toJson(updateRecord))
+      .execute[HttpResponse]
+      .flatMap { response =>
+        response.status match {
+          case OK        => Future.successful(true)
+          case NOT_FOUND => Future.successful(false)
+          case _         => Future.failed(UpstreamErrorResponse(response.body, response.status))
+        }
+      }
+
   def requestAdvice(eori: String, recordId: String, advice: AdviceRequest)(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
       .post(adviceUrl(eori, recordId))

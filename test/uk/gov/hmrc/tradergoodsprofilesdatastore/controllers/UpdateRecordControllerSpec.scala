@@ -61,6 +61,20 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
     traderRef = Some("updated-reference")
   )
 
+  val samplePutRecordRequest: PutRecordRequest = PutRecordRequest(
+    actorId = testEori,
+    traderRef = "BAN001001",
+    comcode = "10410100",
+    goodsDescription = "Organic bananas",
+    countryOfOrigin = "EC",
+    category = Some(3),
+    assessments = None,
+    supplementaryUnit = Some(500),
+    measurementUnit = Some("square meters(m^2)"),
+    comcodeEffectiveFromDate = Instant.parse("2024-10-12T16:12:34Z"),
+    comcodeEffectiveToDate = Some(Instant.parse("2024-10-12T16:12:34Z"))
+  )
+
   val sampleAssessment: Assessment = Assessment(
     assessmentId = Some("abc123"),
     primaryCategory = Some(1),
@@ -118,7 +132,37 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
 
         withClue("must call the relevant services with the correct details") {
           verify(mockRouterConnector)
-            .updateRecord(eqTo(sampleUpdateRequest), eqTo(testEori), eqTo(testRecordId))(any())
+            .patchRecord(eqTo(samplePatchRecordRequest), eqTo(testEori), eqTo(testRecordId))(any())
+        }
+      }
+    }
+  }
+
+  s"PUT $putRecordUrl" - {
+
+    "return 200 when record is successfully updated" in {
+
+      val mockRouterConnector = mock[RouterConnector]
+      when(
+        mockRouterConnector.putRecord(any(), any(), any())(any())
+      ) thenReturn Future.successful(true)
+
+      val application = applicationBuilder()
+        .overrides(
+          inject.bind[IdentifierAction].to[FakeIdentifierAction],
+          inject.bind[RouterConnector].toInstance(mockRouterConnector)
+        )
+        .build()
+      running(application) {
+        val request = validFakePutRecordRequest
+          .withHeaders("Content-Type" -> "application/json")
+          .withJsonBody(Json.toJson(samplePutRecordRequest))
+        val result  = route(application, request).value
+        status(result) shouldBe OK
+
+        withClue("must call the relevant services with the correct details") {
+          verify(mockRouterConnector)
+            .putRecord(eqTo(samplePutRecordRequest), eqTo(testEori), eqTo(testRecordId))(any())
         }
       }
     }

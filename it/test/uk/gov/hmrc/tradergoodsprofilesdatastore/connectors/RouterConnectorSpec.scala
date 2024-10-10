@@ -88,6 +88,20 @@ class RouterConnectorSpec
     updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
   )
 
+  private val putRecordRequest: PutRecordRequest = PutRecordRequest(
+    actorId = testEori,
+    traderRef = "BAN001001",
+    comcode = "10410100",
+    goodsDescription = "Organic bananas",
+    countryOfOrigin = "EC",
+    category = Some(3),
+    assessments = None,
+    supplementaryUnit = Some(500),
+    measurementUnit = Some("square meters(m^2)"),
+    comcodeEffectiveFromDate = Instant.parse("2024-10-12T16:12:34Z"),
+    comcodeEffectiveToDate = Some(Instant.parse("2024-10-12T16:12:34Z"))
+  )
+
   ".createTraderProfile" - {
 
     "must submit a trader profile" in {
@@ -424,6 +438,45 @@ class RouterConnectorSpec
       )
 
       connector.patchRecord(updateRecord, testEori, recordId).failed.futureValue
+    }
+  }
+
+  ".putRecord" - {
+
+    "must update a record in B&T database" in {
+
+      wireMockServer.stubFor(
+        put(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
+          .willReturn(ok())
+      )
+
+      connector.putRecord(putRecordRequest, testEori, recordId).futureValue mustBe true
+    }
+
+    "must return false when not found" in {
+
+      wireMockServer.stubFor(
+        put(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
+          .willReturn(notFound())
+      )
+
+      connector.putRecord(putRecordRequest, testEori, recordId).futureValue mustBe false
+    }
+
+    "must return a failed future when the server returns an error" in {
+
+      wireMockServer.stubFor(
+        put(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
+          .willReturn(serverError())
+      )
+
+      connector.putRecord(putRecordRequest, testEori, recordId).failed.futureValue
     }
   }
 

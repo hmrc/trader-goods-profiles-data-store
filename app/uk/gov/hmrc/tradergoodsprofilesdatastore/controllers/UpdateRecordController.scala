@@ -39,4 +39,12 @@ class UpdateRecordController @Inject() (
         case false => NotFound
       }
     }
+
+  def putRecord(eori: String, recordId: String): Action[PutRecordRequest] =
+    identify.async(parse.json[PutRecordRequest]) { implicit request =>
+      routerConnector.putRecord(request.body, eori, recordId).map {
+        case true  => Ok
+        case false => NotFound
+      }
+    }
 }
