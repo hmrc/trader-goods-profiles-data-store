@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 
-import com.github.tomakehurst.wiremock.client.WireMock.{ok, _}
+import com.github.tomakehurst.wiremock.client.WireMock._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -29,7 +29,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeRetireFileAction, FakeStoreLatestAction}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{RetireFileAction, StoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.{AdviceRequest, CreateRecordRequest, ProfileRequest, UpdateRecordRequest, WithdrawReasonRequest}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, GoodsItemRecord, Pagination}
 
 import java.time.Instant
@@ -382,11 +382,11 @@ class RouterConnectorSpec
     }
   }
 
-  ".updateRecord" - {
+  ".patchRecord" - {
 
     "must update a record in B&T database" in {
 
-      val updateRecord = UpdateRecordRequest(testEori, Some("updated-trader-ref"))
+      val updateRecord = PatchRecordRequest(testEori, Some("updated-trader-ref"))
 
       wireMockServer.stubFor(
         patch(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId"))
@@ -395,12 +395,12 @@ class RouterConnectorSpec
           .willReturn(ok())
       )
 
-      connector.updateRecord(updateRecord, testEori, recordId).futureValue mustBe true
+      connector.patchRecord(updateRecord, testEori, recordId).futureValue mustBe true
     }
 
     "must return false when not found" in {
 
-      val updateRecord = UpdateRecordRequest(testEori, Some("updated-trader-ref"))
+      val updateRecord = PatchRecordRequest(testEori, Some("updated-trader-ref"))
 
       wireMockServer.stubFor(
         patch(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId"))
@@ -409,12 +409,12 @@ class RouterConnectorSpec
           .willReturn(notFound())
       )
 
-      connector.updateRecord(updateRecord, testEori, recordId).futureValue mustBe false
+      connector.patchRecord(updateRecord, testEori, recordId).futureValue mustBe false
     }
 
     "must return a failed future when the server returns an error" in {
 
-      val updateRecord = UpdateRecordRequest(testEori, Some("updated-trader-ref"))
+      val updateRecord = PatchRecordRequest(testEori, Some("updated-trader-ref"))
 
       wireMockServer.stubFor(
         patch(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId"))
@@ -423,7 +423,7 @@ class RouterConnectorSpec
           .willReturn(serverError())
       )
 
-      connector.updateRecord(updateRecord, testEori, recordId).failed.futureValue
+      connector.patchRecord(updateRecord, testEori, recordId).failed.futureValue
     }
   }
 

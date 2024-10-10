@@ -20,7 +20,7 @@ import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.UpdateRecordRequest
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.{PatchRecordRequest, PutRecordRequest}
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
@@ -32,9 +32,9 @@ class UpdateRecordController @Inject() (
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
-  def updateRecord(eori: String, recordId: String): Action[UpdateRecordRequest] =
-    identify.async(parse.json[UpdateRecordRequest]) { implicit request =>
-      routerConnector.updateRecord(request.body, eori, recordId).map {
+  def patchRecord(eori: String, recordId: String): Action[PatchRecordRequest] =
+    identify.async(parse.json[PatchRecordRequest]) { implicit request =>
+      routerConnector.patchRecord(request.body, eori, recordId).map {
         case true  => Ok
         case false => NotFound
       }

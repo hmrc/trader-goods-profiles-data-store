@@ -30,7 +30,7 @@ import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeRetireFileAction, FakeStoreLatestAction}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{RetireFileAction, StoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.UpdateRecordRequest
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.PatchRecordRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GoodsItemRecord}
 
 import java.time.Instant
@@ -62,7 +62,7 @@ class RecordsRepositorySpec
 
   private val testrecordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f"
 
-  val sampleUpdateRequest: UpdateRecordRequest = UpdateRecordRequest(
+  val sampleUpdateRequest: PatchRecordRequest = PatchRecordRequest(
     actorId = "GB098765432112",
     traderRef = Some("updated-reference")
   )

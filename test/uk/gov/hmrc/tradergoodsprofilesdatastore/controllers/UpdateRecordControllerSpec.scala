@@ -28,7 +28,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeIdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.UpdateRecordRequest
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.{PatchRecordRequest, PutRecordRequest}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GoodsItemRecord}
 
 import java.time.Instant
@@ -41,18 +41,22 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
   val testEori             = "GB123456789099"
   private val testRecordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f"
 
-  private val updateUrl = routes.UpdateRecordController.updateRecord(testEori, testRecordId).url
+  private val patchRecordUrl = routes.UpdateRecordController.patchRecord(testEori, testRecordId).url
 
-  private val validFakeUpdateRequest = FakeRequest("PATCH", updateUrl)
+  private val putRecordUrl = routes.UpdateRecordController.putRecord(testEori, testRecordId).url
 
-  val sampleCondition: Condition               = Condition(
+  private val validFakeUpdateRequest = FakeRequest("PATCH", patchRecordUrl)
+
+  private val validFakePutRecordRequest = FakeRequest("PUT", putRecordUrl)
+
+  val sampleCondition: Condition                   = Condition(
     `type` = Some("abc123"),
     conditionId = Some("Y923"),
     conditionDescription =
       Some("Products not considered as waste according to Regulation (EC) No 1013/2006 as retained in UK law"),
     conditionTraderText = Some("Excluded product")
   )
-  val sampleUpdateRequest: UpdateRecordRequest = UpdateRecordRequest(
+  val samplePatchRecordRequest: PatchRecordRequest = PatchRecordRequest(
     actorId = "GB098765432112",
     traderRef = Some("updated-reference")
   )
@@ -90,13 +94,13 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
     updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
   )
 
-  s"PATCH $updateUrl" - {
+  s"PATCH $patchRecordUrl" - {
 
     "return 200 when record is successfully updated" in {
 
       val mockRouterConnector = mock[RouterConnector]
       when(
-        mockRouterConnector.updateRecord(any(), any(), any())(any())
+        mockRouterConnector.patchRecord(any(), any(), any())(any())
       ) thenReturn Future.successful(true)
 
       val application = applicationBuilder()
@@ -108,7 +112,7 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
       running(application) {
         val request = validFakeUpdateRequest
           .withHeaders("Content-Type" -> "application/json")
-          .withJsonBody(Json.toJson(sampleUpdateRequest))
+          .withJsonBody(Json.toJson(samplePatchRecordRequest))
         val result  = route(application, request).value
         status(result) shouldBe OK
 
