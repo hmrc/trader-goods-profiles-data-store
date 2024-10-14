@@ -21,8 +21,8 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, StoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{buildPagination, startingPage}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.buildPagination
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
 import javax.inject.Inject
@@ -41,7 +41,7 @@ class GetRecordsController @Inject() (
     eori: String,
     pageOpt: Option[Int],
     sizeOpt: Option[Int]
-  ): Action[AnyContent] = (identify andThen storeLatest).async { implicit request =>
+  ): Action[AnyContent] = (identify andThen storeLatest).async {
     recordsRepository.getCount(eori).flatMap { totalRecords =>
       recordsRepository.getMany(eori, pageOpt, sizeOpt).map { records =>
         val getRecordsResponse =

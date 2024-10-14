@@ -47,6 +47,7 @@ class EmailConnector @Inject() (config: Configuration, httpClient: HttpClientV2)
       .map(response =>
         response.status match {
           case ACCEPTED => Done
+          case _        => Done
         }
       )
 }

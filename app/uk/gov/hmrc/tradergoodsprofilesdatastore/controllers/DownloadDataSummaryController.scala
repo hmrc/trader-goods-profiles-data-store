@@ -48,14 +48,13 @@ class DownloadDataSummaryController @Inject() (
     with Logging {
 
   def getDownloadDataSummary(eori: String): Action[AnyContent] = (identify andThen retireFile).async {
-    implicit request =>
-      downloadDataSummaryRepository
-        .get(eori)
-        .map {
-          case Some(summary) =>
-            Ok(Json.toJson(summary))
-          case _             => NotFound
-        }
+    downloadDataSummaryRepository
+      .get(eori)
+      .map {
+        case Some(summary) =>
+          Ok(Json.toJson(summary))
+        case _             => NotFound
+      }
   }
 
   def submitNotification(): Action[DownloadDataNotification] =

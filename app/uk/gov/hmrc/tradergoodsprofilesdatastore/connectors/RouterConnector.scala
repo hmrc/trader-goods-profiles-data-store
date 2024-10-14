@@ -20,6 +20,7 @@ import org.apache.pekko.Done
 import play.api.Configuration
 import play.api.http.Status._
 import play.api.libs.json.Json
+import sttp.model.Uri
 import sttp.model.Uri.UriContext
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -44,7 +45,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
     lastUpdatedDate: Option[String] = None,
     page: Option[Int] = None,
     size: Option[Int] = None
-  ) =
+  ): Uri =
     uri"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records?lastUpdatedDate=$lastUpdatedDate&page=$page&size=$size"
 
   private def tgpDeleteRecordUrl(

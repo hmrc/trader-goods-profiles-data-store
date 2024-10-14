@@ -20,8 +20,8 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, StoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{buildPagination, localPageSize, localStartingPage}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{buildPagination, localPageSize, localStartingPage}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
 import javax.inject.Inject
@@ -43,7 +43,7 @@ class FilterRecordsController @Inject() (
     pageOpt: Option[Int],
     sizeOpt: Option[Int]
   ): Action[AnyContent] =
-    (identify andThen storeLatest).async { implicit request =>
+    (identify andThen storeLatest).async {
       val validFields  = Set("traderRef", "goodsDescription", "comcode")
       val isExactMatch = exactMatch.getOrElse(true)
 

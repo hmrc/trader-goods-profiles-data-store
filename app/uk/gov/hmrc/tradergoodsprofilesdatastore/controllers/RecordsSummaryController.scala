@@ -32,7 +32,7 @@ class RecordsSummaryController @Inject() (
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
-  def recordsSummary(eori: String): Action[AnyContent] = identify.async { implicit request =>
+  def recordsSummary(eori: String): Action[AnyContent] = identify.async {
     recordsSummaryRepository
       .get(eori)
       .map {

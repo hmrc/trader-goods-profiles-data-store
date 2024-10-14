@@ -17,11 +17,7 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions
 
 import play.api.Logging
-
-import javax.inject.Inject
 import play.api.mvc.{ActionFilter, Result}
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.RequestFile
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.IdentifierRequest
@@ -29,6 +25,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummary
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.math.Ordering.Implicits.infixOrderingOps
 
@@ -40,8 +37,7 @@ class RetireFileActionImpl @Inject() (downloadDataSummaryRepository: DownloadDat
   override protected def filter[A](
     identifierRequest: IdentifierRequest[A]
   ): Future[Option[Result]] = {
-    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(identifierRequest)
-    val newSummary                 = DownloadDataSummary(identifierRequest.eori, RequestFile, None)
+    val newSummary = DownloadDataSummary(identifierRequest.eori, RequestFile, None)
 
     downloadDataSummaryRepository.get(identifierRequest.eori).flatMap {
       case Some(downloadDataSummary) =>

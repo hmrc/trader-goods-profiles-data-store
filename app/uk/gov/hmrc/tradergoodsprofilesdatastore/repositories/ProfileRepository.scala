@@ -20,7 +20,6 @@ import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
-import uk.gov.hmrc.play.http.logging.Mdc
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.ProfileResponse
 
