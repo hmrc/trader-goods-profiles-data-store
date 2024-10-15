@@ -116,7 +116,17 @@ class CustomsDataStoreConnectorSpec
         )
       )
 
-      connector.getEoriHistory(testEori).futureValue mustEqual expectedResponse
+      connector.getEoriHistory(testEori).futureValue mustEqual Some(expectedResponse)
+    }
+
+    "must return None if not found" in {
+
+      wireMockServer.stubFor(
+        get(urlEqualTo(s"/customs-data-store/eori/$testEori/eori-history"))
+          .willReturn(notFound())
+      )
+
+      connector.getEmail(testEori).futureValue mustEqual None
     }
 
     "must return a failed future when the server returns an error" in {
