@@ -42,9 +42,9 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
 
   private def tgpRecordsUri(
     eori: String,
-    lastUpdatedDate: Option[String] = None,
-    page: Option[Int] = None,
-    size: Option[Int] = None
+    lastUpdatedDate: Option[String],
+    page: Option[Int],
+    size: Option[Int]
   ): Uri =
     uri"$baseUrlRouter/trader-goods-profiles-router/traders/$eori/records?lastUpdatedDate=$lastUpdatedDate&page=$page&size=$size"
 
