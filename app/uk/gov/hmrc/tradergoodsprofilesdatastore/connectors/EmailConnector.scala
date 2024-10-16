@@ -22,7 +22,7 @@ import play.api.http.Status.ACCEPTED
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps, UpstreamErrorResponse}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.email.{DownloadRecordEmailParameters, DownloadRecordEmailRequest}
 
@@ -44,9 +44,10 @@ class EmailConnector @Inject() (config: Configuration, httpClient: HttpClientV2)
       .post(sendEmailUrl)
       .withBody(Json.toJson(DownloadRecordEmailRequest(Seq(to), downloadRecordEmailParameters)))
       .execute[HttpResponse]
-      .map(response =>
+      .flatMap { response =>
         response.status match {
-          case ACCEPTED => Done
+          case ACCEPTED => Future.successful(Done)
+          case _        => Future.failed(UpstreamErrorResponse(response.body, response.status))
         }
-      )
+      }
 }

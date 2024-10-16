@@ -60,6 +60,8 @@ class AuthenticatedIdentifierAction @Inject() (
               block(IdentifierRequest(request, internalId, enrolment.value, affinityGroup))
             case _                                           => throw InsufficientEnrolments("Unable to retrieve Enrolment")
           }
+        case _                                                             =>
+          throw InsufficientEnrolments("Unable to retrieve Enrolment")
       } recover { case _: AuthorisationException =>
       logger.info("Authorisation failure: No enrolments found for TGP.")
       Unauthorized

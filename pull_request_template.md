@@ -1,6 +1,7 @@
 # Checklist for developers before reviewing
 - [ ] I have merged in main
 - [ ] I have assigned the PR to me
+- [ ] I ran the code with a clean compile test and ensured there are no warnings or deprecations
 - [ ] I have run `sbt prePR` to run all tests, format and check the code coverage
 - [ ] I have written unit tests to cover any code that I wrote, where necessary
 - [ ] I have linked tickets to any TODOs I have written
