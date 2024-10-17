@@ -262,6 +262,31 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       captor.getValue.fileInfo.get.fileSize mustEqual fileSize
       captor.getValue.fileInfo.get.retentionDays mustEqual retentionDaysMetaData.value
     }
+
+    "return error if retention days not found" in {
+
+      lazy val submitNotificationUrl = routes.DownloadDataSummaryController
+        .submitNotification()
+        .url
+
+      val fileName         = "fileName"
+      val fileSize         = 600
+      val filetypeMetaData = Metadata("FILETYPE", "csv")
+
+      val notification =
+        DownloadDataNotification(testEori, fileName, fileSize, Seq(filetypeMetaData))
+
+      lazy val validFakePostRequest = FakeRequest("POST", submitNotificationUrl)
+        .withJsonBody(Json.toJson(notification))
+
+      val application = applicationBuilder()
+        .build()
+      running(application) {
+        intercept[RuntimeException] {
+          await(route(application, validFakePostRequest).value)
+        }
+      }
+    }
   }
 
   "requestDownloadData" - {

@@ -17,10 +17,9 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import play.api.Logging
-import play.api.libs.json.JsResult.Exception
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConnector, EmailConnector, RouterConnector, SecureDataExchangeProxyConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, RetireFilesAction}
@@ -33,13 +32,6 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.DateTimeFormats.dateTimeFo
 
 import java.time.temporal.ChronoUnit
 import java.time.{Instant, ZoneOffset}
-import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
-import org.apache.pekko.Done
-import play.api.i18n.MessagesApi
-import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import uk.gov.hmrc.http._
-
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
