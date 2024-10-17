@@ -77,38 +77,40 @@ class ProfileController @Inject() (
       .flatMap {
         case Some(_) => Future.successful(Ok)
         case None    =>
-          customsDataStoreConnector.getEoriHistory(eori).flatMap { eoriHistoryResponse =>
-            val filteredEoriHistory = eoriHistoryResponse.eoriHistory.filterNot(_.eori == eori)
-            if (filteredEoriHistory.isEmpty) {
-              Future.successful(NotFound)
-            } else {
-              val latestEoriResult = profileRepository.get(filteredEoriHistory.head.eori).flatMap {
-                case Some(historicProfile) =>
-                  for {
-                    updateResult <- profileRepository.updateEori(historicProfile.eori, eori)
-                    _            <- recordsRepository.deleteRecordsByEori(historicProfile.eori)
-                    _            <- recordsSummaryRepository.deleteByEori(historicProfile.eori)
-                  } yield updateResult
-                case None                  => Future.successful(false)
-              }
-
-              filteredEoriHistory.tail.map { historyItem =>
-                profileRepository.get(historyItem.eori).flatMap {
-                  case Some(historyProfile) =>
+          customsDataStoreConnector.getEoriHistory(eori).flatMap {
+            case Some(eoriHistoryResponse) =>
+              val filteredEoriHistory = eoriHistoryResponse.eoriHistory.filterNot(_.eori == eori)
+              if (filteredEoriHistory.isEmpty) {
+                Future.successful(NotFound)
+              } else {
+                val latestEoriResult = profileRepository.get(filteredEoriHistory.head.eori).flatMap {
+                  case Some(historicProfile) =>
                     for {
-                      _ <- profileRepository.deleteByEori(historyProfile.eori)
-                      _ <- recordsRepository.deleteRecordsByEori(historyProfile.eori)
-                      _ <- recordsSummaryRepository.deleteByEori(historyProfile.eori)
-                    } yield true
-                  case None                 => Future.successful(false)
+                      updateResult <- profileRepository.updateEori(historicProfile.eori, eori)
+                      _            <- recordsRepository.deleteRecordsByEori(historicProfile.eori)
+                      _            <- recordsSummaryRepository.deleteByEori(historicProfile.eori)
+                    } yield updateResult
+                  case None                  => Future.successful(false)
+                }
+
+                filteredEoriHistory.tail.map { historyItem =>
+                  profileRepository.get(historyItem.eori).flatMap {
+                    case Some(historyProfile) =>
+                      for {
+                        _ <- profileRepository.deleteByEori(historyProfile.eori)
+                        _ <- recordsRepository.deleteRecordsByEori(historyProfile.eori)
+                        _ <- recordsSummaryRepository.deleteByEori(historyProfile.eori)
+                      } yield true
+                    case None                 => Future.successful(false)
+                  }
+                }
+
+                latestEoriResult.flatMap {
+                  case true => Future.successful(Ok)
+                  case _    => Future.successful(NotFound)
                 }
               }
-
-              latestEoriResult.flatMap {
-                case true => Future.successful(Ok)
-                case _    => Future.successful(NotFound)
-              }
-            }
+            case None                      => Future.successful(NotFound)
           }
       }
   }

@@ -55,14 +55,15 @@ class CustomsDataStoreConnector @Inject() (config: Configuration, httpClient: Ht
 
   def getEoriHistory(
     eori: String
-  )(implicit hc: HeaderCarrier): Future[EoriHistoryResponse] =
+  )(implicit hc: HeaderCarrier): Future[Option[EoriHistoryResponse]] =
     httpClient
       .get(eoriHistoryUrl(eori))
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
-          case OK => Future.successful(response.json.as[EoriHistoryResponse])
-          case _  => Future.failed(UpstreamErrorResponse(response.body, response.status))
+          case OK        => Future.successful(Some(response.json.as[EoriHistoryResponse]))
+          case NOT_FOUND => Future.successful(None)
+          case _         => Future.failed(UpstreamErrorResponse(response.body, response.status))
         }
       }
 }
