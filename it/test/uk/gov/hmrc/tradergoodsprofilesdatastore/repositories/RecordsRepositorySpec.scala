@@ -28,8 +28,8 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
-import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeRetireFileAction, FakeStoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{RetireFileAction, StoreLatestAction}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeRetireFilesAction, FakeStoreLatestAction}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{RetireFilesAction, StoreLatestAction}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.PatchRecordRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GoodsItemRecord}
 
@@ -221,7 +221,7 @@ class RecordsRepositorySpec
     .overrides(
       bind[MongoComponent].to(mongoComponent),
       bind[StoreLatestAction].to[FakeStoreLatestAction],
-      bind[RetireFileAction].to[FakeRetireFileAction]
+      bind[RetireFilesAction].to[FakeRetireFilesAction]
     )
     .build()
 

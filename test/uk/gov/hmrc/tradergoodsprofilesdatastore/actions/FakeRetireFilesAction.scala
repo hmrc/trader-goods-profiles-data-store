@@ -17,13 +17,13 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.actions
 
 import play.api.mvc._
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.RetireFileAction
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.RetireFilesAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.IdentifierRequest
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class FakeRetireFileAction @Inject() extends RetireFileAction {
+class FakeRetireFilesAction @Inject() extends RetireFilesAction {
   override def filter[A](
     identifierRequest: IdentifierRequest[A]
   ): Future[Option[Result]]                                 = Future.successful(None)
