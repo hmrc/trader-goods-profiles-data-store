@@ -22,6 +22,7 @@ import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.play.http.logging.Mdc
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.FileInProgress
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
 
 import javax.inject.{Inject, Singleton}
@@ -37,31 +38,59 @@ class DownloadDataSummaryRepository @Inject() (
       domainFormat = DownloadDataSummary.format,
       indexes = Seq(
         IndexModel(
-          Indexes.ascending("eori"),
+          Indexes.compoundIndex(
+            Indexes.ascending("eori"),
+            Indexes.ascending("_id")
+          ),
           IndexOptions()
-            .name("eori_idx")
-            .unique(true)
+            .name("eori_summaryId_idx")
         )
       )
     ) {
 
-  private def byEori(eori: String): Bson      = Filters.equal("eori", eori)
+  private def byEori(eori: String): Bson = Filters.equal("eori", eori)
+
+  private def byEoriAndSummaryIds(eori: String, summaryIds: Seq[String]): Bson =
+    Filters.and(Filters.equal("eori", eori), Filters.in("_id", summaryIds: _*))
+
+  private def byEoriAndSummaryId(eori: String, summaryId: String): Bson =
+    Filters.and(Filters.equal("eori", eori), Filters.and(Filters.equal("_id", summaryId)))
+
+  private def byLatest: Bson = Sorts.descending("createdAt")
+
+  private def byEoriAndFileInProgress(eori: String): Bson =
+    Filters.and(Filters.equal("eori", eori), Filters.equal("status", FileInProgress.toString))
+
   override lazy val requiresTtlIndex: Boolean = false
 
-  def get(eori: String): Future[Option[DownloadDataSummary]] = Mdc.preservingMdc {
+  def get(eori: String): Future[Seq[DownloadDataSummary]] = Mdc.preservingMdc {
     collection
       .find[DownloadDataSummary](byEori(eori))
+      .toFuture()
+  }
+
+  def getLatestInProgress(eori: String): Future[Option[DownloadDataSummary]] = Mdc.preservingMdc {
+    collection
+      .find[DownloadDataSummary](byEoriAndFileInProgress(eori))
+      .sort(byLatest)
       .headOption()
   }
 
   def set(downloadDataSummary: DownloadDataSummary): Future[Done] = Mdc.preservingMdc {
     collection
       .replaceOne(
-        filter = byEori(downloadDataSummary.eori),
+        filter = byEoriAndSummaryId(downloadDataSummary.eori, downloadDataSummary.summaryId),
         replacement = downloadDataSummary,
         options = ReplaceOptions().upsert(true)
       )
       .toFuture()
       .map(_ => Done)
+  }
+
+  def deleteMany(eori: String, summaryIds: Seq[String]): Future[Long] = Mdc.preservingMdc {
+    collection
+      .deleteMany(byEoriAndSummaryIds(eori, summaryIds))
+      .toFuture()
+      .map(_.getDeletedCount)
   }
 }

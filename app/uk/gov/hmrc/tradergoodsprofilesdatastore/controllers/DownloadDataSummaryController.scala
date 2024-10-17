@@ -21,8 +21,8 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConnector, EmailConnector, RouterConnector, SecureDataExchangeProxyConnector}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, RetireFileAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadySeen, FileReadyUnseen}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, RetireFilesAction}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.email.DownloadRecordEmailParameters
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.DownloadDataNotification
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataSummary, FileInfo}
@@ -42,58 +42,52 @@ class DownloadDataSummaryController @Inject() (
   emailConnector: EmailConnector,
   cc: ControllerComponents,
   identify: IdentifierAction,
-  retireFile: RetireFileAction
+  retireFiles: RetireFilesAction
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
     with Logging {
 
-  def getDownloadDataSummary(eori: String): Action[AnyContent] = (identify andThen retireFile).async {
+  def getDownloadDataSummaries(eori: String): Action[AnyContent] = (identify andThen retireFiles).async {
     downloadDataSummaryRepository
       .get(eori)
-      .map {
-        case Some(summary) =>
-          Ok(Json.toJson(summary))
-        case _             => NotFound
-      }
+      .map(summaries => Ok(Json.toJson(summaries)))
   }
 
   def submitNotification(): Action[DownloadDataNotification] =
     Action.async(parse.json[DownloadDataNotification]) { implicit request =>
       val notification  = request.body
-      //TODO determine when to send email in english or welsh (default is english)
+      //TODO determine when to send email in english or welsh (default is english) TGP-2654
       val isWelsh       = false
       val retentionDays = notification.metadata.find(x => x.metadata == "RETENTION_DAYS") match {
         case Some(metadata) => metadata.value
         case None           => "30"
       }
-      val summary       = DownloadDataSummary(
-        notification.eori,
-        FileReadyUnseen,
-        Some(FileInfo(notification.fileName, notification.fileSize, Instant.now, retentionDays))
-      )
-      downloadDataSummaryRepository
-        .set(summary)
-        .flatMap { _ =>
-          customsDataStoreConnector.getEmail(request.body.eori).flatMap {
-            case Some(email) =>
-              emailConnector
-                .sendDownloadRecordEmail(
-                  email.address,
-                  DownloadRecordEmailParameters(
-                    convertToDateString(Instant.now.plus(retentionDays.toInt, ChronoUnit.DAYS), isWelsh)
-                  )
-                )
-                .map { _ =>
-                  NoContent
-                }
-            case None        =>
-              logger.error(s"Unable to find the email for EORI: ${request.body.eori}")
-              Future.successful(NotFound)
-          }
-        }
+      (for {
+        Some(downloadDataSummary) <- downloadDataSummaryRepository.getLatestInProgress(notification.eori)
+        newSummary                <- Future.successful(
+                                       DownloadDataSummary(
+                                         downloadDataSummary.summaryId,
+                                         notification.eori,
+                                         FileReadyUnseen,
+                                         downloadDataSummary.createdAt,
+                                         Some(FileInfo(notification.fileName, notification.fileSize, Instant.now, retentionDays))
+                                       )
+                                     )
+        _                         <- downloadDataSummaryRepository.set(newSummary)
+        Some(email)               <- customsDataStoreConnector.getEmail(request.body.eori)
+        _                         <- emailConnector
+                                       .sendDownloadRecordEmail(
+                                         email.address,
+                                         DownloadRecordEmailParameters(
+                                           convertToDateString(Instant.now.plus(retentionDays.toInt, ChronoUnit.DAYS), isWelsh)
+                                         )
+                                       )
+      } yield NoContent).recover { case _ =>
+        NotFound
+      }
     }
 
-  def convertToDateString(instant: Instant, isWelsh: Boolean): String =
+  private def convertToDateString(instant: Instant, isWelsh: Boolean): String =
     instant
       .atZone(ZoneOffset.UTC)
       .toLocalDate
@@ -103,41 +97,14 @@ class DownloadDataSummaryController @Inject() (
   def requestDownloadData(eori: String): Action[AnyContent] = identify.async { implicit request =>
     routerConnector.getRequestDownloadData(eori).flatMap { _ =>
       downloadDataSummaryRepository
-        .set(DownloadDataSummary(eori, FileInProgress, None))
+        .set(DownloadDataSummary(java.util.UUID.randomUUID().toString, eori, FileInProgress, Instant.now, None))
         .map(_ => Accepted)
     }
   }
 
-  def getDownloadData(eori: String): Action[AnyContent] = (identify andThen retireFile).async { implicit request =>
-    downloadDataSummaryRepository
-      .get(eori)
-      .flatMap {
-        case Some(summary) if summary.status == FileReadyUnseen || summary.status == FileReadySeen =>
-          summary.fileInfo match {
-            case Some(info) =>
-              secureDataExchangeProxyConnector.getFilesAvailableUrl(eori).flatMap { downloadDatas =>
-                downloadDatas.find(downloadData =>
-                  downloadData.filesize == info.fileSize && downloadData.filename == info.fileName && downloadData.metadata
-                    .find(metadataObject => metadataObject.metadata == "RETENTION_DAYS")
-                    .get
-                    .value == info.retentionDays
-                ) match {
-                  case Some(downloadData) =>
-                    summary.status match {
-                      case FileReadyUnseen =>
-                        downloadDataSummaryRepository
-                          .set(DownloadDataSummary(request.eori, FileReadySeen, summary.fileInfo))
-                          .map { _ =>
-                            Ok(Json.toJson(downloadData))
-                          }
-                      case _               => Future.successful(Ok(Json.toJson(downloadData)))
-                    }
-                  case None               => Future.successful(NotFound)
-                }
-              }
-            case _          => Future.successful(NotFound)
-          }
-        case _                                                                                     => Future.successful(NotFound)
-      }
+  def getDownloadData(eori: String): Action[AnyContent] = (identify andThen retireFiles).async { implicit request =>
+    secureDataExchangeProxyConnector.getFilesAvailableUrl(eori).map { downloadDatas =>
+      Ok(Json.toJson(downloadDatas))
+    }
   }
 }

@@ -18,8 +18,6 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions
 
 import play.api.Logging
 import play.api.mvc.{ActionFilter, Result}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.RequestFile
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.IdentifierRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummaryRepository
 
@@ -29,26 +27,29 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.math.Ordering.Implicits.infixOrderingOps
 
-class RetireFileActionImpl @Inject() (downloadDataSummaryRepository: DownloadDataSummaryRepository)(implicit
+class RetireFilesActionImpl @Inject() (downloadDataSummaryRepository: DownloadDataSummaryRepository)(implicit
   val executionContext: ExecutionContext
-) extends RetireFileAction
+) extends RetireFilesAction
     with Logging {
 
   override protected def filter[A](
     identifierRequest: IdentifierRequest[A]
-  ): Future[Option[Result]] = {
-    val newSummary = DownloadDataSummary(identifierRequest.eori, RequestFile, None)
-
-    downloadDataSummaryRepository.get(identifierRequest.eori).flatMap {
-      case Some(downloadDataSummary) =>
-        downloadDataSummary.fileInfo match {
-          case Some(info) if info.fileCreated < Instant.now.minus(info.retentionDays.toInt, ChronoUnit.DAYS) =>
-            downloadDataSummaryRepository.set(newSummary).map(_ => None)
-          case _                                                                                             => Future.successful(None)
+  ): Future[Option[Result]] =
+    downloadDataSummaryRepository.get(identifierRequest.eori).flatMap { downloadDataSummaries =>
+      val summaryIdsToRemove = downloadDataSummaries
+        .filter { downloadDataSummary =>
+          downloadDataSummary.fileInfo match {
+            case Some(info) if info.fileCreated < Instant.now.minus(info.retentionDays.toInt, ChronoUnit.DAYS) =>
+              true
+            case _                                                                                             => false
+          }
         }
-      case None                      => downloadDataSummaryRepository.set(newSummary).map(_ => None)
+        .map(summary => summary.summaryId)
+
+      downloadDataSummaryRepository.deleteMany(identifierRequest.eori, summaryIdsToRemove).map { _ =>
+        None
+      }
     }
-  }
 }
 
-trait RetireFileAction extends ActionFilter[IdentifierRequest]
+trait RetireFilesAction extends ActionFilter[IdentifierRequest]

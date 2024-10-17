@@ -31,11 +31,12 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
-import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeRetireFileAction, FakeStoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{RetireFileAction, StoreLatestAction}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeRetireFilesAction, FakeStoreLatestAction}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{RetireFilesAction, StoreLatestAction}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.FileInProgress
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
 
+import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 
 class DownloadDataSummaryRepositorySpec
@@ -48,11 +49,15 @@ class DownloadDataSummaryRepositorySpec
     with MockitoSugar
     with GuiceOneAppPerSuite {
 
-  val testEori = "GB123456789001"
+  private val testEori = "GB123456789001"
+  private val id       = java.util.UUID.randomUUID().toString
+  private val now      = Instant.now
 
   val sampleDownloadDataSummary: DownloadDataSummary = DownloadDataSummary(
+    summaryId = id,
     eori = testEori,
     status = FileInProgress,
+    createdAt = now,
     fileInfo = None
   )
 
@@ -60,7 +65,7 @@ class DownloadDataSummaryRepositorySpec
     .overrides(
       bind[MongoComponent].toInstance(mongoComponent),
       bind[StoreLatestAction].to[FakeStoreLatestAction],
-      bind[RetireFileAction].to[FakeRetireFileAction]
+      bind[RetireFilesAction].to[FakeRetireFilesAction]
     )
     .build()
 
@@ -82,8 +87,10 @@ class DownloadDataSummaryRepositorySpec
     "must update a downloadDataSummary when there is one" in {
       insert(sampleDownloadDataSummary).futureValue
       val newDownloadDataSummary: DownloadDataSummary = DownloadDataSummary(
+        summaryId = java.util.UUID.randomUUID().toString,
         eori = testEori,
         status = FileInProgress,
+        createdAt = Instant.now,
         fileInfo = None
       )
       repository.set(newDownloadDataSummary).futureValue
@@ -98,17 +105,74 @@ class DownloadDataSummaryRepositorySpec
 
   ".get" - {
 
-    "when there is a downloadDataSummary for this eori it must get the downloadDataSummary" in {
+    "when there is a downloadDataSummary for this eori it must get a list of downloadDataSummaries that match" in {
       insert(sampleDownloadDataSummary).futureValue
-      val result = repository.get(sampleDownloadDataSummary.eori).futureValue
-      result.value mustEqual sampleDownloadDataSummary
+      repository.get(sampleDownloadDataSummary.eori).futureValue mustEqual Seq(sampleDownloadDataSummary)
     }
 
-    "when there is no downloadDataSummary for this eori it must return None" in {
-      repository.get(sampleDownloadDataSummary.eori).futureValue must not be defined
+    "when there is no downloadDataSummary for this eori it must get empty List" in {
+      repository.get(sampleDownloadDataSummary.eori).futureValue mustEqual Seq.empty
     }
 
     mustPreserveMdc(repository.get(sampleDownloadDataSummary.eori))
+  }
+
+  ".getLatestInProgress" - {
+
+    "must get the latest in progress summary that matches the eori" in {
+      insert(sampleDownloadDataSummary).futureValue
+      repository
+        .getLatestInProgress(sampleDownloadDataSummary.eori)
+        .futureValue
+        .value mustEqual sampleDownloadDataSummary
+    }
+
+    "when there is no downloadDataSummary for this eori it must return None" in {
+      repository.getLatestInProgress(sampleDownloadDataSummary.eori).futureValue mustEqual None
+    }
+
+    mustPreserveMdc(repository.get(sampleDownloadDataSummary.eori))
+  }
+
+  ".deleteMany" - {
+
+    "when there something to delete" in {
+      insert(sampleDownloadDataSummary).futureValue
+
+      val result =
+        repository.deleteMany(sampleDownloadDataSummary.eori, Seq(sampleDownloadDataSummary.summaryId)).futureValue
+
+      result mustEqual 1
+
+    }
+
+    "when there are multiple to delete but also different eoris" in {
+      val anotherSampleDownloadDataSummary     =
+        sampleDownloadDataSummary.copy(summaryId = java.util.UUID.randomUUID().toString)
+      val evenAnotherSampleDownloadDataSummary =
+        sampleDownloadDataSummary.copy(summaryId = java.util.UUID.randomUUID().toString, eori = "GBANOTHER")
+
+      insert(sampleDownloadDataSummary).futureValue
+      insert(evenAnotherSampleDownloadDataSummary).futureValue
+      insert(anotherSampleDownloadDataSummary).futureValue
+
+      val result = repository
+        .deleteMany(
+          sampleDownloadDataSummary.eori,
+          Seq(sampleDownloadDataSummary.summaryId, anotherSampleDownloadDataSummary.summaryId)
+        )
+        .futureValue
+
+      result mustEqual 2
+
+    }
+
+    "when there is nothing to delete" in {
+      val result =
+        repository.deleteMany(sampleDownloadDataSummary.eori, Seq(sampleDownloadDataSummary.summaryId)).futureValue
+
+      result mustEqual 0
+    }
   }
 
   private def mustPreserveMdc[A](f: => Future[A])(implicit pos: Position): Unit =
