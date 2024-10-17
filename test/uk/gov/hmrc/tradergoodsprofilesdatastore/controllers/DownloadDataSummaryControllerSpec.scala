@@ -235,6 +235,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       val summary = DownloadDataSummary(id, testEori, FileInProgress, now, None)
 
       when(mockDownloadDataSummaryRepository.getLatestInProgress(any())) thenReturn Future.successful(Some(summary))
+      when(mockDownloadDataSummaryRepository.set(any())) thenReturn Future.successful(Done)
       when(mockCustomsDataStoreConnector.getEmail(any())(any())) thenReturn Future.successful(Some(email))
       when(mockEmailConnector.sendDownloadRecordEmail(any(), any())(any())) thenReturn Future.failed(
         new RuntimeException("Failed to send the email")
@@ -248,8 +249,9 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         )
         .build()
       running(application) {
-        val result = route(application, validFakePostRequest).value
-        status(result) shouldBe Status.NOT_FOUND
+        intercept[RuntimeException] {
+          await(route(application, validFakePostRequest).value)
+        }
       }
 
       val captor: ArgumentCaptor[DownloadDataSummary] = ArgumentCaptor.forClass(classOf[DownloadDataSummary])

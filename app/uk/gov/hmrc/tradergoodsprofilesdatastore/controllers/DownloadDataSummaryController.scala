@@ -17,20 +17,29 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import play.api.Logging
+import play.api.libs.json.JsResult.Exception
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConnector, EmailConnector, RouterConnector, SecureDataExchangeProxyConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, RetireFilesAction}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.email.DownloadRecordEmailParameters
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.DownloadDataNotification
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{DownloadDataNotification, Email}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataSummary, FileInfo}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummaryRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.DateTimeFormats.dateTimeFormat
 
 import java.time.temporal.ChronoUnit
 import java.time.{Instant, ZoneOffset}
+import javax.inject.Inject
+import scala.concurrent.{ExecutionContext, Future}
+import org.apache.pekko.Done
+import play.api.i18n.MessagesApi
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import uk.gov.hmrc.http._
+
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -53,16 +62,26 @@ class DownloadDataSummaryController @Inject() (
       .map(summaries => Ok(Json.toJson(summaries)))
   }
 
+  private def buildRetentionDays(notification: DownloadDataNotification): Future[String] =
+    notification.metadata.find(x => x.metadata == "RETENTION_DAYS") match {
+      case Some(metadata) => Future.successful(metadata.value)
+      case _              =>
+        Future.failed(new RuntimeException(s"Retention days not found in notification for EORI: ${notification.eori}"))
+    }
+
+  private def handleEmail(eori: String)(implicit hc: HeaderCarrier): Future[Email] =
+    customsDataStoreConnector.getEmail(eori).flatMap {
+      case Some(email) => Future.successful(email)
+      case None        => Future.failed(EmailNotFoundException(eori))
+    }
+
   def submitNotification(): Action[DownloadDataNotification] =
     Action.async(parse.json[DownloadDataNotification]) { implicit request =>
-      val notification  = request.body
+      val notification = request.body
       //TODO determine when to send email in english or welsh (default is english) TGP-2654
-      val isWelsh       = false
-      val retentionDays = notification.metadata.find(x => x.metadata == "RETENTION_DAYS") match {
-        case Some(metadata) => metadata.value
-        case None           => "30"
-      }
+      val isWelsh      = false
       (for {
+        retentionDays             <- buildRetentionDays(notification)
         Some(downloadDataSummary) <- downloadDataSummaryRepository.getLatestInProgress(notification.eori)
         newSummary                <- Future.successful(
                                        DownloadDataSummary(
@@ -74,7 +93,7 @@ class DownloadDataSummaryController @Inject() (
                                        )
                                      )
         _                         <- downloadDataSummaryRepository.set(newSummary)
-        Some(email)               <- customsDataStoreConnector.getEmail(request.body.eori)
+        email                     <- handleEmail(notification.eori)
         _                         <- emailConnector
                                        .sendDownloadRecordEmail(
                                          email.address,
@@ -82,10 +101,15 @@ class DownloadDataSummaryController @Inject() (
                                            convertToDateString(Instant.now.plus(retentionDays.toInt, ChronoUnit.DAYS), isWelsh)
                                          )
                                        )
-      } yield NoContent).recover { case _ =>
+      } yield NoContent).recover { case e: EmailNotFoundException =>
+        logger.info(e.getMessage)
         NotFound
       }
     }
+
+  private case class EmailNotFoundException(eori: String) extends RuntimeException {
+    override def getMessage: String = s"Unable to find the email for EORI: $eori"
+  }
 
   private def convertToDateString(instant: Instant, isWelsh: Boolean): String =
     instant
