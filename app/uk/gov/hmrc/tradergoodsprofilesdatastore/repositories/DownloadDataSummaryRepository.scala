@@ -51,10 +51,10 @@ class DownloadDataSummaryRepository @Inject() (
   private def byEori(eori: String): Bson = Filters.equal("eori", eori)
 
   private def byEoriAndSummaryIds(eori: String, summaryIds: Seq[String]): Bson =
-    Filters.and(Filters.equal("eori", eori), Filters.in("_id", summaryIds: _*))
+    Filters.and(Filters.equal("eori", eori), Filters.in("summaryId", summaryIds: _*))
 
   private def byEoriAndSummaryId(eori: String, summaryId: String): Bson =
-    Filters.and(Filters.equal("eori", eori), Filters.and(Filters.equal("_id", summaryId)))
+    Filters.and(Filters.equal("eori", eori), Filters.and(Filters.equal("summaryId", summaryId)))
 
   private def byLatest: Bson = Sorts.descending("createdAt")
 
@@ -89,7 +89,7 @@ class DownloadDataSummaryRepository @Inject() (
 
   def deleteMany(eori: String, summaryIds: Seq[String]): Future[Long] = Mdc.preservingMdc {
     collection
-      .deleteMany(byEoriAndSummaryIds(eori, summaryIds))
+      .deleteMany(filter = byEoriAndSummaryIds(eori, summaryIds))
       .toFuture()
       .map(_.getDeletedCount)
   }
