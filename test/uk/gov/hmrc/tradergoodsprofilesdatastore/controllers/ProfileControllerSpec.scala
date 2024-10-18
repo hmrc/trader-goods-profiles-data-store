@@ -51,8 +51,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
     actorId = "GB123456789099",
     ukimsNumber = "XIUKIM47699357400020231115081800",
     nirmsNumber = Some("RMS-GB-123456"),
-    niphlNumber = Some("6 S12345"),
-    eoriChanged = false
+    niphlNumber = Some("6 S12345")
   )
 
   private val setUrl                = routes.ProfileController.setProfile(requestEori).url

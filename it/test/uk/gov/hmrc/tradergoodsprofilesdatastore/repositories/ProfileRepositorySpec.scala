@@ -44,7 +44,7 @@ class ProfileRepositorySpec
   }
 
   private val profileEori     = "test-eori"
-  private val profileRequest  = ProfileRequest("test-actor-id", "test-ukims", Some("test-nirms"), Some("test-niphl"), eoriChanged = false)
+  private val profileRequest  = ProfileRequest("test-actor-id", "test-ukims", Some("test-nirms"), Some("test-niphl"))
   private val profileResponse =
     ProfileResponse(profileEori, "test-actor-id", "test-ukims", Some("test-nirms"), Some("test-niphl"), eoriChanged = false )
 

@@ -38,6 +38,6 @@ object ProfileResponse {
       ukimsNumber = profileRequest.ukimsNumber,
       nirmsNumber = profileRequest.nirmsNumber,
       niphlNumber = profileRequest.niphlNumber,
-      eoriChanged = profileRequest.eoriChanged
+      eoriChanged = false
     )
 }
