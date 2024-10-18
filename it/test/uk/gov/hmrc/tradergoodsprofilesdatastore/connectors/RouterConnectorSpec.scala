@@ -106,7 +106,7 @@ class RouterConnectorSpec
 
     "must submit a trader profile" in {
 
-      val traderProfile = ProfileRequest(testEori, "1", Some("2"), None)
+      val traderProfile = ProfileRequest(testEori, "1", Some("2"), None, eoriChanged = false)
 
       wireMockServer.stubFor(
         post(urlEqualTo(s"/trader-goods-profiles-router/customs/traders/goods-profiles/$testEori"))
@@ -120,7 +120,7 @@ class RouterConnectorSpec
 
     "must return a failed future when the server returns an error" in {
 
-      val traderProfile = ProfileRequest(testEori, "1", Some("2"), None)
+      val traderProfile = ProfileRequest(testEori, "1", Some("2"), None, eoriChanged = false)
 
       wireMockServer.stubFor(
         post(urlEqualTo(s"/trader-goods-profiles-router/customs/traders/goods-profiles/$testEori"))
@@ -137,7 +137,7 @@ class RouterConnectorSpec
 
     "must submit a trader profile" in {
 
-      val traderProfile = ProfileRequest(testEori, "1", Some("2"), None)
+      val traderProfile = ProfileRequest(testEori, "1", Some("2"), None, eoriChanged = false)
 
       wireMockServer.stubFor(
         put(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori"))
@@ -151,7 +151,7 @@ class RouterConnectorSpec
 
     "must return a failed future when the server returns an error" in {
 
-      val traderProfile = ProfileRequest(testEori, "1", Some("2"), None)
+      val traderProfile = ProfileRequest(testEori, "1", Some("2"), None, eoriChanged = false)
 
       wireMockServer.stubFor(
         put(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori"))

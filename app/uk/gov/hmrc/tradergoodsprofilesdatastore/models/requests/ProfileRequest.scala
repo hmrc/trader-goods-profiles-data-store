@@ -22,7 +22,8 @@ case class ProfileRequest(
   actorId: String,
   ukimsNumber: String,
   nirmsNumber: Option[String],
-  niphlNumber: Option[String]
+  niphlNumber: Option[String],
+  eoriChanged: Boolean
 )
 
 object ProfileRequest {

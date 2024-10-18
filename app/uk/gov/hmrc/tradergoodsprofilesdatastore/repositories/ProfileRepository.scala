@@ -65,7 +65,8 @@ class ProfileRepository @Inject() (
     val updateQuery  = byEori(oldEori)
     val updateAction = Updates.combine(
       Updates.set("eori", newEori),
-      Updates.set("actorId", newEori)
+      Updates.set("actorId", newEori),
+      Updates.set("eoriChanged", true)
     )
     collection
       .updateOne(

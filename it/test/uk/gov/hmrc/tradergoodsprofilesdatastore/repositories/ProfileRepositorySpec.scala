@@ -17,19 +17,15 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
 import org.mongodb.scala.model.Filters
-import org.scalactic.source.Position
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import org.slf4j.MDC
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.ProfileResponse
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class ProfileRepositorySpec
@@ -48,9 +44,9 @@ class ProfileRepositorySpec
   }
 
   private val profileEori     = "test-eori"
-  private val profileRequest  = ProfileRequest("test-actor-id", "test-ukims", Some("test-nirms"), Some("test-niphl"))
+  private val profileRequest  = ProfileRequest("test-actor-id", "test-ukims", Some("test-nirms"), Some("test-niphl"), eoriChanged = false)
   private val profileResponse =
-    ProfileResponse(profileEori, "test-actor-id", "test-ukims", Some("test-nirms"), Some("test-niphl"))
+    ProfileResponse(profileEori, "test-actor-id", "test-ukims", Some("test-nirms"), Some("test-niphl"), eoriChanged = false )
 
   protected override val repository = new ProfileRepository(mongoComponent = mongoComponent)
 
@@ -106,6 +102,7 @@ class ProfileRepositorySpec
       updateResult mustEqual true
       result.value.eori mustEqual newEori
       result.value.actorId mustEqual newEori
+      result.value.eoriChanged mustEqual true
     }
 
     "must not update profile when there is none" in {
