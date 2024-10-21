@@ -48,6 +48,7 @@ class DownloadDataSummaryController @Inject() (
     extends BackendController(cc)
     with Logging {
 
+  //TODO TTL instead dof retire files
   def getDownloadDataSummaries(eori: String): Action[AnyContent] = (identify andThen retireFiles).async {
     downloadDataSummaryRepository
       .get(eori)
@@ -61,10 +62,19 @@ class DownloadDataSummaryController @Inject() (
         Future.failed(new RuntimeException(s"Retention days not found in notification for EORI: ${notification.eori}"))
     }
 
-  private def handleEmail(eori: String)(implicit hc: HeaderCarrier): Future[Email] =
+  private def handleGetEmail(eori: String)(implicit hc: HeaderCarrier): Future[Email] =
     customsDataStoreConnector.getEmail(eori).flatMap {
       case Some(email) => Future.successful(email)
       case None        => Future.failed(EmailNotFoundException(eori))
+    }
+
+  private def handleGetLatestInProgress(eori: String)(implicit hc: HeaderCarrier): Future[DownloadDataSummary] =
+    downloadDataSummaryRepository.getLatestInProgress(eori).flatMap {
+      case Some(downloadDataSummary) => Future.successful(downloadDataSummary)
+      case None                      =>
+        Future.failed(
+          new RuntimeException(s"Initial download request (download data summary) not found for EORI: $eori")
+        )
     }
 
   def submitNotification(): Action[DownloadDataNotification] =
@@ -73,28 +83,31 @@ class DownloadDataSummaryController @Inject() (
       //TODO determine when to send email in english or welsh (default is english) TGP-2654
       val isWelsh      = false
       (for {
-        retentionDays             <- buildRetentionDays(notification)
-        Some(downloadDataSummary) <- downloadDataSummaryRepository.getLatestInProgress(notification.eori)
-        newSummary                <- Future.successful(
-                                       DownloadDataSummary(
-                                         downloadDataSummary.summaryId,
-                                         notification.eori,
-                                         FileReadyUnseen,
-                                         downloadDataSummary.createdAt,
-                                         Some(FileInfo(notification.fileName, notification.fileSize, Instant.now, retentionDays))
-                                       )
-                                     )
-        _                         <- downloadDataSummaryRepository.set(newSummary)
-        email                     <- handleEmail(notification.eori)
-        _                         <- emailConnector
-                                       .sendDownloadRecordEmail(
-                                         email.address,
-                                         DownloadRecordEmailParameters(
-                                           convertToDateString(Instant.now.plus(retentionDays.toInt, ChronoUnit.DAYS), isWelsh)
-                                         )
-                                       )
+        retentionDays       <- buildRetentionDays(notification)
+        //TODO match on conversation ID
+        downloadDataSummary <- handleGetLatestInProgress(notification.eori)
+        newSummary           = DownloadDataSummary(
+                                 downloadDataSummary.summaryId,
+                                 notification.eori,
+                                 FileReadyUnseen,
+                                 downloadDataSummary.createdAt,
+                                 //TODO use clock instead of instant - better for testing
+                                 Some(FileInfo(notification.fileName, notification.fileSize, Instant.now, retentionDays))
+                               )
+        _                   <- downloadDataSummaryRepository.set(newSummary)
+        //TODO think about if we should separate email and submitting, a successful submit should not be related to if the email sends - workqueue
+        email               <- handleGetEmail(notification.eori)
+        _                   <- emailConnector
+                                 .sendDownloadRecordEmail(
+                                   email.address,
+                                   DownloadRecordEmailParameters(
+                                     convertToDateString(Instant.now.plus(retentionDays.toInt, ChronoUnit.DAYS), isWelsh)
+                                   )
+                                 )
       } yield NoContent).recover { case e: EmailNotFoundException =>
         logger.info(e.getMessage)
+
+        //TODO do we need a not found?
         NotFound
       }
     }

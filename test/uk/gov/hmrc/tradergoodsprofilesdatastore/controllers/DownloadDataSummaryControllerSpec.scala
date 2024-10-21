@@ -338,9 +338,10 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
     "return 200 when download data is successfully requested" in {
 
-      val fileName      = "fileName"
-      val fileSize      = 600
-      val fileCreated   = Instant.now.minus(20, ChronoUnit.DAYS)
+      val fileName = "fileName"
+      val fileSize = 600
+
+      //TODO inject a clock to check filecreated
       val retentionDays = "30"
 
       val url                      = "/some-url"

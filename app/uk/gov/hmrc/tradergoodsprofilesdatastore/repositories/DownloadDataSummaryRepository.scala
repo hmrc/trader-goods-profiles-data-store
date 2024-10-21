@@ -48,6 +48,8 @@ class DownloadDataSummaryRepository @Inject() (
       )
     ) {
 
+  //TODO TTL
+
   private def byEori(eori: String): Bson = Filters.equal("eori", eori)
 
   private def byEoriAndSummaryIds(eori: String, summaryIds: Seq[String]): Bson =
@@ -61,14 +63,13 @@ class DownloadDataSummaryRepository @Inject() (
   private def byEoriAndFileInProgress(eori: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.equal("status", FileInProgress.toString))
 
-  override lazy val requiresTtlIndex: Boolean = false
-
   def get(eori: String): Future[Seq[DownloadDataSummary]] = Mdc.preservingMdc {
     collection
       .find[DownloadDataSummary](byEori(eori))
       .toFuture()
   }
 
+  //TODO matching on an ID
   def getLatestInProgress(eori: String): Future[Option[DownloadDataSummary]] = Mdc.preservingMdc {
     collection
       .find[DownloadDataSummary](byEoriAndFileInProgress(eori))
@@ -87,6 +88,7 @@ class DownloadDataSummaryRepository @Inject() (
       .map(_ => Done)
   }
 
+  //TODO will go as not needed due to TTL
   def deleteMany(eori: String, summaryIds: Seq[String]): Future[Long] = Mdc.preservingMdc {
     collection
       .deleteMany(filter = byEoriAndSummaryIds(eori, summaryIds))
