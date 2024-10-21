@@ -16,11 +16,13 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
+import org.apache.pekko.Done
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConnector, EmailConnector, RouterConnector, SecureDataExchangeProxyConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, RetireFilesAction}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadyUnseen}
@@ -43,6 +45,7 @@ class DownloadDataSummaryController @Inject() (
   emailConnector: EmailConnector,
   cc: ControllerComponents,
   identify: IdentifierAction,
+  config: DataStoreAppConfig,
   retireFiles: RetireFilesAction
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
@@ -62,12 +65,6 @@ class DownloadDataSummaryController @Inject() (
         Future.failed(new RuntimeException(s"Retention days not found in notification for EORI: ${notification.eori}"))
     }
 
-  private def handleGetEmail(eori: String)(implicit hc: HeaderCarrier): Future[Email] =
-    customsDataStoreConnector.getEmail(eori).flatMap {
-      case Some(email) => Future.successful(email)
-      case None        => Future.failed(EmailNotFoundException(eori))
-    }
-
   private def handleGetOldestInProgress(eori: String)(implicit hc: HeaderCarrier): Future[DownloadDataSummary] =
     downloadDataSummaryRepository.getOldestInProgress(eori).flatMap {
       case Some(downloadDataSummary) => Future.successful(downloadDataSummary)
@@ -80,8 +77,6 @@ class DownloadDataSummaryController @Inject() (
   def submitNotification(): Action[DownloadDataNotification] =
     Action.async(parse.json[DownloadDataNotification]) { implicit request =>
       val notification = request.body
-      //TODO determine when to send email in english or welsh (default is english) TGP-2654
-      val isWelsh      = false
       (for {
         retentionDays       <- buildRetentionDays(notification)
         //TODO match on conversation ID
@@ -96,14 +91,7 @@ class DownloadDataSummaryController @Inject() (
                                )
         _                   <- downloadDataSummaryRepository.set(newSummary)
         //TODO think about if we should separate email and submitting, a successful submit should not be related to if the email sends - workqueue
-        email               <- handleGetEmail(notification.eori)
-        _                   <- emailConnector
-                                 .sendDownloadRecordEmail(
-                                   email.address,
-                                   DownloadRecordEmailParameters(
-                                     convertToDateString(Instant.now.plus(retentionDays.toInt, ChronoUnit.DAYS), isWelsh)
-                                   )
-                                 )
+        _                   <- sendEmailNotification(notification.eori, retentionDays)
       } yield NoContent).recover { case e: EmailNotFoundException =>
         logger.info(e.getMessage)
 
@@ -111,6 +99,27 @@ class DownloadDataSummaryController @Inject() (
         NotFound
       }
     }
+
+  private def sendEmailNotification(eori: String, retentionDays: String)(implicit hc: HeaderCarrier): Future[Done] = {
+    //TODO determine when to send email in english or welsh (default is english) TGP-2654
+    val isWelsh = false
+    //TODO add flag into qa config as false until the email stuff is working
+    if (config.sendNotificationEmail) {
+      customsDataStoreConnector.getEmail(eori).flatMap {
+        case Some(email) =>
+          emailConnector
+            .sendDownloadRecordEmail(
+              email.address,
+              DownloadRecordEmailParameters(
+                convertToDateString(Instant.now.plus(retentionDays.toInt, ChronoUnit.DAYS), isWelsh)
+              )
+            )
+        case None        => Future.failed(EmailNotFoundException(eori))
+      }
+    } else {
+      Future.successful(Done)
+    }
+  }
 
   private case class EmailNotFoundException(eori: String) extends RuntimeException {
     override def getMessage: String = s"Unable to find the email for EORI: $eori"
