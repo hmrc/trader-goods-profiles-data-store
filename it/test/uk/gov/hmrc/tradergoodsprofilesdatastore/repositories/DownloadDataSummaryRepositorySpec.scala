@@ -117,18 +117,18 @@ class DownloadDataSummaryRepositorySpec
     mustPreserveMdc(repository.get(sampleDownloadDataSummary.eori))
   }
 
-  ".getLatestInProgress" - {
+  ".getOldestInProgress" - {
 
     "must get the latest in progress summary that matches the eori" in {
       insert(sampleDownloadDataSummary).futureValue
       repository
-        .getLatestInProgress(sampleDownloadDataSummary.eori)
+        .getOldestInProgress(sampleDownloadDataSummary.eori)
         .futureValue
         .value mustEqual sampleDownloadDataSummary
     }
 
     "when there is no downloadDataSummary for this eori it must return None" in {
-      repository.getLatestInProgress(sampleDownloadDataSummary.eori).futureValue mustEqual None
+      repository.getOldestInProgress(sampleDownloadDataSummary.eori).futureValue mustEqual None
     }
 
     mustPreserveMdc(repository.get(sampleDownloadDataSummary.eori))

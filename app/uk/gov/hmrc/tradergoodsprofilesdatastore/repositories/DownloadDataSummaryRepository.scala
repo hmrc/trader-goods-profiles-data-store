@@ -58,7 +58,7 @@ class DownloadDataSummaryRepository @Inject() (
   private def byEoriAndSummaryId(eori: String, summaryId: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.and(Filters.equal("summaryId", summaryId)))
 
-  private def byLatest: Bson = Sorts.descending("createdAt")
+  private def byOldest: Bson = Sorts.ascending("createdAt")
 
   private def byEoriAndFileInProgress(eori: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.equal("status", FileInProgress.toString))
@@ -70,10 +70,10 @@ class DownloadDataSummaryRepository @Inject() (
   }
 
   //TODO matching on an ID
-  def getLatestInProgress(eori: String): Future[Option[DownloadDataSummary]] = Mdc.preservingMdc {
+  def getOldestInProgress(eori: String): Future[Option[DownloadDataSummary]] = Mdc.preservingMdc {
     collection
       .find[DownloadDataSummary](byEoriAndFileInProgress(eori))
-      .sort(byLatest)
+      .sort(byOldest)
       .headOption()
   }
 

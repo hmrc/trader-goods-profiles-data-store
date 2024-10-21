@@ -131,7 +131,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       val mockCustomsDataStoreConnector     = mock[CustomsDataStoreConnector]
       val mockEmailConnector                = mock[EmailConnector]
 
-      when(mockDownloadDataSummaryRepository.getLatestInProgress(any())) thenReturn Future.successful(Some(summary))
+      when(mockDownloadDataSummaryRepository.getOldestInProgress(any())) thenReturn Future.successful(Some(summary))
       when(mockDownloadDataSummaryRepository.set(any())) thenReturn Future.successful(Done)
       when(mockCustomsDataStoreConnector.getEmail(any())(any())) thenReturn Future.successful(Some(email))
       when(mockEmailConnector.sendDownloadRecordEmail(any(), any())(any())) thenReturn Future.successful(Done)
@@ -184,7 +184,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
       when(mockDownloadDataSummaryRepository.set(any())) thenReturn Future.successful(Done)
       when(mockCustomsDataStoreConnector.getEmail(any())(any())) thenReturn Future.successful(None)
-      when(mockDownloadDataSummaryRepository.getLatestInProgress(any())) thenReturn Future.successful(Some(summary))
+      when(mockDownloadDataSummaryRepository.getOldestInProgress(any())) thenReturn Future.successful(Some(summary))
 
       val application = applicationBuilder()
         .overrides(
@@ -234,7 +234,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
       val summary = DownloadDataSummary(id, testEori, FileInProgress, now, None)
 
-      when(mockDownloadDataSummaryRepository.getLatestInProgress(any())) thenReturn Future.successful(Some(summary))
+      when(mockDownloadDataSummaryRepository.getOldestInProgress(any())) thenReturn Future.successful(Some(summary))
       when(mockDownloadDataSummaryRepository.set(any())) thenReturn Future.successful(Done)
       when(mockCustomsDataStoreConnector.getEmail(any())(any())) thenReturn Future.successful(Some(email))
       when(mockEmailConnector.sendDownloadRecordEmail(any(), any())(any())) thenReturn Future.failed(

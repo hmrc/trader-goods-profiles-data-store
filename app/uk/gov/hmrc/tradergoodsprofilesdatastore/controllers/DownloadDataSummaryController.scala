@@ -68,8 +68,8 @@ class DownloadDataSummaryController @Inject() (
       case None        => Future.failed(EmailNotFoundException(eori))
     }
 
-  private def handleGetLatestInProgress(eori: String)(implicit hc: HeaderCarrier): Future[DownloadDataSummary] =
-    downloadDataSummaryRepository.getLatestInProgress(eori).flatMap {
+  private def handleGetOldestInProgress(eori: String)(implicit hc: HeaderCarrier): Future[DownloadDataSummary] =
+    downloadDataSummaryRepository.getOldestInProgress(eori).flatMap {
       case Some(downloadDataSummary) => Future.successful(downloadDataSummary)
       case None                      =>
         Future.failed(
@@ -85,7 +85,7 @@ class DownloadDataSummaryController @Inject() (
       (for {
         retentionDays       <- buildRetentionDays(notification)
         //TODO match on conversation ID
-        downloadDataSummary <- handleGetLatestInProgress(notification.eori)
+        downloadDataSummary <- handleGetOldestInProgress(notification.eori)
         newSummary           = DownloadDataSummary(
                                  downloadDataSummary.summaryId,
                                  notification.eori,
