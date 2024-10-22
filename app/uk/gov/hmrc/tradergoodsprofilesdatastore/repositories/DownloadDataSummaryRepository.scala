@@ -24,7 +24,7 @@ import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.play.http.logging.Mdc
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.FileInProgress
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
-
+import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -35,8 +35,14 @@ class DownloadDataSummaryRepository @Inject() (
     extends PlayMongoRepository[DownloadDataSummary](
       collectionName = "downloadDataSummary",
       mongoComponent = mongoComponent,
-      domainFormat = DownloadDataSummary.format,
+      domainFormat = DownloadDataSummary.mongoFormat,
       indexes = Seq(
+        IndexModel(
+          Indexes.ascending("expiresAt"),
+          IndexOptions()
+            .name("expiresAtIndex")
+            .expireAfter(0, TimeUnit.SECONDS)
+        ),
         IndexModel(
           Indexes.compoundIndex(
             Indexes.ascending("eori"),
@@ -48,12 +54,7 @@ class DownloadDataSummaryRepository @Inject() (
       )
     ) {
 
-  //TODO TTL
-
   private def byEori(eori: String): Bson = Filters.equal("eori", eori)
-
-  private def byEoriAndSummaryIds(eori: String, summaryIds: Seq[String]): Bson =
-    Filters.and(Filters.equal("eori", eori), Filters.in("summaryId", summaryIds: _*))
 
   private def byEoriAndSummaryId(eori: String, summaryId: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.and(Filters.equal("summaryId", summaryId)))
@@ -86,13 +87,5 @@ class DownloadDataSummaryRepository @Inject() (
       )
       .toFuture()
       .map(_ => Done)
-  }
-
-  //TODO will go as not needed due to TTL
-  def deleteMany(eori: String, summaryIds: Seq[String]): Future[Long] = Mdc.preservingMdc {
-    collection
-      .deleteMany(filter = byEoriAndSummaryIds(eori, summaryIds))
-      .toFuture()
-      .map(_.getDeletedCount)
   }
 }

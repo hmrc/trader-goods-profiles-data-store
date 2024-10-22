@@ -14,16 +14,10 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.tradergoodsprofilesdatastore.models
+package uk.gov.hmrc.tradergoodsprofilesdatastore.utils
 
-import play.api.libs.json.{Json, OFormat}
+object UuidGenerator {
 
-final case class FileInfo(
-  fileName: String,
-  fileSize: Int,
-  retentionDays: String
-)
-
-object FileInfo {
-  implicit val format: OFormat[FileInfo] = Json.format[FileInfo]
+  def generateUuid(): String =
+    java.util.UUID.randomUUID().toString
 }

@@ -24,7 +24,7 @@ import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
 import play.api.inject.bind
-import play.api.libs.json.{JsArray, JsObject, Json}
+import play.api.libs.json.{JsArray, Json}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
@@ -36,7 +36,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{DownloadData, D
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummaryRepository
 
-import java.time.Instant
+import java.time.{Clock, Instant, ZoneOffset}
 import java.time.temporal.ChronoUnit
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -44,8 +44,9 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
 
-  private val id  = java.util.UUID.randomUUID().toString
-  private val now = Instant.now
+  private val id    = java.util.UUID.randomUUID().toString
+  private val now   = Instant.now
+  private val clock = Clock.fixed(now, ZoneOffset.UTC)
 
   "getDownloadDataSummaries" - {
 
@@ -56,7 +57,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         .url
 
       lazy val validFakeGetRequest = FakeRequest("GET", downloadDataSummaryUrl)
-      val downloadDataSummary      = DownloadDataSummary(id, testEori, FileInProgress, now, None)
+      val downloadDataSummary      = DownloadDataSummary(id, testEori, FileInProgress, now, now, None)
 
       val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
       when(mockDownloadDataSummaryRepository.get(any())) thenReturn Future.successful(
@@ -65,7 +66,8 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
       val application = applicationBuilder()
         .overrides(
-          bind[DownloadDataSummaryRepository].toInstance(mockDownloadDataSummaryRepository)
+          bind[DownloadDataSummaryRepository].toInstance(mockDownloadDataSummaryRepository),
+          bind[Clock].toInstance(clock)
         )
         .build()
       running(application) {
@@ -119,7 +121,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       val fileSize              = 600
       val retentionDaysMetaData = Metadata("RETENTION_DAYS", "30")
 
-      val summary = DownloadDataSummary(id, testEori, FileInProgress, now, None)
+      val summary = DownloadDataSummary(id, testEori, FileInProgress, now, now.plus(1, ChronoUnit.SECONDS), None)
 
       val notification =
         DownloadDataNotification(testEori, fileName, fileSize, Seq(retentionDaysMetaData))
@@ -170,7 +172,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       val retentionDaysMetaData = Metadata("RETENTION_DAYS", "30")
       val filetypeMetaData      = Metadata("FILETYPE", "csv")
 
-      val summary = DownloadDataSummary(id, testEori, FileInProgress, now, None)
+      val summary = DownloadDataSummary(id, testEori, FileInProgress, now, now, None)
 
       val notification =
         DownloadDataNotification(requestEori, fileName, fileSize, Seq(retentionDaysMetaData, filetypeMetaData))
@@ -232,7 +234,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       val mockCustomsDataStoreConnector     = mock[CustomsDataStoreConnector]
       val mockEmailConnector                = mock[EmailConnector]
 
-      val summary = DownloadDataSummary(id, testEori, FileInProgress, now, None)
+      val summary = DownloadDataSummary(id, testEori, FileInProgress, now, now, None)
 
       when(mockDownloadDataSummaryRepository.getOldestInProgress(any())) thenReturn Future.successful(Some(summary))
       when(mockDownloadDataSummaryRepository.set(any())) thenReturn Future.successful(Done)

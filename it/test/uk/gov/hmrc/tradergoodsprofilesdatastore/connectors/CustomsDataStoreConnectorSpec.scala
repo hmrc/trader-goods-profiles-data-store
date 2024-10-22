@@ -26,8 +26,8 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
-import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeRetireFilesAction, FakeStoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{RetireFilesAction, StoreLatestAction}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeStoreLatestAction
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Email, EoriHistoricItem, EoriHistoryResponse}
 
 import java.time.Instant
@@ -43,8 +43,7 @@ class CustomsDataStoreConnectorSpec
     new GuiceApplicationBuilder()
       .configure("microservice.services.customs-data-store.port" -> wireMockPort)
       .overrides(
-        bind[StoreLatestAction].to[FakeStoreLatestAction],
-        bind[RetireFilesAction].to[FakeRetireFilesAction]
+        bind[StoreLatestAction].to[FakeStoreLatestAction]
       )
       .build()
 

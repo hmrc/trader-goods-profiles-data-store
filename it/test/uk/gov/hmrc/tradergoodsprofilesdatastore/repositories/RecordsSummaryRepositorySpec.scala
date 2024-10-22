@@ -31,8 +31,8 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.inject.bind
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
-import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeRetireFilesAction, FakeStoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{RetireFilesAction, StoreLatestAction}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeStoreLatestAction
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary.Update
 
@@ -62,8 +62,7 @@ class RecordsSummaryRepositorySpec
   override def fakeApplication(): Application = GuiceApplicationBuilder()
     .overrides(
       bind[MongoComponent].toInstance(mongoComponent),
-      bind[StoreLatestAction].to[FakeStoreLatestAction],
-      bind[RetireFilesAction].to[FakeRetireFilesAction]
+      bind[StoreLatestAction].to[FakeStoreLatestAction]
     )
     .build()
 
@@ -71,8 +70,6 @@ class RecordsSummaryRepositorySpec
     app.injector.instanceOf[RecordsSummaryRepository]
 
   private def byEori(eori: String): Bson = Filters.equal("eori", eori)
-
-  private def byLastUpdated(lastUpdated: Instant): Bson = Filters.lt("lastUpdated", lastUpdated)
 
   ".set" - {
 

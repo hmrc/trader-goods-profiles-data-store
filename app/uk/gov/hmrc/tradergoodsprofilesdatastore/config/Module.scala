@@ -17,7 +17,7 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.config
 
 import com.google.inject.AbstractModule
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{AuthenticatedIdentifierAction, IdentifierAction, RetireFilesAction, RetireFilesActionImpl, StoreLatestAction, StoreLatestActionImpl}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{AuthenticatedIdentifierAction, IdentifierAction, StoreLatestAction, StoreLatestActionImpl}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.worker.ClearCacheWorker
 
 import java.time.Clock
@@ -26,7 +26,6 @@ class Module extends AbstractModule {
 
   override def configure(): Unit = {
     bind(classOf[StoreLatestAction]).to(classOf[StoreLatestActionImpl]).asEagerSingleton()
-    bind(classOf[RetireFilesAction]).to(classOf[RetireFilesActionImpl]).asEagerSingleton()
     bind(classOf[IdentifierAction]).to(classOf[AuthenticatedIdentifierAction]).asEagerSingleton()
     bind(classOf[Clock]).toInstance(Clock.systemUTC())
     bind(classOf[ClearCacheWorker]).asEagerSingleton()

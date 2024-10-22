@@ -24,16 +24,17 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConnector, EmailConnector, RouterConnector, SecureDataExchangeProxyConnector}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, RetireFilesAction}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.email.DownloadRecordEmailParameters
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{DownloadDataNotification, Email}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.DownloadDataNotification
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataSummary, FileInfo}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummaryRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.DateTimeFormats.dateTimeFormat
+import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.UuidGenerator.generateUuid
 
 import java.time.temporal.ChronoUnit
-import java.time.{Instant, ZoneOffset}
+import java.time.{Clock, Instant, ZoneOffset}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -46,13 +47,12 @@ class DownloadDataSummaryController @Inject() (
   cc: ControllerComponents,
   identify: IdentifierAction,
   config: DataStoreAppConfig,
-  retireFiles: RetireFilesAction
+  clock: Clock
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
     with Logging {
 
-  //TODO TTL instead dof retire files
-  def getDownloadDataSummaries(eori: String): Action[AnyContent] = (identify andThen retireFiles).async {
+  def getDownloadDataSummaries(eori: String): Action[AnyContent] = identify.async {
     downloadDataSummaryRepository
       .get(eori)
       .map(summaries => Ok(Json.toJson(summaries)))
@@ -65,7 +65,7 @@ class DownloadDataSummaryController @Inject() (
         Future.failed(new RuntimeException(s"Retention days not found in notification for EORI: ${notification.eori}"))
     }
 
-  private def handleGetOldestInProgress(eori: String)(implicit hc: HeaderCarrier): Future[DownloadDataSummary] =
+  private def handleGetOldestInProgress(eori: String): Future[DownloadDataSummary] =
     downloadDataSummaryRepository.getOldestInProgress(eori).flatMap {
       case Some(downloadDataSummary) => Future.successful(downloadDataSummary)
       case None                      =>
@@ -86,8 +86,10 @@ class DownloadDataSummaryController @Inject() (
                                  notification.eori,
                                  FileReadyUnseen,
                                  downloadDataSummary.createdAt,
+                                 //TODO handle toInt fail?
+                                 clock.instant.plus(retentionDays.toInt, ChronoUnit.DAYS),
                                  //TODO use clock instead of instant - better for testing
-                                 Some(FileInfo(notification.fileName, notification.fileSize, Instant.now, retentionDays))
+                                 Some(FileInfo(notification.fileName, notification.fileSize, retentionDays))
                                )
         _                   <- downloadDataSummaryRepository.set(newSummary)
         //TODO think about if we should separate email and submitting, a successful submit should not be related to if the email sends - workqueue
@@ -111,7 +113,7 @@ class DownloadDataSummaryController @Inject() (
             .sendDownloadRecordEmail(
               email.address,
               DownloadRecordEmailParameters(
-                convertToDateString(Instant.now.plus(retentionDays.toInt, ChronoUnit.DAYS), isWelsh)
+                convertToDateString(clock.instant.plus(retentionDays.toInt, ChronoUnit.DAYS), isWelsh)
               )
             )
         case None        => Future.failed(EmailNotFoundException(eori))
@@ -134,13 +136,23 @@ class DownloadDataSummaryController @Inject() (
 
   def requestDownloadData(eori: String): Action[AnyContent] = identify.async { implicit request =>
     routerConnector.getRequestDownloadData(eori).flatMap { _ =>
+      val createdAt = clock.instant
       downloadDataSummaryRepository
-        .set(DownloadDataSummary(java.util.UUID.randomUUID().toString, eori, FileInProgress, Instant.now, None))
+        .set(
+          DownloadDataSummary(
+            generateUuid(),
+            eori,
+            FileInProgress,
+            createdAt,
+            createdAt.plus(30, ChronoUnit.DAYS),
+            None
+          )
+        )
         .map(_ => Accepted)
     }
   }
 
-  def getDownloadData(eori: String): Action[AnyContent] = (identify andThen retireFiles).async { implicit request =>
+  def getDownloadData(eori: String): Action[AnyContent] = identify.async { implicit request =>
     secureDataExchangeProxyConnector.getFilesAvailableUrl(eori).map { downloadDatas =>
       Ok(Json.toJson(downloadDatas))
     }
