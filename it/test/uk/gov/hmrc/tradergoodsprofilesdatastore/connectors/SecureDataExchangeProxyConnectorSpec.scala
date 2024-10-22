@@ -79,7 +79,7 @@ class SecureDataExchangeProxyConnectorSpec
       )
 
       wireMockServer.stubFor(
-        get(urlEqualTo(s"/secure-data-exchange-proxy/files-available/list/$informationType"))
+        get(urlEqualTo(s"/files-available/list/$informationType"))
           .withHeader("x-client-id", equalTo(serverToken))
           .withHeader("X-SDES-Key", equalTo(testEori))
           .willReturn(ok().withBody(Json.toJson(Seq(downloadData)).toString()))
@@ -91,7 +91,7 @@ class SecureDataExchangeProxyConnectorSpec
     "must return a failed future when the server returns an error" in {
 
       wireMockServer.stubFor(
-        get(urlEqualTo(s"/secure-data-exchange-proxy/files-available/list/$informationType"))
+        get(urlEqualTo(s"/files-available/list/$informationType"))
           .withHeader("x-client-id", equalTo(serverToken))
           .withHeader("X-SDES-Key", equalTo(testEori))
           .willReturn(serverError())
