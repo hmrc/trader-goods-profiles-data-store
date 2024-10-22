@@ -30,8 +30,8 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.email.DownloadRecordEmail
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.DownloadDataNotification
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataSummary, FileInfo}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummaryRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.services.UuidService
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.DateTimeFormats.dateTimeFormat
-import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.UuidGenerator.generateUuid
 
 import java.time.temporal.ChronoUnit
 import java.time.{Clock, Instant, ZoneOffset}
@@ -47,6 +47,7 @@ class DownloadDataSummaryController @Inject() (
   cc: ControllerComponents,
   identify: IdentifierAction,
   config: DataStoreAppConfig,
+  uuidService: UuidService,
   clock: Clock
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
@@ -88,7 +89,6 @@ class DownloadDataSummaryController @Inject() (
                                  downloadDataSummary.createdAt,
                                  //TODO handle toInt fail?
                                  clock.instant.plus(retentionDays.toInt, ChronoUnit.DAYS),
-                                 //TODO use clock instead of instant - better for testing
                                  Some(FileInfo(notification.fileName, notification.fileSize, retentionDays))
                                )
         _                   <- downloadDataSummaryRepository.set(newSummary)
@@ -140,7 +140,7 @@ class DownloadDataSummaryController @Inject() (
       downloadDataSummaryRepository
         .set(
           DownloadDataSummary(
-            generateUuid(),
+            uuidService.generate(),
             eori,
             FileInProgress,
             createdAt,

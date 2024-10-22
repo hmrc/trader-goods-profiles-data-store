@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.tradergoodsprofilesdatastore.utils
+package uk.gov.hmrc.tradergoodsprofilesdatastore.services
 
-object UuidGenerator {
+import java.util.UUID
+import javax.inject.{Inject, Singleton}
 
-  def generateUuid(): String =
-    java.util.UUID.randomUUID().toString
+@Singleton
+class UuidService @Inject() () {
+  def generate(): String = UUID.randomUUID().toString
 }
