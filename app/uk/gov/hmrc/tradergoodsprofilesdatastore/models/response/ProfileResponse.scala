@@ -25,7 +25,7 @@ case class ProfileResponse(
   ukimsNumber: String,
   nirmsNumber: Option[String],
   niphlNumber: Option[String],
-  eoriChanged: Boolean
+  eoriChanged: Option[Boolean]
 )
 
 object ProfileResponse {
@@ -38,6 +38,6 @@ object ProfileResponse {
       ukimsNumber = profileRequest.ukimsNumber,
       nirmsNumber = profileRequest.nirmsNumber,
       niphlNumber = profileRequest.niphlNumber,
-      eoriChanged = false
+      eoriChanged = Some(false)
     )
 }
