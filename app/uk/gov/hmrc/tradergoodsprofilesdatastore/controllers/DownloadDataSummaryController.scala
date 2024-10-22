@@ -117,7 +117,7 @@ class DownloadDataSummaryController @Inject() (
             case Some(info) =>
               secureDataExchangeProxyConnector.getFilesAvailableUrl(eori).flatMap { downloadDatas =>
                 downloadDatas.find(downloadData =>
-                  downloadData.filesize == info.fileSize && downloadData.filename == info.fileName && downloadData.metadata
+                  downloadData.fileSize == info.fileSize && downloadData.filename == info.fileName && downloadData.metadata
                     .find(metadataObject => metadataObject.metadata == "RETENTION_DAYS")
                     .get
                     .value == info.retentionDays

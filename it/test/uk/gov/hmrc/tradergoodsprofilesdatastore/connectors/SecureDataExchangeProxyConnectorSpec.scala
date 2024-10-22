@@ -60,7 +60,7 @@ class SecureDataExchangeProxyConnectorSpec
 
       val url                      = "/some-url"
       val filename                 = "filename"
-      val filesize                 = 600
+      val fileSize                 = 600
       val fileRoleMetadata         = Metadata("FileRole", "C79Certificate")
       val periodStartYearMetadata  = Metadata("PeriodStartYear", "2020")
       val retentionDaysMetadata    = Metadata("RETENTION_DAYS", "217")
@@ -69,7 +69,7 @@ class SecureDataExchangeProxyConnectorSpec
       val downloadData = DownloadData(
         url,
         filename,
-        filesize,
+        fileSize,
         Seq(
           fileRoleMetadata,
           periodStartYearMetadata,
