@@ -17,19 +17,15 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
 import org.mongodb.scala.model.Filters
-import org.scalactic.source.Position
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import org.slf4j.MDC
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.ProfileResponse
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class ProfileRepositorySpec
@@ -47,10 +43,26 @@ class ProfileRepositorySpec
     prepareDatabase()
   }
 
-  private val profileEori     = "test-eori"
-  private val profileRequest  = ProfileRequest("test-actor-id", "test-ukims", Some("test-nirms"), Some("test-niphl"))
-  private val profileResponse =
-    ProfileResponse(profileEori, "test-actor-id", "test-ukims", Some("test-nirms"), Some("test-niphl"))
+  private val profileEori                       = "test-eori"
+  private val profileRequest                    = ProfileRequest("test-actor-id", "test-ukims", Some("test-nirms"), Some("test-niphl"))
+  private val profileResponse                   =
+    ProfileResponse(
+      profileEori,
+      "test-actor-id",
+      "test-ukims",
+      Some("test-nirms"),
+      Some("test-niphl"),
+      eoriChanged = Some(false)
+    )
+  private val profileResponseWithoutEoriChanged =
+    ProfileResponse(
+      profileEori,
+      "test-actor-id",
+      "test-ukims",
+      Some("test-nirms"),
+      Some("test-niphl"),
+      eoriChanged = None
+    )
 
   protected override val repository = new ProfileRepository(mongoComponent = mongoComponent)
 
@@ -88,6 +100,13 @@ class ProfileRepositorySpec
       result.value mustEqual profileResponse
     }
 
+    "when there is a record without EoriChanged for this eori it must get the record" in {
+      insert(profileResponseWithoutEoriChanged).futureValue
+      val result           = repository.get(profileEori).futureValue
+      val expectedResponse = profileResponseWithoutEoriChanged.copy(eoriChanged = Some(false))
+      result.value mustEqual expectedResponse
+    }
+
     "when there is no record for this eori it must return None" in {
       repository.get("eori that does not exist").futureValue must not be defined
     }
@@ -106,6 +125,7 @@ class ProfileRepositorySpec
       updateResult mustEqual true
       result.value.eori mustEqual newEori
       result.value.actorId mustEqual newEori
+      result.value.eoriChanged.value mustEqual true
     }
 
     "must not update profile when there is none" in {
