@@ -16,25 +16,20 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
-import org.apache.pekko.Done
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
-import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConnector, EmailConnector, RouterConnector, SecureDataExchangeProxyConnector}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{RouterConnector, SecureDataExchangeProxyConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadyUnseen}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.email.DownloadRecordEmailParameters
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.DownloadDataNotification
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataSummary, FileInfo}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummaryRepository
-import uk.gov.hmrc.tradergoodsprofilesdatastore.services.UuidService
-import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.DateTimeFormats.dateTimeFormat
+import uk.gov.hmrc.tradergoodsprofilesdatastore.services.{SdesService, UuidService}
 
 import java.time.temporal.ChronoUnit
-import java.time.{Clock, Instant, ZoneOffset}
+import java.time.Clock
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -42,13 +37,11 @@ class DownloadDataSummaryController @Inject() (
   downloadDataSummaryRepository: DownloadDataSummaryRepository,
   routerConnector: RouterConnector,
   secureDataExchangeProxyConnector: SecureDataExchangeProxyConnector,
-  customsDataStoreConnector: CustomsDataStoreConnector,
-  emailConnector: EmailConnector,
   cc: ControllerComponents,
   identify: IdentifierAction,
-  config: DataStoreAppConfig,
   uuidService: UuidService,
-  clock: Clock
+  clock: Clock,
+  sdesService: SdesService
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
     with Logging {
@@ -78,7 +71,7 @@ class DownloadDataSummaryController @Inject() (
   def submitNotification(): Action[DownloadDataNotification] =
     Action.async(parse.json[DownloadDataNotification]) { implicit request =>
       val notification = request.body
-      (for {
+      for {
         retentionDays       <- buildRetentionDays(notification)
         //TODO match on conversation ID
         downloadDataSummary <- handleGetOldestInProgress(notification.eori)
@@ -92,47 +85,10 @@ class DownloadDataSummaryController @Inject() (
                                  Some(FileInfo(notification.fileName, notification.fileSize, retentionDays))
                                )
         _                   <- downloadDataSummaryRepository.set(newSummary)
-        //TODO think about if we should separate email and submitting, a successful submit should not be related to if the email sends - workqueue
-        _                   <- sendEmailNotification(notification.eori, retentionDays)
-      } yield NoContent).recover { case e: EmailNotFoundException =>
-        logger.info(e.getMessage)
-
-        //TODO do we need a not found?
-        NotFound
-      }
+        submissionId         = uuidService.generate()
+        _                   <- sdesService.enqueueSubmission(submissionId, newSummary.eori, retentionDays, newSummary.summaryId)
+      } yield NoContent
     }
-
-  private def sendEmailNotification(eori: String, retentionDays: String)(implicit hc: HeaderCarrier): Future[Done] = {
-    //TODO determine when to send email in english or welsh (default is english) TGP-2654
-    val isWelsh = false
-    //TODO add flag into qa config as false until the email stuff is working
-    if (config.sendNotificationEmail) {
-      customsDataStoreConnector.getEmail(eori).flatMap {
-        case Some(email) =>
-          emailConnector
-            .sendDownloadRecordEmail(
-              email.address,
-              DownloadRecordEmailParameters(
-                convertToDateString(clock.instant.plus(retentionDays.toInt, ChronoUnit.DAYS), isWelsh)
-              )
-            )
-        case None        => Future.failed(EmailNotFoundException(eori))
-      }
-    } else {
-      Future.successful(Done)
-    }
-  }
-
-  private case class EmailNotFoundException(eori: String) extends RuntimeException {
-    override def getMessage: String = s"Unable to find the email for EORI: $eori"
-  }
-
-  private def convertToDateString(instant: Instant, isWelsh: Boolean): String =
-    instant
-      .atZone(ZoneOffset.UTC)
-      .toLocalDate
-      .format(dateTimeFormat(if (isWelsh) { "cy" }
-      else { "en" }))
 
   def requestDownloadData(eori: String): Action[AnyContent] = identify.async { implicit request =>
     routerConnector.getRequestDownloadData(eori).flatMap { _ =>

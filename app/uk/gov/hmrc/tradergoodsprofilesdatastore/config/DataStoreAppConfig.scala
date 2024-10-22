@@ -20,6 +20,7 @@ import com.google.inject.{Inject, Singleton}
 import play.api.Configuration
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.EnrolmentConfig
 
+import java.time.Duration
 import scala.concurrent.duration.FiniteDuration
 @Singleton
 class DataStoreAppConfig @Inject() (configuration: Configuration) {
@@ -33,4 +34,5 @@ class DataStoreAppConfig @Inject() (configuration: Configuration) {
     configuration.get[FiniteDuration]("workers.clear-cache-worker.initial-delay")
   val dataToClearOlderThanDays: FiniteDuration     =
     configuration.get[FiniteDuration]("workers.clear-cache-worker.older-than-days")
+  val sdesSubmissionRetryTimeout: Duration         = configuration.get[Duration]("sdes.submission.retry-after")
 }

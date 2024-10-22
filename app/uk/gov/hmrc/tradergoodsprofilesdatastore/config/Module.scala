@@ -18,7 +18,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.config
 
 import com.google.inject.AbstractModule
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{AuthenticatedIdentifierAction, IdentifierAction, StoreLatestAction, StoreLatestActionImpl}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.worker.ClearCacheWorker
+import uk.gov.hmrc.tradergoodsprofilesdatastore.worker.{ClearCacheWorker, SdesSubmissionWorker}
 
 import java.time.Clock
 
@@ -29,5 +29,6 @@ class Module extends AbstractModule {
     bind(classOf[IdentifierAction]).to(classOf[AuthenticatedIdentifierAction]).asEagerSingleton()
     bind(classOf[Clock]).toInstance(Clock.systemUTC())
     bind(classOf[ClearCacheWorker]).asEagerSingleton()
+    bind(classOf[SdesSubmissionWorker]).asEagerSingleton()
   }
 }
