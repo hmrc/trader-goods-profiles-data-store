@@ -59,7 +59,7 @@ class SecureDataExchangeProxyConnectorSpec
 
       val url                      = "/some-url"
       val filename                 = "filename"
-      val filesize                 = 600
+      val fileSize                 = 600
       val fileRoleMetadata         = Metadata("FileRole", "C79Certificate")
       val periodStartYearMetadata  = Metadata("PeriodStartYear", "2020")
       val retentionDaysMetadata    = Metadata("RETENTION_DAYS", "217")
@@ -68,7 +68,7 @@ class SecureDataExchangeProxyConnectorSpec
       val downloadData = DownloadData(
         url,
         filename,
-        filesize,
+        fileSize,
         Seq(
           fileRoleMetadata,
           periodStartYearMetadata,
@@ -78,7 +78,7 @@ class SecureDataExchangeProxyConnectorSpec
       )
 
       wireMockServer.stubFor(
-        get(urlEqualTo(s"/secure-data-exchange-proxy/files-available/list/$informationType"))
+        get(urlEqualTo(s"/files-available/list/$informationType"))
           .withHeader("x-client-id", equalTo(serverToken))
           .withHeader("X-SDES-Key", equalTo(testEori))
           .willReturn(ok().withBody(Json.toJson(Seq(downloadData)).toString()))
@@ -90,7 +90,7 @@ class SecureDataExchangeProxyConnectorSpec
     "must return a failed future when the server returns an error" in {
 
       wireMockServer.stubFor(
-        get(urlEqualTo(s"/secure-data-exchange-proxy/files-available/list/$informationType"))
+        get(urlEqualTo(s"/files-available/list/$informationType"))
           .withHeader("x-client-id", equalTo(serverToken))
           .withHeader("X-SDES-Key", equalTo(testEori))
           .willReturn(serverError())

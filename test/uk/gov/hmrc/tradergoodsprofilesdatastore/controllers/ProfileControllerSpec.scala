@@ -75,7 +75,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
     actorId = "1234567890",
     ukimsNumber = "XIUKIM47699357400020231115081800",
     nirmsNumber = Some("123456"),
-    niphlNumber = Some("123456")
+    niphlNumber = Some("123456"),
+    eoriChanged = Some(false)
   )
 
   override def beforeEach(): Unit = {
@@ -256,7 +257,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
             actorId = "previousEori",
             ukimsNumber = "XIUKIM47699357400020231115081800",
             nirmsNumber = Some("RMS-GB-123456"),
-            niphlNumber = Some("6 S12345")
+            niphlNumber = Some("6 S12345"),
+            eoriChanged = Some(false)
           )
 
           when(mockProfileRepository.get(eqTo("previousEori"))) thenReturn Future.successful(Some(historicEoriProfile))
@@ -313,7 +315,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
             actorId = "previousEori",
             ukimsNumber = "XIUKIM47699357400020231115081800",
             nirmsNumber = Some("RMS-GB-123456"),
-            niphlNumber = Some("6 S12345")
+            niphlNumber = Some("6 S12345"),
+            eoriChanged = Some(false)
           )
 
           when(mockProfileRepository.get(eqTo("previousEori"))) thenReturn Future.successful(Some(historicEoriProfile))
@@ -326,7 +329,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
             actorId = "eori2",
             ukimsNumber = "XIUKIM47699357400020231115081800",
             nirmsNumber = Some("RMS-GB-123456"),
-            niphlNumber = Some("6 S12345")
+            niphlNumber = Some("6 S12345"),
+            eoriChanged = Some(false)
           )
 
           when(mockProfileRepository.get(eqTo("eori2"))) thenReturn Future.successful(Some(olderHistoricEoriProfile))
@@ -391,7 +395,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
             actorId = "previousEori",
             ukimsNumber = "XIUKIM47699357400020231115081800",
             nirmsNumber = Some("RMS-GB-123456"),
-            niphlNumber = Some("6 S12345")
+            niphlNumber = Some("6 S12345"),
+            eoriChanged = Some(false)
           )
 
           when(mockProfileRepository.get(eqTo("previousEori"))) thenReturn Future.successful(Some(historicEoriProfile))
@@ -531,7 +536,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
             actorId = "previousEori",
             ukimsNumber = "XIUKIM47699357400020231115081800",
             nirmsNumber = Some("RMS-GB-123456"),
-            niphlNumber = Some("6 S12345")
+            niphlNumber = Some("6 S12345"),
+            eoriChanged = Some(false)
           )
 
           when(mockProfileRepository.get(eqTo("previousEori"))) thenReturn Future.successful(Some(historicEoriProfile))

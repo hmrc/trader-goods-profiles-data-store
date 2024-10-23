@@ -48,6 +48,11 @@ class ProfileRepository @Inject() (
     collection
       .find[ProfileResponse](byEori(eori))
       .headOption()
+      .map {
+        case Some(profile) =>
+          Some(profile.copy(eoriChanged = profile.eoriChanged.orElse(Some(false))))
+        case None          => None
+      }
 
   def set(eori: String, profile: ProfileRequest): Future[Boolean] = {
     val profileToSet = ProfileResponse.fromRequest(eori, profile)
@@ -65,7 +70,8 @@ class ProfileRepository @Inject() (
     val updateQuery  = byEori(oldEori)
     val updateAction = Updates.combine(
       Updates.set("eori", newEori),
-      Updates.set("actorId", newEori)
+      Updates.set("actorId", newEori),
+      Updates.set("eoriChanged", true)
     )
     collection
       .updateOne(
