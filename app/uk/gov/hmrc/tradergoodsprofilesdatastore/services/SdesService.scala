@@ -24,7 +24,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConn
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.email.DownloadRecordEmailParameters
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.SdesSubmissionWorkItemRepository
-import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.DateTimeFormats.dateTimeFormat
+import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.DateTimeFormats.{convertToDateString, dateTimeFormat}
 
 import java.time.{Clock, Instant, ZoneOffset}
 import javax.inject.{Inject, Singleton}
@@ -47,6 +47,9 @@ class SdesService @Inject() (
 
     val now = clock.instant()
     println(config.sdesSubmissionRetryTimeout)
+    println(now.minus(config.sdesSubmissionRetryTimeout))
+    println(now)
+
     workItemRepository.pullOutstanding(now.minus(config.sdesSubmissionRetryTimeout), now).flatMap {
       _.map { workItem =>
         println("boop2")
@@ -86,16 +89,6 @@ class SdesService @Inject() (
       Future.successful(Done)
     }
   }
-
-  private def convertToDateString(instant: Instant, isWelsh: Boolean): String =
-    instant
-      .atZone(ZoneOffset.UTC)
-      .toLocalDate
-      .format(dateTimeFormat(if (isWelsh) {
-        "cy"
-      } else {
-        "en"
-      }))
 
   def processAllSubmissions(): Future[Done] = {
     println("hello")

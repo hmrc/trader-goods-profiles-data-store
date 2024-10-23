@@ -37,8 +37,9 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataSummary, Fil
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.email.DownloadRecordEmailParameters
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Email
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.SdesSubmissionWorkItemRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.DateTimeFormats.convertToDateString
 
-import java.time.{Clock, Instant, ZoneOffset}
+import java.time.Instant
 import java.time.temporal.ChronoUnit
 import scala.concurrent.{Future, Promise}
 
@@ -57,16 +58,13 @@ class SdesSubmissionWorkerSpec
   private val mockEmailConnector: EmailConnector                       = mock[EmailConnector]
 
   private val id  = java.util.UUID.randomUUID().toString
-  private val now = Instant.parse("2018-11-30T18:35:24.00Z")
-
-  private val clock = Clock.fixed(now, ZoneOffset.UTC)
+  private val now = Instant.now
 
   override def fakeApplication(): Application = GuiceApplicationBuilder()
     .overrides(
       bind[MongoComponent].toInstance(mongoComponent),
       bind[CustomsDataStoreConnector].toInstance(mockCustomsDataStoreConnector),
-      bind[EmailConnector].toInstance(mockEmailConnector),
-      bind[Clock].toInstance(clock)
+      bind[EmailConnector].toInstance(mockEmailConnector)
     )
     .configure(
       "workers.sdes-submission.initial-delay" -> "1s",
@@ -87,10 +85,10 @@ class SdesSubmissionWorkerSpec
   "must process waiting submissions" in {
     val eori          = "GB1234567890"
     val retentionDays = "30"
-    val timestamp     = Instant.now
-    val address       = "email@test.co.uk"
     val fileName      = "fileName"
     val fileSize      = 600
+    val timestamp     = Instant.now
+    val address       = "email@test.co.uk"
     val email         = Email(address, timestamp)
 
     val summary = DownloadDataSummary(
@@ -103,15 +101,10 @@ class SdesSubmissionWorkerSpec
     )
 
     val downloadRecordEmailParameters = DownloadRecordEmailParameters(
-      "30 December 2018"
+      convertToDateString(now.plus(retentionDays.toInt, ChronoUnit.DAYS), isWelsh = false)
     )
-
-    val mockCustomsDataStoreConnector = mock[CustomsDataStoreConnector]
-    val mockEmailConnector            = mock[EmailConnector]
-
     when(mockCustomsDataStoreConnector.getEmail(any())(any())) thenReturn Future.successful(Some(email))
     when(mockEmailConnector.sendDownloadRecordEmail(any(), any())(any())) thenReturn Future.successful(Done)
-
     submissionWorkerItemRepository.pushNew(summary).futureValue
 
     val done = Promise[Done]
