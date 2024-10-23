@@ -73,7 +73,7 @@ class DownloadDataSummaryController @Inject() (
       case Some(downloadDataSummary) => Future.successful(downloadDataSummary)
       case None                      =>
         Future.failed(
-          new RuntimeException(s"Initial download request (download data summary) not found for EORI: $eori")
+          new RuntimeException(s"Initial download request not found for EORI: $eori")
         )
     }
 
