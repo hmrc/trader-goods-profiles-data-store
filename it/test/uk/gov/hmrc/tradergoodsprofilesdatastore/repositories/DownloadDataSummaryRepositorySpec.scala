@@ -33,7 +33,7 @@ import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeStoreLatestAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.FileInProgress
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadySeen, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
 
 import java.time.Instant
@@ -134,6 +134,45 @@ class DownloadDataSummaryRepositorySpec
     }
 
     mustPreserveMdc(repository.get(sampleDownloadDataSummary.eori))
+  }
+
+  ".update" - {
+
+    "must only update status from FileReadyUnseen to FileReadySeen" in {
+
+      val downloadDataSummaryFileReadyUnseen: DownloadDataSummary = DownloadDataSummary(
+        summaryId = java.util.UUID.randomUUID().toString,
+        eori = testEori,
+        status = FileReadyUnseen,
+        createdAt = now,
+        expiresAt = now,
+        fileInfo = None
+      )
+
+      val downloadDataSummaryFileInProgress: DownloadDataSummary = DownloadDataSummary(
+        summaryId = java.util.UUID.randomUUID().toString,
+        eori = testEori,
+        status = FileInProgress,
+        createdAt = now,
+        expiresAt = now,
+        fileInfo = None
+      )
+
+      repository.set(downloadDataSummaryFileReadyUnseen).futureValue
+      repository.set(downloadDataSummaryFileInProgress).futureValue
+
+      repository.updateSeen(testEori).futureValue mustEqual 1
+
+      val records = find(byEori(testEori)).futureValue
+
+      val updatedRecord    = records.find(_.summaryId == downloadDataSummaryFileReadyUnseen.summaryId).value
+      val notUpdatedRecord = records.find(_.summaryId == downloadDataSummaryFileInProgress.summaryId).value
+
+      updatedRecord.status mustEqual FileReadySeen
+      notUpdatedRecord.status mustEqual FileInProgress
+    }
+
+    mustPreserveMdc(repository.updateSeen("eori"))
   }
 
   private def mustPreserveMdc[A](f: => Future[A])(implicit pos: Position): Unit =

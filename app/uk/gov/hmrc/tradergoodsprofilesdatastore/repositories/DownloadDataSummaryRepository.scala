@@ -22,7 +22,7 @@ import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.play.http.logging.Mdc
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.FileInProgress
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadySeen, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
@@ -64,10 +64,23 @@ class DownloadDataSummaryRepository @Inject() (
   private def byEoriAndFileInProgress(eori: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.equal("status", FileInProgress.toString))
 
+  private def byEoriAndFileReadyUnseen(eori: String): Bson =
+    Filters.and(Filters.equal("eori", eori), Filters.equal("status", FileReadyUnseen.toString))
+
   def get(eori: String): Future[Seq[DownloadDataSummary]] = Mdc.preservingMdc {
     collection
       .find[DownloadDataSummary](byEori(eori))
       .toFuture()
+  }
+
+  def updateSeen(eori: String): Future[Long] = Mdc.preservingMdc {
+    collection
+      .updateMany(
+        filter = byEoriAndFileReadyUnseen(eori),
+        update = Updates.set("status", FileReadySeen.toString)
+      )
+      .head()
+      .map(_.getMatchedCount)
   }
 
   //TODO matching on an ID

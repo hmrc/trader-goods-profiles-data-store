@@ -105,6 +105,59 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
     }
   }
 
+  "touchDownloadDataSummaries" - {
+
+    "return 204 and update summaries" in {
+
+      lazy val downloadDataSummaryUrl = routes.DownloadDataSummaryController
+        .touchDownloadDataSummaries(testEori)
+        .url
+
+      lazy val validFakePatchRequest = FakeRequest("PATCH", downloadDataSummaryUrl)
+
+      val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
+      when(mockDownloadDataSummaryRepository.updateSeen(any())) thenReturn Future.successful(1)
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[DownloadDataSummaryRepository].toInstance(mockDownloadDataSummaryRepository),
+          bind[Clock].toInstance(clock)
+        )
+        .build()
+      running(application) {
+        val result = route(application, validFakePatchRequest).value
+        status(result) shouldBe Status.NO_CONTENT
+      }
+
+      verify(mockDownloadDataSummaryRepository).updateSeen(testEori)
+    }
+
+    "return 200 and empty list if the DownloadDataSummaries are not present" in {
+
+      lazy val downloadDataSummaryUrl = routes.DownloadDataSummaryController
+        .getDownloadDataSummaries(testEori)
+        .url
+
+      lazy val validFakeGetRequest = FakeRequest("GET", downloadDataSummaryUrl)
+
+      val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
+      when(mockDownloadDataSummaryRepository.get(any())) thenReturn Future.successful(Seq.empty)
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[DownloadDataSummaryRepository].toInstance(mockDownloadDataSummaryRepository)
+        )
+        .build()
+      running(application) {
+        val result = route(application, validFakeGetRequest).value
+        status(result) shouldBe Status.OK
+        contentAsJson(result) mustEqual JsArray()
+      }
+
+      verify(mockDownloadDataSummaryRepository).get(testEori)
+    }
+  }
+
   "submitNotification" - {
 
     "return 204 if the notification is submitted successfully" in {

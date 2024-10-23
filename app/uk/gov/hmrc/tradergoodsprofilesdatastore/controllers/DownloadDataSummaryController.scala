@@ -22,7 +22,7 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{RouterConnector, SecureDataExchangeProxyConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadyUnseen}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadySeen, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.DownloadDataNotification
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataSummary, FileInfo}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummaryRepository
@@ -52,6 +52,12 @@ class DownloadDataSummaryController @Inject() (
       .map(summaries => Ok(Json.toJson(summaries)))
   }
 
+  def touchDownloadDataSummaries(eori: String): Action[AnyContent] = identify.async {
+    downloadDataSummaryRepository
+      .updateSeen(eori)
+      .map(_ => NoContent)
+  }
+
   private def buildRetentionDays(notification: DownloadDataNotification): Future[String] =
     notification.metadata.find(x => x.metadata == "RETENTION_DAYS") match {
       case Some(metadata) => Future.successful(metadata.value)
@@ -67,8 +73,6 @@ class DownloadDataSummaryController @Inject() (
           new RuntimeException(s"Initial download request (download data summary) not found for EORI: $eori")
         )
     }
-
-  //TODO add update to summary endpoint
 
   def submitNotification(): Action[DownloadDataNotification] =
     Action.async(parse.json[DownloadDataNotification]) { implicit request =>
