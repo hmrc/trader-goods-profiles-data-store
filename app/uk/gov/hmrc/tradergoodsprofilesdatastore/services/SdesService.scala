@@ -24,9 +24,9 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConn
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.email.DownloadRecordEmailParameters
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.SdesSubmissionWorkItemRepository
-import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.DateTimeFormats.{convertToDateString, dateTimeFormat}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.DateTimeFormats.convertToDateString
 
-import java.time.{Clock, Instant, ZoneOffset}
+import java.time.{Clock, Instant}
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -43,17 +43,9 @@ class SdesService @Inject() (
     workItemRepository.pushNew(downloadDataSummary, clock.instant()).map(_ => Done)
 
   def processNextSubmission(): Future[Boolean] = {
-    println("boop1")
-
     val now = clock.instant()
-    println(config.sdesSubmissionRetryTimeout)
-    println(now.minus(config.sdesSubmissionRetryTimeout))
-    println(now)
-
     workItemRepository.pullOutstanding(now.minus(config.sdesSubmissionRetryTimeout), now).flatMap {
       _.map { workItem =>
-        println("boop2")
-
         for {
           _ <- sendEmailNotification(workItem.item.eori, workItem.item.expiresAt).recoverWith { case e =>
                  workItemRepository.markAs(workItem.id, ProcessingStatus.Failed).flatMap { _ =>
@@ -71,7 +63,6 @@ class SdesService @Inject() (
     implicit val hc: HeaderCarrier = HeaderCarrier()
     //TODO determine when to send email in english or welsh (default is english) TGP-2654
     val isWelsh                    = false
-    println("boop3")
     //TODO add flag into qa config as false until the email stuff is working
     if (config.sendNotificationEmail) {
       customsDataStoreConnector.getEmail(eori).flatMap {
@@ -90,14 +81,11 @@ class SdesService @Inject() (
     }
   }
 
-  def processAllSubmissions(): Future[Done] = {
-    println("hello")
-
+  def processAllSubmissions(): Future[Done] =
     processNextSubmission().flatMap {
       case true  =>
         processAllSubmissions()
       case false =>
         Future.successful(Done)
     }
-  }
 }
