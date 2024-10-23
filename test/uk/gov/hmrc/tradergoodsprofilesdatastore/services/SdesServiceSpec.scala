@@ -212,6 +212,34 @@ class SdesServiceSpec
           verify(mockSdesSubmissionWorkItemRepository).markAs(workItem.id, ProcessingStatus.Failed)
         }
       }
+
+      "when there is no email" - {
+
+        "must mark the work item as failed and fail" in {
+
+          val workItem = WorkItem(
+            id = ObjectId.get(),
+            receivedAt = now.minus(1, ChronoUnit.HOURS),
+            updatedAt = now.minus(1, ChronoUnit.HOURS),
+            availableAt = now.minus(1, ChronoUnit.HOURS),
+            status = ToDo,
+            failureCount = 0,
+            item = summary
+          )
+
+          when(mockSdesSubmissionWorkItemRepository.pullOutstanding(any(), any()))
+            .thenReturn(Future.successful(Some(workItem)))
+          when(mockCustomsDataStoreConnector.getEmail(any())(any())).thenReturn(Future.successful(None))
+          when(mockSdesSubmissionWorkItemRepository.markAs(any(), any(), any())).thenReturn(Future.successful(true))
+
+          sdesService.processNextSubmission().failed.futureValue
+
+          verify(mockSdesSubmissionWorkItemRepository).pullOutstanding(now.minus(30, ChronoUnit.MINUTES), now)
+          verify(mockCustomsDataStoreConnector).getEmail(eqTo(eori))(any())
+          verify(mockSdesSubmissionWorkItemRepository).markAs(workItem.id, ProcessingStatus.Failed)
+        }
+      }
+
     }
 
     "when there is no submission in the work item queue" - {

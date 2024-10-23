@@ -28,6 +28,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.TestConstants.testEori
+import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{RouterConnector, SecureDataExchangeProxyConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{DownloadData, DownloadDataNotification, Metadata}
@@ -223,6 +224,72 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       }
     }
 
+    "return 204 if the notification is submitted successfully with the flag false so nothing is queued" in {
+
+      lazy val submitNotificationUrl = routes.DownloadDataSummaryController
+        .submitNotification()
+        .url
+
+      val fileName              = "fileName"
+      val fileSize              = 600
+      val retentionDays         = "30"
+      val retentionDaysMetaData = Metadata("RETENTION_DAYS", retentionDays)
+
+      val oldSummary = DownloadDataSummary(
+        id,
+        testEori,
+        FileInProgress,
+        now,
+        now.plus(30, ChronoUnit.DAYS),
+        None
+      )
+
+      val newSummary = DownloadDataSummary(
+        id,
+        testEori,
+        FileReadyUnseen,
+        now,
+        now.plus(retentionDays.toInt, ChronoUnit.DAYS),
+        Some(FileInfo(fileName, fileSize, retentionDays))
+      )
+
+      val notification =
+        DownloadDataNotification(testEori, fileName, fileSize, Seq(retentionDaysMetaData))
+
+      lazy val validFakePostRequest = FakeRequest("POST", submitNotificationUrl)
+        .withJsonBody(Json.toJson(notification))
+
+      val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
+      val mockSdesService                   = mock[SdesService]
+      val mockDataStoreAppConfig            = mock[DataStoreAppConfig]
+
+      when(mockDownloadDataSummaryRepository.getOldestInProgress(any())) thenReturn Future.successful(Some(oldSummary))
+      when(mockDownloadDataSummaryRepository.set(any())) thenReturn Future.successful(Done)
+      when(mockDataStoreAppConfig.sendNotificationEmail) thenReturn false
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[DownloadDataSummaryRepository].toInstance(mockDownloadDataSummaryRepository),
+          bind[SdesService].toInstance(mockSdesService),
+          bind[DataStoreAppConfig].toInstance(mockDataStoreAppConfig),
+          bind[Clock].toInstance(clock)
+        )
+        .build()
+
+      running(application) {
+        val result = route(application, validFakePostRequest).value
+        status(result) shouldBe Status.NO_CONTENT
+      }
+
+      withClue("must call the relevant services with the correct details") {
+        verify(mockDownloadDataSummaryRepository).getOldestInProgress(eqTo(testEori))
+        verify(mockDownloadDataSummaryRepository).set(eqTo(newSummary))
+        verify(mockDataStoreAppConfig).sendNotificationEmail
+        verify(mockSdesService, never)
+          .enqueueSubmission(any())
+      }
+    }
+
     "return error if email submission is not queued" in {
 
       lazy val submitNotificationUrl = routes.DownloadDataSummaryController
@@ -289,141 +356,48 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       }
     }
 
-    //    "return 204 if the notification is submitted successfully but no email is sent because flag is false" in {
-//
-//      lazy val submitNotificationUrl = routes.DownloadDataSummaryController
-//        .submitNotification()
-//        .url
-//
-//      val fileName              = "fileName"
-//      val fileSize              = 600
-//      val retentionDays         = "30"
-//      val retentionDaysMetaData = Metadata("RETENTION_DAYS", retentionDays)
-//
-//      val oldSummary = DownloadDataSummary(
-//        id,
-//        testEori,
-//        FileInProgress,
-//        now,
-//        now.plus(30, ChronoUnit.DAYS),
-//        None
-//      )
-//
-//      val newSummary = DownloadDataSummary(
-//        id,
-//        testEori,
-//        FileReadyUnseen,
-//        now,
-//        now.plus(retentionDays.toInt, ChronoUnit.DAYS),
-//        Some(FileInfo(fileName, fileSize, retentionDays))
-//      )
-//
-//      val notification =
-//        DownloadDataNotification(testEori, fileName, fileSize, Seq(retentionDaysMetaData))
-//
-//      lazy val validFakePostRequest = FakeRequest("POST", submitNotificationUrl)
-//        .withJsonBody(Json.toJson(notification))
-//
-//      val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
-//      val mockCustomsDataStoreConnector     = mock[CustomsDataStoreConnector]
-//      val mockEmailConnector                = mock[EmailConnector]
-//
-//      when(mockDownloadDataSummaryRepository.getOldestInProgress(any())) thenReturn Future.successful(Some(oldSummary))
-//      when(mockDownloadDataSummaryRepository.set(any())) thenReturn Future.successful(Done)
-//      when(appConfig.sendNotificationEmail) thenReturn false
-//
-//      val application = applicationBuilder()
-//        .overrides(
-//          bind[DownloadDataSummaryRepository].toInstance(mockDownloadDataSummaryRepository),
-//          bind[CustomsDataStoreConnector].toInstance(mockCustomsDataStoreConnector),
-//          bind[EmailConnector].toInstance(mockEmailConnector),
-//          bind[Clock].toInstance(clock),
-//          bind[DataStoreAppConfig].toInstance(appConfig)
-//        )
-//        .build()
-//
-//      running(application) {
-//        val result = route(application, validFakePostRequest).value
-//        status(result) shouldBe Status.NO_CONTENT
-//      }
-//
-//      withClue("must call the relevant services with the correct details") {
-//        verify(mockDownloadDataSummaryRepository).getOldestInProgress(eqTo(testEori))
-//        verify(mockDownloadDataSummaryRepository).set(eqTo(newSummary))
-//        verify(mockCustomsDataStoreConnector, never).getEmail(any())(any())
-//        verify(mockEmailConnector, never).sendDownloadRecordEmail(any(), any())(any())
-//      }
-//    }
-
-//    "return error if email not found" in {
-//
-//      lazy val submitNotificationUrl = routes.DownloadDataSummaryController
-//        .submitNotification()
-//        .url
-//
-//      val fileName              = "fileName"
-//      val fileSize              = 600
-//      val retentionDays         = "30"
-//      val retentionDaysMetaData = Metadata("RETENTION_DAYS", retentionDays)
-//
-//      val oldSummary = DownloadDataSummary(
-//        id,
-//        testEori,
-//        FileInProgress,
-//        now,
-//        now.plus(30, ChronoUnit.DAYS),
-//        None
-//      )
-//
-//      val newSummary = DownloadDataSummary(
-//        id,
-//        testEori,
-//        FileReadyUnseen,
-//        now,
-//        now.plus(retentionDays.toInt, ChronoUnit.DAYS),
-//        Some(FileInfo(fileName, fileSize, retentionDays))
-//      )
-//
-//      val notification =
-//        DownloadDataNotification(testEori, fileName, fileSize, Seq(retentionDaysMetaData))
-//
-//      lazy val validFakePostRequest = FakeRequest("POST", submitNotificationUrl)
-//        .withJsonBody(Json.toJson(notification))
-//
-//      val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
-//      val mockCustomsDataStoreConnector     = mock[CustomsDataStoreConnector]
-//      val mockEmailConnector                = mock[EmailConnector]
-//
-//      when(mockDownloadDataSummaryRepository.getOldestInProgress(any())) thenReturn Future.successful(Some(oldSummary))
-//      when(mockDownloadDataSummaryRepository.set(any())) thenReturn Future.successful(Done)
-//      when(mockCustomsDataStoreConnector.getEmail(any())(any())) thenReturn Future.successful(None)
-//
-//      val application = applicationBuilder()
-//        .overrides(
-//          bind[DownloadDataSummaryRepository].toInstance(mockDownloadDataSummaryRepository),
-//          bind[CustomsDataStoreConnector].toInstance(mockCustomsDataStoreConnector),
-//          bind[EmailConnector].toInstance(mockEmailConnector),
-//          bind[Clock].toInstance(clock)
-//        )
-//        .build()
-//
-//      running(application) {
-//        intercept[RuntimeException] {
-//          await(route(application, validFakePostRequest).value)
-//        }
-//      }
-//
-//      withClue("must call the relevant services with the correct details") {
-//        verify(mockDownloadDataSummaryRepository).getOldestInProgress(eqTo(testEori))
-//        verify(mockDownloadDataSummaryRepository).set(eqTo(newSummary))
-//        verify(mockCustomsDataStoreConnector).getEmail(eqTo(testEori))(any())
-//        verify(mockEmailConnector, never()).sendDownloadRecordEmail(any(), any())(
-//          any()
-//        )
-//      }
-//    }
-
     "return error if matching summary not found" in {
+
+      lazy val submitNotificationUrl = routes.DownloadDataSummaryController
+        .submitNotification()
+        .url
+
+      val fileName              = "fileName"
+      val fileSize              = 600
+      val retentionDays         = "hello"
+      val retentionDaysMetaData = Metadata("RETENTION_DAYS", retentionDays)
+
+      val notification =
+        DownloadDataNotification(testEori, fileName, fileSize, Seq(retentionDaysMetaData))
+
+      lazy val validFakePostRequest = FakeRequest("POST", submitNotificationUrl)
+        .withJsonBody(Json.toJson(notification))
+
+      val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
+      val mockSdesService                   = mock[SdesService]
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[DownloadDataSummaryRepository].toInstance(mockDownloadDataSummaryRepository),
+          bind[SdesService].toInstance(mockSdesService),
+          bind[Clock].toInstance(clock)
+        )
+        .build()
+
+      running(application) {
+        intercept[RuntimeException] {
+          await(route(application, validFakePostRequest).value)
+        }
+      }
+
+      withClue("must call the relevant services with the correct details") {
+        verify(mockDownloadDataSummaryRepository, never).getOldestInProgress(eqTo(testEori))
+        verify(mockDownloadDataSummaryRepository, never).set(any())
+        verify(mockSdesService, never).enqueueSubmission(any())
+      }
+    }
+
+    "return error if retention days not a number" in {
 
       lazy val submitNotificationUrl = routes.DownloadDataSummaryController
         .submitNotification()
@@ -465,81 +439,6 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         verify(mockSdesService, never).enqueueSubmission(any())
       }
     }
-
-//    "return error if EmailConnector fails" in {
-//
-//      lazy val submitNotificationUrl = routes.DownloadDataSummaryController
-//        .submitNotification()
-//        .url
-//
-//      val fileName              = "fileName"
-//      val fileSize              = 600
-//      val retentionDays         = "30"
-//      val retentionDaysMetaData = Metadata("RETENTION_DAYS", retentionDays)
-//
-//      val oldSummary = DownloadDataSummary(
-//        id,
-//        testEori,
-//        FileInProgress,
-//        now,
-//        now.plus(30, ChronoUnit.DAYS),
-//        None
-//      )
-//
-//      val newSummary = DownloadDataSummary(
-//        id,
-//        testEori,
-//        FileReadyUnseen,
-//        now,
-//        now.plus(retentionDays.toInt, ChronoUnit.DAYS),
-//        Some(FileInfo(fileName, fileSize, retentionDays))
-//      )
-//
-//      val downloadRecordEmailParameters = DownloadRecordEmailParameters(
-//        "30 December 2018"
-//      )
-//
-//      val notification =
-//        DownloadDataNotification(testEori, fileName, fileSize, Seq(retentionDaysMetaData))
-//
-//      lazy val validFakePostRequest = FakeRequest("POST", submitNotificationUrl)
-//        .withJsonBody(Json.toJson(notification))
-//
-//      val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
-//      val mockCustomsDataStoreConnector     = mock[CustomsDataStoreConnector]
-//      val mockEmailConnector                = mock[EmailConnector]
-//
-//      when(mockDownloadDataSummaryRepository.getOldestInProgress(any())) thenReturn Future.successful(Some(oldSummary))
-//      when(mockDownloadDataSummaryRepository.set(any())) thenReturn Future.successful(Done)
-//      when(mockCustomsDataStoreConnector.getEmail(any())(any())) thenReturn Future.successful(Some(email))
-//      when(mockEmailConnector.sendDownloadRecordEmail(any(), any())(any())) thenReturn Future.failed(
-//        new RuntimeException("Failed to send the email")
-//      )
-//
-//      val application = applicationBuilder()
-//        .overrides(
-//          bind[DownloadDataSummaryRepository].toInstance(mockDownloadDataSummaryRepository),
-//          bind[CustomsDataStoreConnector].toInstance(mockCustomsDataStoreConnector),
-//          bind[EmailConnector].toInstance(mockEmailConnector),
-//          bind[Clock].toInstance(clock)
-//        )
-//        .build()
-//
-//      running(application) {
-//        intercept[RuntimeException] {
-//          await(route(application, validFakePostRequest).value)
-//        }
-//      }
-//
-//      withClue("must call the relevant services with the correct details") {
-//        verify(mockDownloadDataSummaryRepository).getOldestInProgress(eqTo(testEori))
-//        verify(mockDownloadDataSummaryRepository).set(eqTo(newSummary))
-//        verify(mockCustomsDataStoreConnector).getEmail(eqTo(testEori))(any())
-//        verify(mockEmailConnector).sendDownloadRecordEmail(eqTo(email.address), eqTo(downloadRecordEmailParameters))(
-//          any()
-//        )
-//      }
-//    }
 
     "return error if retention days not found" in {
 

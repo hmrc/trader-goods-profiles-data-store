@@ -16,13 +16,15 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
+import org.apache.pekko.Done
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{RouterConnector, SecureDataExchangeProxyConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadySeen, FileReadyUnseen}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.DownloadDataNotification
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataSummary, FileInfo}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummaryRepository
@@ -41,6 +43,7 @@ class DownloadDataSummaryController @Inject() (
   identify: IdentifierAction,
   uuidService: UuidService,
   clock: Clock,
+  config: DataStoreAppConfig,
   sdesService: SdesService
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
@@ -74,11 +77,21 @@ class DownloadDataSummaryController @Inject() (
         )
     }
 
+  private def handleToInt(string: String): Future[Int] =
+    try Future.successful(string.toInt)
+    catch {
+      case _: Throwable =>
+        Future.failed(
+          new RuntimeException(s"$string is not a number so cannot be used for retention days")
+        )
+    }
+
   def submitNotification(): Action[DownloadDataNotification] =
     Action.async(parse.json[DownloadDataNotification]) { implicit request =>
       val notification = request.body
       for {
         retentionDays       <- buildRetentionDays(notification)
+        retentionDaysAsInt  <- handleToInt(retentionDays)
         //TODO match on conversation ID
         downloadDataSummary <- handleGetOldestInProgress(notification.eori)
         newSummary           = DownloadDataSummary(
@@ -86,13 +99,19 @@ class DownloadDataSummaryController @Inject() (
                                  notification.eori,
                                  FileReadyUnseen,
                                  downloadDataSummary.createdAt,
-                                 //TODO handle toInt fail?
-                                 clock.instant.plus(retentionDays.toInt, ChronoUnit.DAYS),
+                                 clock.instant.plus(retentionDaysAsInt, ChronoUnit.DAYS),
                                  Some(FileInfo(notification.fileName, notification.fileSize, retentionDays))
                                )
         _                   <- downloadDataSummaryRepository.set(newSummary)
-        _                   <- sdesService.enqueueSubmission(newSummary)
+        _                   <- handleEnqueueSubmission(newSummary)
       } yield NoContent
+    }
+
+  private def handleEnqueueSubmission(downloadDataSummary: DownloadDataSummary): Future[Done] =
+    if (config.sendNotificationEmail) {
+      sdesService.enqueueSubmission(downloadDataSummary)
+    } else {
+      Future.successful(Done)
     }
 
   def requestDownloadData(eori: String): Action[AnyContent] = identify.async { implicit request =>

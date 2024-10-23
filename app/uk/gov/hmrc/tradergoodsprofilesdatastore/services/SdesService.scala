@@ -63,21 +63,16 @@ class SdesService @Inject() (
     implicit val hc: HeaderCarrier = HeaderCarrier()
     //TODO determine when to send email in english or welsh (default is english) TGP-2654
     val isWelsh                    = false
-    //TODO add flag into qa config as false until the email stuff is working
-    if (config.sendNotificationEmail) {
-      customsDataStoreConnector.getEmail(eori).flatMap {
-        case Some(email) =>
-          emailConnector
-            .sendDownloadRecordEmail(
-              email.address,
-              DownloadRecordEmailParameters(
-                convertToDateString(expiresAt, isWelsh)
-              )
+    customsDataStoreConnector.getEmail(eori).flatMap {
+      case Some(email) =>
+        emailConnector
+          .sendDownloadRecordEmail(
+            email.address,
+            DownloadRecordEmailParameters(
+              convertToDateString(expiresAt, isWelsh)
             )
-        case None        => Future.failed(new RuntimeException(s"Unable to find the email for EORI: $eori"))
-      }
-    } else {
-      Future.successful(Done)
+          )
+      case None        => Future.failed(new RuntimeException(s"Unable to find the email for EORI: $eori"))
     }
   }
 
