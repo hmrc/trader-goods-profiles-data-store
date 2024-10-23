@@ -145,20 +145,15 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
       val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
       val mockSdesService                   = mock[SdesService]
-      val mockUuidService                   = mock[UuidService]
 
       when(mockDownloadDataSummaryRepository.getOldestInProgress(any())) thenReturn Future.successful(Some(oldSummary))
       when(mockDownloadDataSummaryRepository.set(any())) thenReturn Future.successful(Done)
-      when(mockSdesService.enqueueSubmission(any(), any(), any(), any())) thenReturn Future.successful(Done)
-      when(
-        mockUuidService.generate()
-      ) thenReturn submissionId
+      when(mockSdesService.enqueueSubmission(any())) thenReturn Future.successful(Done)
 
       val application = applicationBuilder()
         .overrides(
           bind[DownloadDataSummaryRepository].toInstance(mockDownloadDataSummaryRepository),
           bind[SdesService].toInstance(mockSdesService),
-          bind[UuidService].toInstance(mockUuidService),
           bind[Clock].toInstance(clock)
         )
         .build()
@@ -172,8 +167,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         verify(mockDownloadDataSummaryRepository).getOldestInProgress(eqTo(testEori))
         verify(mockDownloadDataSummaryRepository).set(eqTo(newSummary))
         verify(mockSdesService)
-          .enqueueSubmission(eqTo(submissionId), eqTo(testEori), eqTo(retentionDays), eqTo(newSummary.summaryId))
-        verify(mockUuidService).generate()
+          .enqueueSubmission(eqTo(newSummary))
       }
     }
 
@@ -214,21 +208,16 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
       val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
       val mockSdesService                   = mock[SdesService]
-      val mockUuidService                   = mock[UuidService]
 
       when(mockDownloadDataSummaryRepository.getOldestInProgress(any())) thenReturn Future.successful(Some(oldSummary))
       when(mockDownloadDataSummaryRepository.set(any())) thenReturn Future.successful(Done)
-      when(mockSdesService.enqueueSubmission(any(), any(), any(), any())) thenReturn Future.failed(
+      when(mockSdesService.enqueueSubmission(any())) thenReturn Future.failed(
         new RuntimeException("Work not queued!")
       )
-      when(
-        mockUuidService.generate()
-      ) thenReturn submissionId
 
       val application = applicationBuilder()
         .overrides(
           bind[DownloadDataSummaryRepository].toInstance(mockDownloadDataSummaryRepository),
-          bind[UuidService].toInstance(mockUuidService),
           bind[SdesService].toInstance(mockSdesService),
           bind[Clock].toInstance(clock)
         )
@@ -244,8 +233,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         verify(mockDownloadDataSummaryRepository).getOldestInProgress(eqTo(testEori))
         verify(mockDownloadDataSummaryRepository).set(eqTo(newSummary))
         verify(mockSdesService)
-          .enqueueSubmission(eqTo(submissionId), eqTo(testEori), eqTo(retentionDays), eqTo(newSummary.summaryId))
-        verify(mockUuidService).generate()
+          .enqueueSubmission(eqTo(newSummary))
       }
     }
 
@@ -402,14 +390,12 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
       val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
       val mockSdesService                   = mock[SdesService]
-      val mockUuidService                   = mock[UuidService]
 
       when(mockDownloadDataSummaryRepository.getOldestInProgress(any())) thenReturn Future.successful(None)
 
       val application = applicationBuilder()
         .overrides(
           bind[DownloadDataSummaryRepository].toInstance(mockDownloadDataSummaryRepository),
-          bind[UuidService].toInstance(mockUuidService),
           bind[SdesService].toInstance(mockSdesService),
           bind[Clock].toInstance(clock)
         )
@@ -424,8 +410,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       withClue("must call the relevant services with the correct details") {
         verify(mockDownloadDataSummaryRepository).getOldestInProgress(eqTo(testEori))
         verify(mockDownloadDataSummaryRepository, never).set(any())
-        verify(mockSdesService, never).enqueueSubmission(any(), any(), any(), any())
-        verify(mockUuidService, never).generate()
+        verify(mockSdesService, never).enqueueSubmission(any())
       }
     }
 
@@ -521,12 +506,10 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
       val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
       val mockSdesService                   = mock[SdesService]
-      val mockUuidService                   = mock[UuidService]
 
       val application = applicationBuilder()
         .overrides(
           bind[DownloadDataSummaryRepository].toInstance(mockDownloadDataSummaryRepository),
-          bind[UuidService].toInstance(mockUuidService),
           bind[SdesService].toInstance(mockSdesService),
           bind[Clock].toInstance(clock)
         )
@@ -541,8 +524,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       withClue("must call the relevant services with the correct details") {
         verify(mockDownloadDataSummaryRepository, never).getOldestInProgress(any())
         verify(mockDownloadDataSummaryRepository, never).set(any())
-        verify(mockSdesService, never).enqueueSubmission(any(), any(), any(), any())
-        verify(mockUuidService, never).generate()
+        verify(mockSdesService, never).enqueueSubmission(any())
       }
     }
   }

@@ -19,7 +19,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 import play.api.Configuration
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.workitem.{WorkItemFields, WorkItemRepository}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.SdesSubmissionWorkItem
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
 
 import java.time.{Duration, Instant}
 import javax.inject.{Inject, Singleton}
@@ -30,10 +30,10 @@ class SdesSubmissionWorkItemRepository @Inject() (
   configuration: Configuration,
   mongoComponent: MongoComponent
 )(implicit ec: ExecutionContext)
-    extends WorkItemRepository[SdesSubmissionWorkItem](
+    extends WorkItemRepository[DownloadDataSummary](
       collectionName = "sdesSubmissions",
       mongoComponent = mongoComponent,
-      itemFormat = SdesSubmissionWorkItem.format,
+      itemFormat = DownloadDataSummary.mongoFormat,
       workItemFields = WorkItemFields.default
     ) {
 

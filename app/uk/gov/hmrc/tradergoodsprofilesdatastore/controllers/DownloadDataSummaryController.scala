@@ -68,6 +68,8 @@ class DownloadDataSummaryController @Inject() (
         )
     }
 
+  //TODO add update to summary endpoint
+
   def submitNotification(): Action[DownloadDataNotification] =
     Action.async(parse.json[DownloadDataNotification]) { implicit request =>
       val notification = request.body
@@ -85,8 +87,7 @@ class DownloadDataSummaryController @Inject() (
                                  Some(FileInfo(notification.fileName, notification.fileSize, retentionDays))
                                )
         _                   <- downloadDataSummaryRepository.set(newSummary)
-        submissionId         = uuidService.generate()
-        _                   <- sdesService.enqueueSubmission(submissionId, newSummary.eori, retentionDays, newSummary.summaryId)
+        _                   <- sdesService.enqueueSubmission(newSummary)
       } yield NoContent
     }
 
