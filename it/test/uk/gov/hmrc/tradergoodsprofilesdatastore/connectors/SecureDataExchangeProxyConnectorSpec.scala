@@ -26,8 +26,8 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
-import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeRetireFileAction, FakeStoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{RetireFileAction, StoreLatestAction}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeStoreLatestAction
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{DownloadData, Metadata}
 
 class SecureDataExchangeProxyConnectorSpec
@@ -41,8 +41,7 @@ class SecureDataExchangeProxyConnectorSpec
     new GuiceApplicationBuilder()
       .configure("microservice.services.secure-data-exchange-proxy.port" -> wireMockPort)
       .overrides(
-        bind[StoreLatestAction].to[FakeStoreLatestAction],
-        bind[RetireFileAction].to[FakeRetireFileAction]
+        bind[StoreLatestAction].to[FakeStoreLatestAction]
       )
       .build()
 

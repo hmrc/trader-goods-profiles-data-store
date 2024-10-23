@@ -18,9 +18,9 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.utils
 
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.DateTimeFormats.dateTimeFormat
+import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.DateTimeFormats.{convertToDateString, dateTimeFormat}
 
-import java.time.LocalDate
+import java.time.{Instant, LocalDate}
 
 class DateTimeFormatsSpec extends AnyFreeSpec with Matchers {
 
@@ -44,4 +44,20 @@ class DateTimeFormatsSpec extends AnyFreeSpec with Matchers {
       result mustEqual "1 January 2023"
     }
   }
+
+  ".convertToDateString" - {
+
+    val instant = Instant.parse("2024-10-12T16:12:34Z")
+
+    "must format dates in English" in {
+      val result = convertToDateString(instant, isWelsh = false)
+      result mustEqual "12 October 2024"
+    }
+
+    "must format dates in Welsh" in {
+      val result = convertToDateString(instant, isWelsh = true)
+      result mustEqual "12 Hydref 2024"
+    }
+  }
+
 }

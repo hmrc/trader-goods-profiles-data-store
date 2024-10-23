@@ -22,8 +22,9 @@ import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.play.http.logging.Mdc
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadySeen, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
-
+import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,30 +35,66 @@ class DownloadDataSummaryRepository @Inject() (
     extends PlayMongoRepository[DownloadDataSummary](
       collectionName = "downloadDataSummary",
       mongoComponent = mongoComponent,
-      domainFormat = DownloadDataSummary.format,
+      domainFormat = DownloadDataSummary.mongoFormat,
       indexes = Seq(
         IndexModel(
-          Indexes.ascending("eori"),
+          Indexes.ascending("expiresAt"),
           IndexOptions()
-            .name("eori_idx")
-            .unique(true)
+            .name("expiresAtIndex")
+            .expireAfter(0, TimeUnit.SECONDS)
+        ),
+        IndexModel(
+          Indexes.compoundIndex(
+            Indexes.ascending("eori"),
+            Indexes.ascending("_id")
+          ),
+          IndexOptions()
+            .name("eori_summaryId_idx")
         )
       )
     ) {
 
-  private def byEori(eori: String): Bson      = Filters.equal("eori", eori)
-  override lazy val requiresTtlIndex: Boolean = false
+  private def byEori(eori: String): Bson = Filters.equal("eori", eori)
 
-  def get(eori: String): Future[Option[DownloadDataSummary]] = Mdc.preservingMdc {
+  private def byEoriAndSummaryId(eori: String, summaryId: String): Bson =
+    Filters.and(Filters.equal("eori", eori), Filters.and(Filters.equal("summaryId", summaryId)))
+
+  private def byOldest: Bson = Sorts.ascending("createdAt")
+
+  private def byEoriAndFileInProgress(eori: String): Bson =
+    Filters.and(Filters.equal("eori", eori), Filters.equal("status", FileInProgress.toString))
+
+  private def byEoriAndFileReadyUnseen(eori: String): Bson =
+    Filters.and(Filters.equal("eori", eori), Filters.equal("status", FileReadyUnseen.toString))
+
+  def get(eori: String): Future[Seq[DownloadDataSummary]] = Mdc.preservingMdc {
     collection
       .find[DownloadDataSummary](byEori(eori))
+      .toFuture()
+  }
+
+  def updateSeen(eori: String): Future[Long] = Mdc.preservingMdc {
+    collection
+      .updateMany(
+        filter = byEoriAndFileReadyUnseen(eori),
+        update = Updates.set("status", FileReadySeen.toString)
+      )
+      .head()
+      .map(_.getMatchedCount)
+  }
+
+  //TODO matching on an ID https://jira.tools.tax.service.gov.uk/browse/TGP-2798
+  def getOldestInProgress(eori: String): Future[Option[DownloadDataSummary]] = Mdc.preservingMdc {
+    collection
+      .find[DownloadDataSummary](byEoriAndFileInProgress(eori))
+      .sort(byOldest)
       .headOption()
   }
 
   def set(downloadDataSummary: DownloadDataSummary): Future[Done] = Mdc.preservingMdc {
     collection
       .replaceOne(
-        filter = byEori(downloadDataSummary.eori),
+        filter = byEoriAndSummaryId(downloadDataSummary.eori, downloadDataSummary.summaryId),
         replacement = downloadDataSummary,
         options = ReplaceOptions().upsert(true)
       )
