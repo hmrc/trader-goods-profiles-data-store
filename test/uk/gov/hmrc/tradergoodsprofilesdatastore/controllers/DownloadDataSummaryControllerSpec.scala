@@ -43,9 +43,8 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
 
-  private val id           = java.util.UUID.randomUUID().toString
-  private val submissionId = java.util.UUID.randomUUID().toString
-  private val now          = Instant.parse("2018-11-30T18:35:24.00Z")
+  private val id  = java.util.UUID.randomUUID().toString
+  private val now = Instant.parse("2018-11-30T18:35:24.00Z")
 
   private val clock = Clock.fixed(now, ZoneOffset.UTC)
 

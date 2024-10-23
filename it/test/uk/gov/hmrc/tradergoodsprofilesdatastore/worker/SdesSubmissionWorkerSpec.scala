@@ -103,6 +103,7 @@ class SdesSubmissionWorkerSpec
     val downloadRecordEmailParameters = DownloadRecordEmailParameters(
       convertToDateString(now.plus(retentionDays.toInt, ChronoUnit.DAYS), isWelsh = false)
     )
+
     when(mockCustomsDataStoreConnector.getEmail(any())(any())) thenReturn Future.successful(Some(email))
     when(mockEmailConnector.sendDownloadRecordEmail(any(), any())(any())) thenReturn Future.successful(Done)
     submissionWorkerItemRepository.pushNew(summary).futureValue
