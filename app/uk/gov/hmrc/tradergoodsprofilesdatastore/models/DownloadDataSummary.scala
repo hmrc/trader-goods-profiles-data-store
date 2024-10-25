@@ -16,14 +16,24 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.models
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{Format, Json, OFormat}
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
+
+import java.time.Instant
 
 final case class DownloadDataSummary(
+  summaryId: String,
   eori: String,
   status: DownloadDataStatus,
+  createdAt: Instant,
+  expiresAt: Instant,
   fileInfo: Option[FileInfo]
 )
 
 object DownloadDataSummary {
   implicit val format: OFormat[DownloadDataSummary] = Json.format[DownloadDataSummary]
+  val mongoFormat: OFormat[DownloadDataSummary] = {
+    implicit val instantFormat: Format[Instant] = MongoJavatimeFormats.instantFormat
+    Json.format[DownloadDataSummary]
+  }
 }

@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.utils
 
+import java.time.{Instant, ZoneOffset}
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -33,4 +34,14 @@ object DateTimeFormats {
 
   val dateTimeHintFormat: DateTimeFormatter =
     DateTimeFormatter.ofPattern("d M yyyy")
+
+  def convertToDateString(instant: Instant, isWelsh: Boolean): String =
+    instant
+      .atZone(ZoneOffset.UTC)
+      .toLocalDate
+      .format(dateTimeFormat(if (isWelsh) {
+        "cy"
+      } else {
+        "en"
+      }))
 }
