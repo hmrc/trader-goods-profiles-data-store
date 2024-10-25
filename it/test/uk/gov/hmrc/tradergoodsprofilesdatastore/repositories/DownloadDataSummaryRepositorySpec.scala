@@ -31,11 +31,13 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
-import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeRetireFileAction, FakeStoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{RetireFileAction, StoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.FileInProgress
+import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeStoreLatestAction
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestAction
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadySeen, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
 
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import scala.concurrent.{ExecutionContext, Future}
 
 class DownloadDataSummaryRepositorySpec
@@ -48,19 +50,23 @@ class DownloadDataSummaryRepositorySpec
     with MockitoSugar
     with GuiceOneAppPerSuite {
 
-  val testEori = "GB123456789001"
+  private val testEori = "GB123456789001"
+  private val id       = java.util.UUID.randomUUID().toString
+  private val now      = Instant.now.truncatedTo(ChronoUnit.MILLIS)
 
   val sampleDownloadDataSummary: DownloadDataSummary = DownloadDataSummary(
+    summaryId = id,
     eori = testEori,
     status = FileInProgress,
+    createdAt = now,
+    expiresAt = now,
     fileInfo = None
   )
 
   override def fakeApplication(): Application = GuiceApplicationBuilder()
     .overrides(
       bind[MongoComponent].toInstance(mongoComponent),
-      bind[StoreLatestAction].to[FakeStoreLatestAction],
-      bind[RetireFileAction].to[FakeRetireFileAction]
+      bind[StoreLatestAction].to[FakeStoreLatestAction]
     )
     .build()
 
@@ -73,21 +79,24 @@ class DownloadDataSummaryRepositorySpec
 
     "must create a downloadDataSummary when there is none" in {
       repository.set(sampleDownloadDataSummary).futureValue
-      val updatedRecord = find(byEori(testEori)).futureValue.headOption.value
+      val retrievedRecord = find(byEori(testEori)).futureValue.headOption.value
 
-      updatedRecord.eori mustEqual testEori
-      updatedRecord.status mustEqual sampleDownloadDataSummary.status
+      retrievedRecord mustEqual sampleDownloadDataSummary
     }
 
     "must update a downloadDataSummary when there is one" in {
       insert(sampleDownloadDataSummary).futureValue
       val newDownloadDataSummary: DownloadDataSummary = DownloadDataSummary(
+        summaryId = java.util.UUID.randomUUID().toString,
         eori = testEori,
         status = FileInProgress,
+        createdAt = now,
+        expiresAt = now,
         fileInfo = None
       )
+
       repository.set(newDownloadDataSummary).futureValue
-      val updatedRecord                               = find(byEori(testEori)).futureValue.headOption.value
+      val updatedRecord = find(byEori(testEori)).futureValue.headOption.value
 
       updatedRecord.eori mustEqual testEori
       updatedRecord.status mustBe newDownloadDataSummary.status
@@ -98,17 +107,72 @@ class DownloadDataSummaryRepositorySpec
 
   ".get" - {
 
-    "when there is a downloadDataSummary for this eori it must get the downloadDataSummary" in {
+    "when there is a downloadDataSummary for this eori it must get a list of downloadDataSummaries that match" in {
       insert(sampleDownloadDataSummary).futureValue
-      val result = repository.get(sampleDownloadDataSummary.eori).futureValue
-      result.value mustEqual sampleDownloadDataSummary
+      repository.get(sampleDownloadDataSummary.eori).futureValue mustEqual Seq(sampleDownloadDataSummary)
     }
 
-    "when there is no downloadDataSummary for this eori it must return None" in {
-      repository.get(sampleDownloadDataSummary.eori).futureValue must not be defined
+    "when there is no downloadDataSummary for this eori it must get empty List" in {
+      repository.get(sampleDownloadDataSummary.eori).futureValue mustEqual Seq.empty
     }
 
     mustPreserveMdc(repository.get(sampleDownloadDataSummary.eori))
+  }
+
+  ".getOldestInProgress" - {
+
+    "must get the latest in progress summary that matches the eori" in {
+      insert(sampleDownloadDataSummary).futureValue
+      repository
+        .getOldestInProgress(sampleDownloadDataSummary.eori)
+        .futureValue
+        .value mustEqual sampleDownloadDataSummary
+    }
+
+    "when there is no downloadDataSummary for this eori it must return None" in {
+      repository.getOldestInProgress(sampleDownloadDataSummary.eori).futureValue mustEqual None
+    }
+
+    mustPreserveMdc(repository.get(sampleDownloadDataSummary.eori))
+  }
+
+  ".update" - {
+
+    "must only update status from FileReadyUnseen to FileReadySeen" in {
+
+      val downloadDataSummaryFileReadyUnseen: DownloadDataSummary = DownloadDataSummary(
+        summaryId = java.util.UUID.randomUUID().toString,
+        eori = testEori,
+        status = FileReadyUnseen,
+        createdAt = now,
+        expiresAt = now,
+        fileInfo = None
+      )
+
+      val downloadDataSummaryFileInProgress: DownloadDataSummary = DownloadDataSummary(
+        summaryId = java.util.UUID.randomUUID().toString,
+        eori = testEori,
+        status = FileInProgress,
+        createdAt = now,
+        expiresAt = now,
+        fileInfo = None
+      )
+
+      repository.set(downloadDataSummaryFileReadyUnseen).futureValue
+      repository.set(downloadDataSummaryFileInProgress).futureValue
+
+      repository.updateSeen(testEori).futureValue mustEqual 1
+
+      val records = find(byEori(testEori)).futureValue
+
+      val updatedRecord    = records.find(_.summaryId == downloadDataSummaryFileReadyUnseen.summaryId).value
+      val notUpdatedRecord = records.find(_.summaryId == downloadDataSummaryFileInProgress.summaryId).value
+
+      updatedRecord.status mustEqual FileReadySeen
+      notUpdatedRecord.status mustEqual FileInProgress
+    }
+
+    mustPreserveMdc(repository.updateSeen("eori"))
   }
 
   private def mustPreserveMdc[A](f: => Future[A])(implicit pos: Position): Unit =

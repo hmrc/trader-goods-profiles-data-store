@@ -27,8 +27,8 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
-import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.{FakeRetireFileAction, FakeStoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{RetireFileAction, StoreLatestAction}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeStoreLatestAction
+import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, GoodsItemRecord, Pagination}
 
@@ -45,8 +45,7 @@ class RouterConnectorSpec
     new GuiceApplicationBuilder()
       .configure("microservice.services.trader-goods-profiles-router.port" -> wireMockPort)
       .overrides(
-        bind[StoreLatestAction].to[FakeStoreLatestAction],
-        bind[RetireFileAction].to[FakeRetireFileAction]
+        bind[StoreLatestAction].to[FakeStoreLatestAction]
       )
       .build()
 
@@ -107,7 +106,6 @@ class RouterConnectorSpec
     "must submit a trader profile" in {
 
       val traderProfile = ProfileRequest(testEori, "1", Some("2"), None)
-
       wireMockServer.stubFor(
         post(urlEqualTo(s"/trader-goods-profiles-router/customs/traders/goods-profiles/$testEori"))
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))

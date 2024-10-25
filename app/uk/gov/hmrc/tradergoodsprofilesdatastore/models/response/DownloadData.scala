@@ -21,7 +21,7 @@ import play.api.libs.json.{Json, OFormat}
 case class DownloadData(
   downloadURL: String,
   filename: String,
-  filesize: Int,
+  fileSize: Int,
   metadata: Seq[Metadata]
 )
 
