@@ -44,31 +44,27 @@ class ProfileController @Inject() (
 
   def setProfile(eori: String): Action[ProfileRequest] = identify.async(parse.json[ProfileRequest]) {
     implicit request =>
-      if (config.checkForHistoricProfile) {
-        routerConnector.hasHistoricProfile(eori).flatMap {
-          case true  =>
-            routerConnector.updateTraderProfile(request.body, eori).flatMap { case Done =>
-              profileRepository.set(eori, request.body).map(_ => Ok)
-            }
-          case false =>
-            routerConnector.createTraderProfile(request.body, eori).flatMap { case Done =>
-              profileRepository.set(eori, request.body).map(_ => Ok)
-            }
-        }
-      } else {
-        routerConnector.updateTraderProfile(request.body, eori).flatMap { case Done =>
-          profileRepository.set(eori, request.body).map(_ => Ok)
-        }
-      }
+      val updateOrCreateProfile =
+        if (config.checkForHistoricProfile)
+          routerConnector.hasHistoricProfile(eori).flatMap { hasHistoric =>
+            if (hasHistoric) routerConnector.updateTraderProfile(request.body, eori)
+            else routerConnector.createTraderProfile(request.body, eori)
+          }
+        else routerConnector.updateTraderProfile(request.body, eori)
+
+      for {
+        _ <- updateOrCreateProfile
+        _ <- profileRepository.set(eori, request.body)
+      } yield Ok
   }
 
   def getProfile(eori: String): Action[AnyContent] = identify.async {
-    profileRepository
-      .get(eori)
-      .map {
-        case Some(profile) => Ok(Json.toJson(profile))
-        case None          => NotFound
-      }
+    for {
+      profileOpt <- profileRepository.get(eori)
+    } yield profileOpt match {
+      case Some(profile) => Ok(Json.toJson(profile))
+      case None          => NotFound
+    }
   }
 
   def doesProfileExist(eori: String): Action[AnyContent] = identify.async { implicit request =>

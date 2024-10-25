@@ -34,12 +34,22 @@ class EmailController @Inject() (
     extends BackendController(cc)
     with Logging {
 
+//  def getEmail(eori: String): Action[AnyContent] = identify.async { implicit request =>
+//    customsDataStoreConnector
+//      .getEmail(eori)
+//      .map {
+//        case Some(email) => Ok(Json.toJson(email))
+//        case None        => NotFound
+//      }
+//  }
+
   def getEmail(eori: String): Action[AnyContent] = identify.async { implicit request =>
-    customsDataStoreConnector
-      .getEmail(eori)
-      .map {
-        case Some(email) => Ok(Json.toJson(email))
-        case None        => NotFound
-      }
+    for {
+      emailOpt <- customsDataStoreConnector.getEmail(eori)
+    } yield emailOpt match {
+      case Some(email) => Ok(Json.toJson(email))
+      case None        => NotFound
+    }
   }
+
 }
