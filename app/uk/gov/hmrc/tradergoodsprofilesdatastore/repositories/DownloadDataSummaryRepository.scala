@@ -52,7 +52,7 @@ class DownloadDataSummaryRepository @Inject() (
             .name("eori_idx")
         )
       ),
-      replaceIndexes = config.replaceIndexes
+      replaceIndexes = config.downloadDataSummaryReplaceIndexes
     ) {
 
   private def byEori(eori: String): Bson = Filters.equal("eori", eori)
