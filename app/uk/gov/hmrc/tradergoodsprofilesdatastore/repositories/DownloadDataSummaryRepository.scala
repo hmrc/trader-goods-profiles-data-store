@@ -22,15 +22,18 @@ import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.play.http.logging.Mdc
+import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadySeen, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
+
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class DownloadDataSummaryRepository @Inject() (
-  mongoComponent: MongoComponent
+  mongoComponent: MongoComponent,
+  config: DataStoreAppConfig
 )(implicit ec: ExecutionContext)
     extends PlayMongoRepository[DownloadDataSummary](
       collectionName = "downloadDataSummary",
@@ -44,14 +47,12 @@ class DownloadDataSummaryRepository @Inject() (
             .expireAfter(0, TimeUnit.SECONDS)
         ),
         IndexModel(
-          Indexes.compoundIndex(
-            Indexes.ascending("eori"),
-            Indexes.ascending("_id")
-          ),
+          Indexes.ascending("eori"),
           IndexOptions()
-            .name("eori_summaryId_idx")
+            .name("eori_idx")
         )
-      )
+      ),
+      replaceIndexes = config.downloadDataSummaryReplaceIndexes
     ) {
 
   private def byEori(eori: String): Bson = Filters.equal("eori", eori)

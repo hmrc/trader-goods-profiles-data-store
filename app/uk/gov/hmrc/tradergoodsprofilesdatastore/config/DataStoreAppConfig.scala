@@ -35,4 +35,6 @@ class DataStoreAppConfig @Inject() (configuration: Configuration) {
   val dataToClearOlderThanDays: FiniteDuration     =
     configuration.get[FiniteDuration]("workers.clear-cache-worker.older-than-days")
   val sdesSubmissionRetryTimeout: Duration         = configuration.get[Duration]("sdes.submission.retry-after")
+
+  val downloadDataSummaryReplaceIndexes: Boolean = configuration.get[Boolean]("download-data-summary.replace-indexes")
 }
