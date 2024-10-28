@@ -70,7 +70,7 @@ class StoreRecordsService @Inject() (
       recordsSummaryRepository.set(eori, None, initialTimestamp).map(_ => true)
     }
 
-  def processRecords(
+  private def processRecords(
     eori: String,
     goodsRecords: Seq[GoodsItemRecord],
     totalRecords: Int,
