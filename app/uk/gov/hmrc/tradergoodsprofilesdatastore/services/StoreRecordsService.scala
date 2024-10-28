@@ -44,28 +44,15 @@ class StoreRecordsService @Inject() (
   )(implicit hc: HeaderCarrier): Future[Boolean] = {
 
     val timeBeforeInitialCall = clock.instant()
+
     for {
       recordsResponse <- routerConnector.getRecords(eori, lastUpdatedDate, Some(startingPage), Some(pageSize))
       goodsRecords     = recordsResponse.goodsItemRecords
       totalRecords     = recordsResponse.pagination.totalRecords
 
-      result <- if (goodsRecords.isEmpty) {
-                  Future.successful(true)
-                } else {
-                  for {
-                    _           <- recordsRepository.updateRecords(eori, goodsRecords)
-                    _           <- recordsSummaryRepository.set(
-                                     eori,
-                                     update = Some(Update(pageSize, totalRecords)),
-                                     lastUpdated = getLastUpdated(goodsRecords)
-                                   )
-                    finalResult <-
-                      handlePaginationAndSummaryUpdate(eori, totalRecords, lastUpdatedDate, timeBeforeInitialCall)
-                  } yield finalResult
-                }
+      result <- processRecords(eori, goodsRecords, totalRecords, lastUpdatedDate, timeBeforeInitialCall)
     } yield result
   }
-
   private def handlePaginationAndSummaryUpdate(
     eori: String,
     totalRecords: Int,
@@ -81,6 +68,27 @@ class StoreRecordsService @Inject() (
         }
     } else {
       recordsSummaryRepository.set(eori, None, initialTimestamp).map(_ => true)
+    }
+
+  def processRecords(
+    eori: String,
+    goodsRecords: Seq[GoodsItemRecord],
+    totalRecords: Int,
+    lastUpdatedDate: Option[String],
+    timeBeforeInitialCall: Instant
+  )(implicit hc: HeaderCarrier): Future[Boolean] =
+    if (goodsRecords.isEmpty) {
+      Future.successful(true)
+    } else {
+      for {
+        _           <- recordsRepository.updateRecords(eori, goodsRecords)
+        _           <- recordsSummaryRepository.set(
+                         eori,
+                         update = Some(Update(pageSize, totalRecords)),
+                         lastUpdated = getLastUpdated(goodsRecords)
+                       )
+        finalResult <- handlePaginationAndSummaryUpdate(eori, totalRecords, lastUpdatedDate, timeBeforeInitialCall)
+      } yield finalResult
     }
 
   private def storeRecordsRecursively(

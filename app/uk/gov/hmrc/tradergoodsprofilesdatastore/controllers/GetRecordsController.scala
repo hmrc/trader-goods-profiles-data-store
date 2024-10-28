@@ -42,15 +42,12 @@ class GetRecordsController @Inject() (
     pageOpt: Option[Int],
     sizeOpt: Option[Int]
   ): Action[AnyContent] = (identify andThen storeLatest).async {
-    for {
-      totalRecords <- recordsRepository.getCount(eori)
-      records      <- recordsRepository.getMany(eori, pageOpt, sizeOpt)
-    } yield {
-      val getRecordsResponse = GetRecordsResponse(
-        goodsItemRecords = records,
-        buildPagination(sizeOpt, pageOpt, totalRecords)
-      )
-      Ok(Json.toJson(getRecordsResponse))
+    recordsRepository.getCount(eori).flatMap { totalRecords =>
+      recordsRepository.getMany(eori, pageOpt, sizeOpt).map { records =>
+        val getRecordsResponse =
+          GetRecordsResponse(goodsItemRecords = records, buildPagination(sizeOpt, pageOpt, totalRecords))
+        Ok(Json.toJson(getRecordsResponse))
+      }
     }
   }
 
