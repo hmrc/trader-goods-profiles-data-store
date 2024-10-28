@@ -35,12 +35,11 @@ class EmailController @Inject() (
     with Logging {
 
   def getEmail(eori: String): Action[AnyContent] = identify.async { implicit request =>
-    for {
-      emailOpt <- customsDataStoreConnector.getEmail(eori)
-    } yield emailOpt match {
-      case Some(email) => Ok(Json.toJson(email))
-      case None        => NotFound
-    }
+    customsDataStoreConnector
+      .getEmail(eori)
+      .map {
+        case Some(email) => Ok(Json.toJson(email))
+        case None        => NotFound
+      }
   }
-
 }

@@ -42,46 +42,46 @@ class StoreRecordsService @Inject() (
     eori: String,
     lastUpdatedDate: Option[String]
   )(implicit hc: HeaderCarrier): Future[Boolean] = {
+
     val timeBeforeInitialCall = clock.instant()
-    routerConnector.getRecords(eori, lastUpdatedDate, Some(startingPage), Some(pageSize)).flatMap { recordsResponse =>
-      if (recordsResponse.goodsItemRecords.nonEmpty) {
-        recordsRepository
-          .updateRecords(eori, recordsResponse.goodsItemRecords)
-          .flatMap { _ =>
-            val totalRecords = recordsResponse.pagination.totalRecords
-            if (totalRecords > pageSize) {
+    for {
+      recordsResponse <- routerConnector.getRecords(eori, lastUpdatedDate, Some(startingPage), Some(pageSize))
+      goodsRecords     = recordsResponse.goodsItemRecords
+      totalRecords     = recordsResponse.pagination.totalRecords
 
-              recordsSummaryRepository
-                .set(
-                  eori,
-                  update = Some(Update(pageSize, totalRecords)),
-                  lastUpdated = getLastUpdated(recordsResponse.goodsItemRecords)
-                )
-                .map { _ =>
-                  storeRecordsRecursively(
-                    eori,
-                    startingPage + 1,
-                    lastUpdatedDate,
-                    pageSize
-                  ).flatMap { timeBeforeLastCall =>
-                    recordsSummaryRepository.set(eori, None, timeBeforeLastCall)
-                  }.recoverWith { case NonFatal(_) =>
-                    recordsSummaryRepository.update(eori, None, None)
-                  }
-
-                  false
+      result <- if (goodsRecords.isEmpty) {
+                  Future.successful(true)
+                } else {
+                  for {
+                    _           <- recordsRepository.updateRecords(eori, goodsRecords)
+                    _           <- recordsSummaryRepository.set(
+                                     eori,
+                                     update = Some(Update(pageSize, totalRecords)),
+                                     lastUpdated = getLastUpdated(goodsRecords)
+                                   )
+                    finalResult <-
+                      handlePaginationAndSummaryUpdate(eori, totalRecords, lastUpdatedDate, timeBeforeInitialCall)
+                  } yield finalResult
                 }
-            } else {
-              recordsSummaryRepository
-                .set(eori, None, timeBeforeInitialCall)
-                .map(_ => true)
-            }
-          }
-      } else {
-        Future.successful(true)
-      }
-    }
+    } yield result
   }
+
+  private def handlePaginationAndSummaryUpdate(
+    eori: String,
+    totalRecords: Int,
+    lastUpdatedDate: Option[String],
+    initialTimestamp: Instant
+  )(implicit hc: HeaderCarrier): Future[Boolean] =
+    if (totalRecords > pageSize) {
+      storeRecordsRecursively(eori, startingPage + 1, lastUpdatedDate, pageSize)
+        .flatMap(timeBeforeLastCall => recordsSummaryRepository.set(eori, None, timeBeforeLastCall).map(_ => false))
+        .recover { case NonFatal(_) =>
+          recordsSummaryRepository.update(eori, None, None)
+          false
+        }
+    } else {
+      recordsSummaryRepository.set(eori, None, initialTimestamp).map(_ => true)
+    }
 
   private def storeRecordsRecursively(
     eori: String,

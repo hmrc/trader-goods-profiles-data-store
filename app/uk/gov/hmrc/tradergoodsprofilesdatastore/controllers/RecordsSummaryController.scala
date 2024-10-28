@@ -33,12 +33,12 @@ class RecordsSummaryController @Inject() (
     extends BackendController(cc) {
 
   def recordsSummary(eori: String): Action[AnyContent] = identify.async {
-    for {
-      summaryOpt <- recordsSummaryRepository.get(eori)
-    } yield summaryOpt match {
-      case Some(summary) => Ok(Json.toJson(summary))
-      case None          => NotFound
-    }
+    recordsSummaryRepository
+      .get(eori)
+      .map {
+        _.map { summary =>
+          Ok(Json.toJson(summary))
+        }.getOrElse(NotFound)
+      }
   }
-
 }

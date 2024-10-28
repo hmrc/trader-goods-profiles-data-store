@@ -59,12 +59,12 @@ class ProfileController @Inject() (
   }
 
   def getProfile(eori: String): Action[AnyContent] = identify.async {
-    for {
-      profileOpt <- profileRepository.get(eori)
-    } yield profileOpt match {
-      case Some(profile) => Ok(Json.toJson(profile))
-      case None          => NotFound
-    }
+    profileRepository
+      .get(eori)
+      .map {
+        case Some(profile) => Ok(Json.toJson(profile))
+        case None          => NotFound
+      }
   }
 
   def doesProfileExist(eori: String): Action[AnyContent] = identify.async { implicit request =>
