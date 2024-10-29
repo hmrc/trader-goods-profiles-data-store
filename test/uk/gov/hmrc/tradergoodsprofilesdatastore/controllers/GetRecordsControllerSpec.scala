@@ -71,7 +71,6 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
         contentAsString(result) mustBe Json.toJson(GetRecordsResponse(goodsItemRecords = records, pagination)).toString
 
         verify(mockRecordsRepository).getCount(eqTo(requestEori))
-        //verify(mockRecordsRepository).getMany(eqTo(requestEori), eqTo(page), eqTo(Some(recordsSize)))
         verify(mockRecordsRepository).getMany(eqTo(requestEori), eqTo(Some(page)), eqTo(Some(recordsSize)))
 
       }
