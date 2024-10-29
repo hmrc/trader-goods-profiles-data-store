@@ -17,7 +17,7 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
+import org.mockito.Mockito.{atLeastOnce, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
@@ -101,6 +101,7 @@ class FilterRecordsControllerSpec
           .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
           .toString
       }
+      verify(mockRecordsRepository, atLeastOnce()).filterRecords(any(),any(),any(),any())
     }
 
     "return 200 and the paginated records from the data store with size 10 and page 1 and 5 records in db" in {

@@ -18,7 +18,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito.{never, verify, when}
+import org.mockito.Mockito.{atLeastOnce, never, verify, when}
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
@@ -77,7 +77,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         contentAsJson(result) mustEqual Json.toJson(Seq(downloadDataSummary))
       }
 
-      verify(mockDownloadDataSummaryRepository).get(testEori)
+      verify(mockDownloadDataSummaryRepository, atLeastOnce()).get(testEori)
     }
 
     "return 200 and empty list if the DownloadDataSummaries are not present" in {
@@ -102,7 +102,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         contentAsJson(result) mustEqual JsArray()
       }
 
-      verify(mockDownloadDataSummaryRepository).get(testEori)
+      verify(mockDownloadDataSummaryRepository, atLeastOnce()).get(testEori)
     }
   }
 
