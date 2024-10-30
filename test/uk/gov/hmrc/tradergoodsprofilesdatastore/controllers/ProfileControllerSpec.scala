@@ -19,7 +19,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchersSugar.eqTo
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.Mockito.{atLeastOnce, never, times, verify, when}
 import org.mockito.MockitoSugar.reset
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
@@ -109,6 +109,10 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
         running(application) {
           val result = route(application, validFakePutRequest).value
           status(result) shouldBe Status.OK
+
+          verify(mockProfileRepository, times(1)).set(any(), any())
+          verify(mockRouterConnector, times(1)).hasHistoricProfile(any())(any())
+          verify(mockRouterConnector, times(1)).updateTraderProfile(any(), any())(any())
         }
       }
 
@@ -128,6 +132,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
         running(application) {
           val result = route(application, validFakePutRequest).value
           status(result) shouldBe Status.OK
+
+          verify(mockRouterConnector, times(1)).createTraderProfile(any(), any())(any())
         }
       }
     }
@@ -148,6 +154,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
         running(application) {
           val result = route(application, validFakePutRequest).value
           status(result) shouldBe Status.OK
+
+          verify(mockRouterConnector, times(1)).updateTraderProfile(any(), any())(any())
         }
       }
     }
@@ -165,6 +173,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
       running(application) {
         val result = route(application, invalidFakePutRequest).value
         status(result) shouldBe Status.BAD_REQUEST
+
+        verify(mockRouterConnector, never()).updateTraderProfile(any(), any())(any())
       }
     }
   }
@@ -185,6 +195,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
         status(result) shouldBe Status.OK
 
         contentAsString(result) mustBe Json.toJson(expectedProfileResponse).toString
+        //verify(mockProfileRepository,atLeastOnce()).get(any())
       }
     }
 

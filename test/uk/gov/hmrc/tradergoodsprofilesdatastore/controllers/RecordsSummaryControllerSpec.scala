@@ -17,7 +17,7 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{verify, when}
+import org.mockito.Mockito.{atLeastOnce, atMostOnce, verify, when}
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
@@ -64,7 +64,7 @@ class RecordsSummaryControllerSpec extends SpecBase with MockitoSugar with GetRe
         contentAsJson(result) mustEqual Json.toJson(recordsSummary)
       }
 
-      verify(mockRecordsSummaryRepository).get(requestEori)
+      verify(mockRecordsSummaryRepository, atLeastOnce()).get(requestEori)
     }
 
     "return 404 if the RecordsSummary is not present" in {

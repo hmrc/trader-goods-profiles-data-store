@@ -101,7 +101,7 @@ class FilterRecordsControllerSpec
           .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
           .toString
       }
-      verify(mockRecordsRepository, atLeastOnce()).filterRecords(any(),any(),any(),any())
+      verify(mockRecordsRepository, atLeastOnce()).filterRecords(any(), any(), any(), any())
     }
 
     "return 200 and the paginated records from the data store with size 10 and page 1 and 5 records in db" in {
