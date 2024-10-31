@@ -18,7 +18,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito.{atLeastOnce, never, verify, when}
+import org.mockito.Mockito.{atLeastOnce, never, times, verify, when}
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
@@ -282,8 +282,8 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       }
 
       withClue("must call the relevant services with the correct details") {
-        verify(mockDownloadDataSummaryRepository).getOldestInProgress(eqTo(testEori))
-        verify(mockDownloadDataSummaryRepository).set(eqTo(newSummary))
+        verify(mockDownloadDataSummaryRepository, times(1)).getOldestInProgress(eqTo(testEori))
+        verify(mockDownloadDataSummaryRepository, times(1)).set(eqTo(newSummary))
         verify(mockDataStoreAppConfig).sendNotificationEmail
         verify(mockSdesService, never)
           .enqueueSubmission(any())
