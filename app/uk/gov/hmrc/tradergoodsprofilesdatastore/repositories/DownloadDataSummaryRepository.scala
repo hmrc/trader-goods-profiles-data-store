@@ -23,7 +23,7 @@ import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.play.http.logging.Mdc
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadySeen, FileReadyUnseen}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileReadySeen, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
 
 import java.util.concurrent.TimeUnit
@@ -60,13 +60,14 @@ class DownloadDataSummaryRepository @Inject() (
   private def byEoriAndSummaryId(eori: String, summaryId: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.and(Filters.equal("summaryId", summaryId)))
 
-  private def byOldest: Bson = Sorts.ascending("createdAt")
-
-  private def byEoriAndFileInProgress(eori: String): Bson =
-    Filters.and(Filters.equal("eori", eori), Filters.equal("status", FileInProgress.toString))
-
   private def byEoriAndFileReadyUnseen(eori: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.equal("status", FileReadyUnseen.toString))
+
+  def get(eori: String, summaryId: String): Future[Option[DownloadDataSummary]] = Mdc.preservingMdc {
+    collection
+      .find[DownloadDataSummary](byEoriAndSummaryId(eori, summaryId))
+      .headOption()
+  }
 
   def get(eori: String): Future[Seq[DownloadDataSummary]] = Mdc.preservingMdc {
     collection
@@ -82,14 +83,6 @@ class DownloadDataSummaryRepository @Inject() (
       )
       .head()
       .map(_.getMatchedCount)
-  }
-
-  //TODO matching on an ID https://jira.tools.tax.service.gov.uk/browse/TGP-2798
-  def getOldestInProgress(eori: String): Future[Option[DownloadDataSummary]] = Mdc.preservingMdc {
-    collection
-      .find[DownloadDataSummary](byEoriAndFileInProgress(eori))
-      .sort(byOldest)
-      .headOption()
   }
 
   def set(downloadDataSummary: DownloadDataSummary): Future[Done] = Mdc.preservingMdc {

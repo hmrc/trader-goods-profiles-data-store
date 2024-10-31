@@ -19,7 +19,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 import org.apache.pekko.Done
 import play.api.Logging
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.{Action, AnyContent, ControllerComponents, Headers}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{RouterConnector, SecureDataExchangeProxyConnector}
@@ -28,7 +28,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileI
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.DownloadDataNotification
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataSummary, FileInfo}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummaryRepository
-import uk.gov.hmrc.tradergoodsprofilesdatastore.services.{SdesService, UuidService}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.services.SdesService
 
 import java.time.temporal.ChronoUnit
 import java.time.Clock
@@ -41,7 +41,6 @@ class DownloadDataSummaryController @Inject() (
   secureDataExchangeProxyConnector: SecureDataExchangeProxyConnector,
   cc: ControllerComponents,
   identify: IdentifierAction,
-  uuidService: UuidService,
   clock: Clock,
   config: DataStoreAppConfig,
   sdesService: SdesService
@@ -68,8 +67,15 @@ class DownloadDataSummaryController @Inject() (
         Future.failed(new RuntimeException(s"Retention days not found in notification for EORI: ${notification.eori}"))
     }
 
-  private def handleGetOldestInProgress(eori: String): Future[DownloadDataSummary] =
-    downloadDataSummaryRepository.getOldestInProgress(eori).flatMap {
+  private def handleConversationId(eori: String, headers: Headers): Future[String] =
+    headers.get("x-conversation-id") match {
+      case Some(conversationId) => Future.successful(conversationId)
+      case _                    =>
+        Future.failed(new RuntimeException(s"Header x-conversation-id not present in notification for EORI: $eori"))
+    }
+
+  private def handleGetDownloadDataSummary(eori: String, summaryId: String): Future[DownloadDataSummary] =
+    downloadDataSummaryRepository.get(eori, summaryId).flatMap {
       case Some(downloadDataSummary) => Future.successful(downloadDataSummary)
       case None                      =>
         Future.failed(
@@ -90,10 +96,10 @@ class DownloadDataSummaryController @Inject() (
     Action.async(parse.json[DownloadDataNotification]) { implicit request =>
       val notification = request.body
       for {
+        conversationId      <- handleConversationId(notification.eori, request.headers)
         retentionDays       <- buildRetentionDays(notification)
         retentionDaysAsInt  <- handleToInt(retentionDays)
-        //TODO match on conversation ID https://jira.tools.tax.service.gov.uk/browse/TGP-2798
-        downloadDataSummary <- handleGetOldestInProgress(notification.eori)
+        downloadDataSummary <- handleGetDownloadDataSummary(notification.eori, conversationId)
         newSummary           = DownloadDataSummary(
                                  downloadDataSummary.summaryId,
                                  notification.eori,
@@ -115,12 +121,12 @@ class DownloadDataSummaryController @Inject() (
     }
 
   def requestDownloadData(eori: String): Action[AnyContent] = identify.async { implicit request =>
-    routerConnector.getRequestDownloadData(eori).flatMap { _ =>
+    routerConnector.getRequestDownloadData(eori).flatMap { correlationId =>
       val createdAt = clock.instant
       downloadDataSummaryRepository
         .set(
           DownloadDataSummary(
-            uuidService.generate(),
+            correlationId.correlationId,
             eori,
             FileInProgress,
             createdAt,

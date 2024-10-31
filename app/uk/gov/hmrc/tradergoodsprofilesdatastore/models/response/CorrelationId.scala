@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.tradergoodsprofilesdatastore.services
+package uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 
-import java.util.UUID
-import javax.inject.{Inject, Singleton}
+import play.api.libs.json.{Json, OFormat}
 
-@Singleton
-class UuidService @Inject() () {
-  def generate(): String = UUID.randomUUID().toString
+case class CorrelationId(
+  correlationId: String
+)
+
+object CorrelationId {
+  implicit val format: OFormat[CorrelationId] = Json.format[CorrelationId]
 }
