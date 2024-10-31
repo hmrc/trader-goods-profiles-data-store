@@ -133,6 +133,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
           val result = route(application, validFakePutRequest).value
           status(result) shouldBe Status.OK
 
+          verify(mockProfileRepository, times(1)).set(any(), any())
+          verify(mockRouterConnector, times(1)).hasHistoricProfile(any())(any())
           verify(mockRouterConnector, times(1)).createTraderProfile(any(), any())(any())
         }
       }
@@ -155,6 +157,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
           val result = route(application, validFakePutRequest).value
           status(result) shouldBe Status.OK
 
+          verify(mockProfileRepository, times(1)).set(any(), any())
           verify(mockRouterConnector, times(1)).updateTraderProfile(any(), any())(any())
         }
       }
@@ -174,6 +177,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
         val result = route(application, invalidFakePutRequest).value
         status(result) shouldBe Status.BAD_REQUEST
 
+        verify(mockProfileRepository, never()).set(any(), any())
         verify(mockRouterConnector, never()).updateTraderProfile(any(), any())(any())
       }
     }
@@ -195,7 +199,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
         status(result) shouldBe Status.OK
 
         contentAsString(result) mustBe Json.toJson(expectedProfileResponse).toString
-        //verify(mockProfileRepository,atLeastOnce()).get(any())
+
+        verify(mockProfileRepository, atLeastOnce()).get(any())
       }
     }
 
@@ -212,6 +217,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
       running(application) {
         val result = route(application, validFakeGetRequest).value
         status(result) shouldBe Status.NOT_FOUND
+
+        verify(mockProfileRepository, atLeastOnce()).get(any())
       }
     }
 
@@ -233,6 +240,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
         running(application) {
           val result = route(application, validDoesExistRequest).value
           status(result) shouldBe Status.OK
+
+          verify(mockProfileRepository, atLeastOnce()).get(any())
         }
       }
 
@@ -288,9 +297,11 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
             status(result) shouldBe Status.OK
 
             withClue("must call update eori and delete records") {
-              verify(mockProfileRepository).updateEori(any, any)
-              verify(mockRecordsRepository).deleteRecordsByEori(any)
-              verify(mockRecordsSummaryRepository).deleteByEori(any)
+              verify(mockProfileRepository, atLeastOnce()).get(eqTo(requestEori))
+              verify(mockCustomDataStoreConnector, atLeastOnce()).getEoriHistory(any())(any())
+              verify(mockProfileRepository, atLeastOnce()).updateEori(any, any)
+              verify(mockRecordsRepository, atLeastOnce()).deleteRecordsByEori(any)
+              verify(mockRecordsSummaryRepository, atLeastOnce()).deleteByEori(any)
             }
           }
         }
@@ -363,9 +374,9 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
             status(result) shouldBe Status.OK
 
             withClue("must called delete records twice and delete eori profile once") {
-              verify(mockProfileRepository).updateEori(any, any)
+              verify(mockProfileRepository, atLeastOnce()).updateEori(any, any)
               verify(mockRecordsRepository, times(2)).deleteRecordsByEori(any)
-              verify(mockProfileRepository).deleteByEori(any)
+              verify(mockProfileRepository, atLeastOnce()).deleteByEori(any)
               verify(mockRecordsSummaryRepository, times(2)).deleteByEori(any)
             }
           }
@@ -427,9 +438,10 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
             status(result) shouldBe Status.OK
 
             withClue("must called delete records and delete eori profile once") {
-              verify(mockProfileRepository).updateEori(any, any)
-              verify(mockRecordsRepository).deleteRecordsByEori(any)
-              verify(mockRecordsSummaryRepository).deleteByEori(any)
+              verify(mockProfileRepository, times(3)).get(any)
+              verify(mockProfileRepository, atLeastOnce()).updateEori(any, any)
+              verify(mockRecordsRepository, atLeastOnce()).deleteRecordsByEori(any)
+              verify(mockRecordsSummaryRepository, atLeastOnce()).deleteByEori(any)
             }
           }
         }
@@ -465,6 +477,9 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
           running(application) {
             val result = route(application, validDoesExistRequest).value
             status(result) shouldBe Status.NOT_FOUND
+
+            verify(mockProfileRepository, atLeastOnce()).get(any())
+            verify(mockCustomDataStoreConnector, atLeastOnce()).getEoriHistory(any())(any())
           }
         }
 
@@ -482,6 +497,9 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
           running(application) {
             val result = route(application, validDoesExistRequest).value
             status(result) shouldBe Status.NOT_FOUND
+
+            verify(mockProfileRepository, atLeastOnce()).get(any())
+            verify(mockCustomDataStoreConnector, atLeastOnce()).getEoriHistory(any())(any())
           }
         }
 
@@ -518,6 +536,9 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
           running(application) {
             val result = route(application, validDoesExistRequest).value
             status(result) shouldBe Status.NOT_FOUND
+
+            verify(mockProfileRepository, times(2)).get(any())
+            verify(mockCustomDataStoreConnector, atLeastOnce()).getEoriHistory(any())(any())
           }
         }
 
@@ -566,6 +587,11 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
           running(application) {
             val result = route(application, validDoesExistRequest).value
             status(result) shouldBe Status.NOT_FOUND
+
+            verify(mockProfileRepository, times(2)).get(any())
+            verify(mockProfileRepository, atLeastOnce()).updateEori(any(), any())
+            verify(mockRecordsRepository, atLeastOnce()).deleteRecordsByEori(any())
+            verify(mockCustomDataStoreConnector, atLeastOnce()).getEoriHistory(any())(any())
           }
         }
       }

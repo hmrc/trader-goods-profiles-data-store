@@ -17,7 +17,8 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{atLeastOnce, verify, when}
+import org.mockito.ArgumentMatchersSugar.eqTo
+import org.mockito.Mockito.{atLeastOnce, never, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
@@ -101,7 +102,9 @@ class FilterRecordsControllerSpec
           .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
           .toString
       }
-      verify(mockRecordsRepository, atLeastOnce()).filterRecords(any(), any(), any(), any())
+      verify(mockRecordsRepository, atLeastOnce())
+        .filterRecords(eqTo(requestEori), eqTo(Some(searchTerm)), eqTo(Some(field)), eqTo(false))
+
     }
 
     "return 200 and the paginated records from the data store with size 10 and page 1 and 5 records in db" in {
@@ -136,6 +139,10 @@ class FilterRecordsControllerSpec
         contentAsString(result) mustBe Json
           .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
           .toString
+
+        verify(mockRecordsRepository, atLeastOnce())
+          .filterRecords(eqTo(requestEori), eqTo(Some(searchTerm)), eqTo(Some(field)), eqTo(false))
+
       }
     }
 
@@ -171,6 +178,7 @@ class FilterRecordsControllerSpec
         contentAsString(result) mustBe Json
           .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
           .toString
+        verify(mockRecordsRepository, atLeastOnce()).filterRecords(any(), any(), any(), any())
       }
     }
 
@@ -206,6 +214,10 @@ class FilterRecordsControllerSpec
         contentAsString(result) mustBe Json
           .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
           .toString
+
+        verify(mockRecordsRepository, atLeastOnce())
+          .filterRecords(eqTo(requestEori), eqTo(Some(searchTerm)), eqTo(Some(field)), eqTo(false))
+
       }
     }
 
@@ -235,6 +247,10 @@ class FilterRecordsControllerSpec
       running(application) {
         val result = route(application, validFakeGetRequest).value
         status(result) shouldBe Status.BAD_REQUEST
+
+        verify(mockRecordsRepository, never())
+          .filterRecords(eqTo(requestEori), eqTo(Some(searchTerm)), eqTo(Some(field)), eqTo(true))
+
       }
     }
   }

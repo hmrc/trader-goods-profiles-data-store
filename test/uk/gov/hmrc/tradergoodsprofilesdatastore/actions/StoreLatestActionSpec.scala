@@ -18,7 +18,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.actions
 
 import play.api.http.Status.ACCEPTED
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{verify, when}
+import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar.mock
 import play.api.mvc.Result
 import play.api.test.FakeRequest
@@ -67,8 +67,8 @@ class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
 
       result mustEqual None
 
-      verify(mockRecordsSummaryRepository).get(any())
-      verify(mockStoreRecordsService).storeRecords(any(), any())(any())
+      verify(mockRecordsSummaryRepository, times(1)).get(any())
+      verify(mockStoreRecordsService, times(1)).storeRecords(any(), any())(any())
     }
 
     "must store all when there is no latest" in {
@@ -88,8 +88,8 @@ class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
 
       result mustEqual None
 
-      verify(mockRecordsSummaryRepository).get(any())
-      verify(mockStoreRecordsService).storeRecords(any(), any())(any())
+      verify(mockRecordsSummaryRepository, times(1)).get(any())
+      verify(mockStoreRecordsService, times(1)).storeRecords(any(), any())(any())
     }
 
     "must store latest records but more than one page" in {
@@ -111,8 +111,8 @@ class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
         .value
       status(Future.successful(result)) mustEqual ACCEPTED
 
-      verify(mockRecordsSummaryRepository).get(any())
-      verify(mockStoreRecordsService).storeRecords(any(), any())(any())
+      verify(mockRecordsSummaryRepository, times(1)).get(any())
+      verify(mockStoreRecordsService, times(1)).storeRecords(any(), any())(any())
     }
 
     "must store all when there is no latest but more than one page" in {
@@ -132,8 +132,8 @@ class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
         .value
       status(Future.successful(result)) mustEqual ACCEPTED
 
-      verify(mockRecordsSummaryRepository).get(any())
-      verify(mockStoreRecordsService).storeRecords(any(), any())(any())
+      verify(mockRecordsSummaryRepository, times(1)).get(any())
+      verify(mockStoreRecordsService, times(1)).storeRecords(any(), any())(any())
     }
   }
 }

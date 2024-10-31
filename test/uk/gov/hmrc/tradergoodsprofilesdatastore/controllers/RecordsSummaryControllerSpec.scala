@@ -17,7 +17,7 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{atLeastOnce, atMostOnce, verify, when}
+import org.mockito.Mockito.{atLeastOnce, atMostOnce, times, verify, when}
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
@@ -89,7 +89,7 @@ class RecordsSummaryControllerSpec extends SpecBase with MockitoSugar with GetRe
         status(result) shouldBe Status.NOT_FOUND
       }
 
-      verify(mockRecordsSummaryRepository).get(requestEori)
+      verify(mockRecordsSummaryRepository, times(1)).get(requestEori)
     }
   }
 }
