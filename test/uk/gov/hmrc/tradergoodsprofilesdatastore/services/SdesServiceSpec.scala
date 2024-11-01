@@ -19,8 +19,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.services
 import org.apache.pekko.Done
 import org.bson.types.ObjectId
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito
-import org.mockito.Mockito.{never, times, verify, when}
+import org.mockito.Mockito._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -82,11 +81,9 @@ class SdesServiceSpec
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    Mockito.reset(
-      mockSdesSubmissionWorkItemRepository,
-      mockCustomsDataStoreConnector,
-      mockEmailConnector
-    )
+    reset(mockSdesSubmissionWorkItemRepository)
+    reset(mockCustomsDataStoreConnector)
+    reset(mockEmailConnector)
   }
 
   override def fakeApplication(): Application =
