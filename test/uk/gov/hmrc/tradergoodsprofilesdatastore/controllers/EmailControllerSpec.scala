@@ -94,6 +94,8 @@ class EmailControllerSpec extends SpecBase with MockitoSugar with GetRecordsResp
       running(application) {
         val result = route(application, validFakeGetRequest).value
         status(result) shouldBe NOT_FOUND
+
+        verify(mockCustomsDataStoreConnector, atLeastOnce()).getEmail(any())(any())
       }
     }
   }
