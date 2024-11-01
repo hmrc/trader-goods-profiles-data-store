@@ -17,7 +17,7 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.worker
 
 import org.mockito.ArgumentMatchersSugar.{any, eqTo}
-import org.mockito.Mockito.verify
+import org.mockito.Mockito.{times, verify}
 import org.mockito.MockitoSugar.when
 import org.mongodb.scala.model.Filters
 import org.scalatest.concurrent.{Eventually, IntegrationPatience}
@@ -65,6 +65,8 @@ class ClearCacheWorkerIntegrationSpec
       eventually {
         val recordsResult = recordsRepository.getMany(testEori, None, None).futureValue
         recordsResult.size mustBe 0
+
+        verify(recordsRepository, times(1)).updateRecords(eqTo(testEori),eqTo(Seq(goodsItemRecord)))
       }
     }
   }
