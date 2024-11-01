@@ -112,7 +112,7 @@ class SdesServiceSpec
 
       sdesService.enqueueSubmission(summary).futureValue
 
-      verify(mockSdesSubmissionWorkItemRepository).pushNew(summary, now)
+      verify(mockSdesSubmissionWorkItemRepository, times(1)).pushNew(summary, now)
     }
 
     "must fail when saving the work item fails" in {
@@ -148,12 +148,13 @@ class SdesServiceSpec
 
         sdesService.processNextSubmission().futureValue mustBe true
 
-        verify(mockSdesSubmissionWorkItemRepository).pullOutstanding(now.minus(30, ChronoUnit.MINUTES), now)
-        verify(mockCustomsDataStoreConnector).getEmail(eqTo(eori))(any())
-        verify(mockEmailConnector).sendDownloadRecordEmail(eqTo(email.address), eqTo(downloadRecordEmailParameters))(
-          any()
-        )
-        verify(mockSdesSubmissionWorkItemRepository).complete(workItem.id, ProcessingStatus.Succeeded)
+        verify(mockSdesSubmissionWorkItemRepository, times(1)).pullOutstanding(now.minus(30, ChronoUnit.MINUTES), now)
+        verify(mockCustomsDataStoreConnector, times(1)).getEmail(eqTo(eori))(any())
+        verify(mockEmailConnector, times(1))
+          .sendDownloadRecordEmail(eqTo(email.address), eqTo(downloadRecordEmailParameters))(
+            any()
+          )
+        verify(mockSdesSubmissionWorkItemRepository, times(1)).complete(workItem.id, ProcessingStatus.Succeeded)
       }
 
       "when the Email connector fails" - {
@@ -179,10 +180,10 @@ class SdesServiceSpec
 
           sdesService.processNextSubmission().failed.futureValue
 
-          verify(mockSdesSubmissionWorkItemRepository).pullOutstanding(now.minus(30, ChronoUnit.MINUTES), now)
+          verify(mockSdesSubmissionWorkItemRepository, times(1)).pullOutstanding(now.minus(30, ChronoUnit.MINUTES), now)
           when(mockCustomsDataStoreConnector.getEmail(any())(any())).thenReturn(Future.successful(Some(email)))
           when(mockEmailConnector.sendDownloadRecordEmail(any(), any())(any())).thenReturn(Future.successful(Done))
-          verify(mockSdesSubmissionWorkItemRepository).markAs(workItem.id, ProcessingStatus.Failed)
+          verify(mockSdesSubmissionWorkItemRepository, times(1)).markAs(workItem.id, ProcessingStatus.Failed)
         }
       }
 
@@ -207,9 +208,9 @@ class SdesServiceSpec
 
           sdesService.processNextSubmission().failed.futureValue
 
-          verify(mockSdesSubmissionWorkItemRepository).pullOutstanding(now.minus(30, ChronoUnit.MINUTES), now)
-          verify(mockCustomsDataStoreConnector).getEmail(eqTo(eori))(any())
-          verify(mockSdesSubmissionWorkItemRepository).markAs(workItem.id, ProcessingStatus.Failed)
+          verify(mockSdesSubmissionWorkItemRepository, times(1)).pullOutstanding(now.minus(30, ChronoUnit.MINUTES), now)
+          verify(mockCustomsDataStoreConnector, times(1)).getEmail(eqTo(eori))(any())
+          verify(mockSdesSubmissionWorkItemRepository, times(1)).markAs(workItem.id, ProcessingStatus.Failed)
         }
       }
 
@@ -234,9 +235,9 @@ class SdesServiceSpec
 
           sdesService.processNextSubmission().failed.futureValue
 
-          verify(mockSdesSubmissionWorkItemRepository).pullOutstanding(now.minus(30, ChronoUnit.MINUTES), now)
-          verify(mockCustomsDataStoreConnector).getEmail(eqTo(eori))(any())
-          verify(mockSdesSubmissionWorkItemRepository).markAs(workItem.id, ProcessingStatus.Failed)
+          verify(mockSdesSubmissionWorkItemRepository, times(1)).pullOutstanding(now.minus(30, ChronoUnit.MINUTES), now)
+          verify(mockCustomsDataStoreConnector, times(1)).getEmail(eqTo(eori))(any())
+          verify(mockSdesSubmissionWorkItemRepository, times(1)).markAs(workItem.id, ProcessingStatus.Failed)
         }
       }
 
@@ -250,7 +251,7 @@ class SdesServiceSpec
 
         sdesService.processNextSubmission().futureValue mustBe false
 
-        verify(mockSdesSubmissionWorkItemRepository).pullOutstanding(now.minus(30, ChronoUnit.MINUTES), now)
+        verify(mockSdesSubmissionWorkItemRepository, times(1)).pullOutstanding(now.minus(30, ChronoUnit.MINUTES), now)
         verify(mockEmailConnector, never()).sendDownloadRecordEmail(any(), any())(any())
         verify(mockCustomsDataStoreConnector, never()).getEmail(any())(any())
         verify(mockSdesSubmissionWorkItemRepository, never()).markAs(any(), any(), any())

@@ -18,7 +18,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.services
 
 import org.apache.pekko.Done
 import org.mockito.ArgumentMatchersSugar.{any, eqTo}
-import org.mockito.Mockito.never
+import org.mockito.Mockito.{never, times}
 import org.mockito.MockitoSugar.{reset, verify, verifyZeroInteractions, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar.mock
@@ -65,7 +65,7 @@ class ClearCacheServiceSpec extends PlaySpec with BeforeAndAfterEach {
 
       await(sut.clearCache(Instant.now))
 
-      verify(mongoLockRepository).takeLock(eqTo("clear-cache-lock"), any, any)
+      verify(mongoLockRepository, times(1)).takeLock(eqTo("clear-cache-lock"), any, any)
     }
 
     "release a lock" in {
@@ -74,7 +74,7 @@ class ClearCacheServiceSpec extends PlaySpec with BeforeAndAfterEach {
 
       await(sut.clearCache(Instant.now))
 
-      verify(mongoLockRepository).releaseLock(eqTo("clear-cache-lock"), any)
+      verify(mongoLockRepository, times(1)).releaseLock(eqTo("clear-cache-lock"), any)
     }
 
     "delete a cache" in {
@@ -91,9 +91,9 @@ class ClearCacheServiceSpec extends PlaySpec with BeforeAndAfterEach {
       val expiredBefore = Instant.now
       await(sut.clearCache(expiredBefore))
 
-      verify(recordsSummaryRepository).getByLastUpdatedBefore(eqTo(expiredBefore))
-      verify(recordsSummaryRepository).deleteByEori(eqTo(testEori))
-      verify(recordsRepository).deleteRecordsByEori(eqTo(testEori))
+      verify(recordsSummaryRepository, times(1)).getByLastUpdatedBefore(eqTo(expiredBefore))
+      verify(recordsSummaryRepository, times(1)).deleteByEori(eqTo(testEori))
+      verify(recordsRepository, times(1)).deleteRecordsByEori(eqTo(testEori))
     }
 
     "should not delete cache if record is before expired date" in {
@@ -103,7 +103,7 @@ class ClearCacheServiceSpec extends PlaySpec with BeforeAndAfterEach {
 
       await(sut.clearCache(expiredBefore))
 
-      verify(recordsSummaryRepository).getByLastUpdatedBefore(eqTo(expiredBefore))
+      verify(recordsSummaryRepository, times(1)).getByLastUpdatedBefore(eqTo(expiredBefore))
       verify(recordsSummaryRepository, never()).deleteByEori(any)
       verifyZeroInteractions(recordsRepository)
     }
