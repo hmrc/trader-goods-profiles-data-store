@@ -18,7 +18,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito.{verify, when}
+import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject
@@ -69,7 +69,7 @@ class RequestAdviceControllerSpec extends SpecBase with MockitoSugar {
         status(result) shouldBe CREATED
 
         withClue("must call the relevant services with the correct details") {
-          verify(mockRouterConnector)
+          verify(mockRouterConnector, times(1))
             .requestAdvice(eqTo(testEori), eqTo(testRecordId), eqTo(advice))(any())
         }
       }

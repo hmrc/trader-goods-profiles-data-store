@@ -17,7 +17,7 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
+import org.mockito.Mockito.{atLeastOnce, verify, when}
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
@@ -67,6 +67,7 @@ class EmailControllerSpec extends SpecBase with MockitoSugar with GetRecordsResp
         status(result) shouldBe Status.OK
         contentAsString(result) mustBe Json.toJson(email).toString
       }
+      verify(mockCustomsDataStoreConnector, atLeastOnce()).getEmail(any())(any())
     }
 
     "return 404 when email does not exist" in {
@@ -93,6 +94,8 @@ class EmailControllerSpec extends SpecBase with MockitoSugar with GetRecordsResp
       running(application) {
         val result = route(application, validFakeGetRequest).value
         status(result) shouldBe NOT_FOUND
+
+        verify(mockCustomsDataStoreConnector, atLeastOnce()).getEmail(any())(any())
       }
     }
   }
