@@ -3,8 +3,8 @@ import sbt.*
 
 object AppDependencies {
 
-  private val bootstrapVersion = "8.6.0"
-  private val hmrcMongoVersion = "1.9.0"
+  private val bootstrapVersion = "9.5.0"
+  private val hmrcMongoVersion = "2.3.0"
 
   val compile = Seq(
     "uk.gov.hmrc"       %% "bootstrap-backend-play-30"         % bootstrapVersion,
@@ -15,8 +15,7 @@ object AppDependencies {
   val test = Seq(
     "uk.gov.hmrc"       %% "bootstrap-test-play-30"  % bootstrapVersion % Test,
     "uk.gov.hmrc.mongo" %% "hmrc-mongo-test-play-30" % hmrcMongoVersion % Test,
-    "org.mockito"       %% "mockito-scala"           % "1.17.31"        % Test,
-    "org.apache.pekko"  %% "pekko-testkit"           % "1.0.2"          % Test
+    "org.mockito"       %% "mockito-scala"           % "1.17.31"        % Test
   )
 
   val it: Seq[Nothing] = Seq.empty
