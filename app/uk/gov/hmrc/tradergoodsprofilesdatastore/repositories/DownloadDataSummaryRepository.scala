@@ -23,7 +23,7 @@ import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.play.http.logging.Mdc
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileReadySeen, FileReadyUnseen}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadySeen, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
 
 import java.util.concurrent.TimeUnit
@@ -60,19 +60,31 @@ class DownloadDataSummaryRepository @Inject() (
   private def byEoriAndSummaryId(eori: String, summaryId: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.and(Filters.equal("summaryId", summaryId)))
 
+  private def byOldest: Bson = Sorts.ascending("createdAt")
+
+  private def byEoriAndFileInProgress(eori: String): Bson =
+    Filters.and(Filters.equal("eori", eori), Filters.equal("status", FileInProgress.toString))
+
   private def byEoriAndFileReadyUnseen(eori: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.equal("status", FileReadyUnseen.toString))
-
-  def get(eori: String, summaryId: String): Future[Option[DownloadDataSummary]] = Mdc.preservingMdc {
-    collection
-      .find[DownloadDataSummary](byEoriAndSummaryId(eori, summaryId))
-      .headOption()
-  }
 
   def get(eori: String): Future[Seq[DownloadDataSummary]] = Mdc.preservingMdc {
     collection
       .find[DownloadDataSummary](byEori(eori))
       .toFuture()
+  }
+
+  def get(eori: String, summaryId: String): Future[Option[DownloadDataSummary]] = Mdc.preservingMdc {
+    if (config.useXConversationIdHeader) {
+      collection
+        .find[DownloadDataSummary](byEoriAndSummaryId(eori, summaryId))
+        .headOption()
+    } else {
+      collection
+        .find[DownloadDataSummary](byEoriAndFileInProgress(eori))
+        .sort(byOldest)
+        .headOption()
+    }
   }
 
   def updateSeen(eori: String): Future[Long] = Mdc.preservingMdc {

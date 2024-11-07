@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
+import org.mockito.Mockito.when
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Filters
 import org.scalactic.source.Position
@@ -32,6 +33,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeStoreLatestAction
+import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadySeen, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
@@ -121,15 +123,72 @@ class DownloadDataSummaryRepositorySpec
 
   ".get one" - {
 
-    "when there is a downloadDataSummary for this eori it must get a list of downloadDataSummaries that match" in {
-      insert(sampleDownloadDataSummary).futureValue
-      repository.get(sampleDownloadDataSummary.eori, sampleDownloadDataSummary.summaryId).futureValue mustEqual Some(
-        sampleDownloadDataSummary
-      )
+    "when use-x-conversation-id-header is true" - {
+
+      "when there is a downloadDataSummary for this eori and summary id it must get it" in {
+
+        val mockDataStoreAppConfig = mock[DataStoreAppConfig]
+        when(mockDataStoreAppConfig.useXConversationIdHeader) thenReturn true
+
+        insert(sampleDownloadDataSummary).futureValue
+        insert(sampleDownloadDataSummary.copy(summaryId = java.util.UUID.randomUUID.toString)).futureValue
+        repository.get(sampleDownloadDataSummary.eori, sampleDownloadDataSummary.summaryId).futureValue mustEqual Some(
+          sampleDownloadDataSummary
+        )
+      }
+
+      "when there is no downloadDataSummary for this eori and summaryId it must return None" in {
+
+        val mockDataStoreAppConfig = mock[DataStoreAppConfig]
+        when(mockDataStoreAppConfig.useXConversationIdHeader) thenReturn true
+
+        repository.get(sampleDownloadDataSummary.eori, sampleDownloadDataSummary.summaryId).futureValue mustEqual None
+      }
     }
 
-    "when there is no downloadDataSummary for this eori it must get empty List" in {
-      repository.get(sampleDownloadDataSummary.eori, sampleDownloadDataSummary.summaryId).futureValue mustEqual None
+    "when use-x-conversation-id-header is false" - {
+
+      "when there are downloadDataSummaries for this eori in Progress it must return the oldest" in {
+
+        val mockDataStoreAppConfig = mock[DataStoreAppConfig]
+        when(mockDataStoreAppConfig.useXConversationIdHeader) thenReturn false
+
+        val oldestInProgressUuid   = java.util.UUID.randomUUID.toString
+        val oldestUuid             = java.util.UUID.randomUUID.toString
+        val youngestInProgressUuid = java.util.UUID.randomUUID.toString
+
+        insert(
+          sampleDownloadDataSummary
+            .copy(summaryId = oldestUuid, status = FileReadySeen, createdAt = Instant.now().minus(30, ChronoUnit.DAYS))
+        ).futureValue
+        insert(
+          sampleDownloadDataSummary.copy(
+            summaryId = oldestInProgressUuid,
+            status = FileInProgress,
+            createdAt = Instant.now().minus(20, ChronoUnit.DAYS)
+          )
+        ).futureValue
+        insert(
+          sampleDownloadDataSummary.copy(
+            summaryId = youngestInProgressUuid,
+            status = FileInProgress,
+            createdAt = Instant.now().minus(10, ChronoUnit.DAYS)
+          )
+        ).futureValue
+        repository
+          .get(sampleDownloadDataSummary.eori, oldestInProgressUuid)
+          .futureValue
+          .get
+          .summaryId mustEqual oldestInProgressUuid
+      }
+
+      "when there is no downloadDataSummary for this eori it must return None" in {
+
+        val mockDataStoreAppConfig = mock[DataStoreAppConfig]
+        when(mockDataStoreAppConfig.useXConversationIdHeader) thenReturn false
+
+        repository.get(sampleDownloadDataSummary.eori, sampleDownloadDataSummary.summaryId).futureValue mustEqual None
+      }
     }
 
     mustPreserveMdc(repository.get(sampleDownloadDataSummary.eori, sampleDownloadDataSummary.summaryId))
