@@ -74,6 +74,19 @@ class DownloadDataSummaryRepository @Inject() (
       .toFuture()
   }
 
+  def get(eori: String, summaryId: String): Future[Option[DownloadDataSummary]] = Mdc.preservingMdc {
+    if (config.useXConversationIdHeader) {
+      collection
+        .find[DownloadDataSummary](byEoriAndSummaryId(eori, summaryId))
+        .headOption()
+    } else {
+      collection
+        .find[DownloadDataSummary](byEoriAndFileInProgress(eori))
+        .sort(byOldest)
+        .headOption()
+    }
+  }
+
   def updateSeen(eori: String): Future[Long] = Mdc.preservingMdc {
     collection
       .updateMany(
@@ -82,14 +95,6 @@ class DownloadDataSummaryRepository @Inject() (
       )
       .head()
       .map(_.getMatchedCount)
-  }
-
-  //TODO matching on an ID https://jira.tools.tax.service.gov.uk/browse/TGP-2798
-  def getOldestInProgress(eori: String): Future[Option[DownloadDataSummary]] = Mdc.preservingMdc {
-    collection
-      .find[DownloadDataSummary](byEoriAndFileInProgress(eori))
-      .sort(byOldest)
-      .headOption()
   }
 
   def set(downloadDataSummary: DownloadDataSummary): Future[Done] = Mdc.preservingMdc {

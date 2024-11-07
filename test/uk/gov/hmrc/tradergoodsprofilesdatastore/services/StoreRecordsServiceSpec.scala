@@ -59,7 +59,9 @@ class StoreRecordsServiceSpec
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    reset(mockRouterConnector, mockRecordsRepository, mockRecordsSummaryRepository)
+    reset(mockRouterConnector)
+    reset(mockRecordsRepository)
+    reset(mockRecordsSummaryRepository)
   }
 
   "StoreRecordsService" - {
@@ -162,7 +164,7 @@ class StoreRecordsServiceSpec
         val result = await(service.storeRecords(requestEori, None)(hc))
         result shouldBe false
 
-        val done = Promise[Done]
+        val done = Promise[Done]()
         eventually {
           verify(mockRouterConnector, times(2)).getRecords(any(), any(), any(), any())(any())
           verify(mockRecordsRepository, times(2)).updateRecords(any(), any())
@@ -198,7 +200,7 @@ class StoreRecordsServiceSpec
         val result = await(service.storeRecords(requestEori, None)(hc))
         result shouldBe false
 
-        val done = Promise[Done]
+        val done = Promise[Done]()
         eventually {
           verify(mockRouterConnector, times(2)).getRecords(any(), any(), any(), any())(any())
           verify(mockRecordsRepository, times(1)).updateRecords(any(), any())

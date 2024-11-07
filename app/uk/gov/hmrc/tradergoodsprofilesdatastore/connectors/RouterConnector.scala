@@ -27,7 +27,7 @@ import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps, UpstreamErrorResponse}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests._
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, GoodsItemRecord}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{CorrelationId, GetRecordsResponse, GoodsItemRecord}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -248,14 +248,14 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
 
   def getRequestDownloadData(
     eori: String
-  )(implicit hc: HeaderCarrier): Future[Done] =
+  )(implicit hc: HeaderCarrier): Future[CorrelationId] =
     httpClient
       .get(getRequestDownloadDataUrl(eori))
       .setHeader(clientIdAndAcceptHeaders: _*)
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
-          case ACCEPTED => Future.successful(Done)
+          case ACCEPTED => Future.successful(response.json.as[CorrelationId])
           case _        => Future.failed(UpstreamErrorResponse(response.body, response.status))
         }
       }

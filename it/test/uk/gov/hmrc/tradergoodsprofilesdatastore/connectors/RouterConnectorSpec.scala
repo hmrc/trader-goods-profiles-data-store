@@ -30,9 +30,10 @@ import uk.gov.hmrc.http.test.WireMockSupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeStoreLatestAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests._
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, GoodsItemRecord, Pagination}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{CorrelationId, GetRecordsResponse, GoodsItemRecord, Pagination}
 
 import java.time.Instant
+import java.util.UUID
 
 class RouterConnectorSpec
     extends AnyFreeSpec
@@ -371,14 +372,15 @@ class RouterConnectorSpec
   ".getRequestDownloadData" - {
 
     "must request to download data" in {
+      val correlationId = UUID.randomUUID().toString
       wireMockServer.stubFor(
         get(urlEqualTo(s"/trader-goods-profiles-router/customs/traders/goods-profiles/$testEori/download"))
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
           .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
-          .willReturn(status(ACCEPTED))
+          .willReturn(status(ACCEPTED).withBody(Json.toJson(CorrelationId(correlationId)).toString()))
       )
 
-      connector.getRequestDownloadData(testEori).futureValue
+      connector.getRequestDownloadData(testEori).futureValue mustEqual CorrelationId(correlationId)
     }
 
     "must return a failed future when the server returns an error" in {
