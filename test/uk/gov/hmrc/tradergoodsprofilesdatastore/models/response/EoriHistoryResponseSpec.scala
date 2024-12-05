@@ -27,7 +27,7 @@ class EoriHistoryResponseSpec extends SpecBase {
           EoriHistoricItem(
             eori = "GB1234567890",
             validFrom = java.time.Instant.parse("2024-10-12T16:12:34Z"),
-            validTo = java.time.Instant.parse("2024-10-12T16:12:34Z")
+            validUntil = java.time.Instant.parse("2024-10-12T16:12:34Z")
           )
         )
       )
@@ -44,12 +44,12 @@ class EoriHistoryResponseSpec extends SpecBase {
           |    {
           |      "eori": "GB1234567890",
           |      "validFrom": "2024-09-12T16:12:34Z",
-          |      "validTo": "2024-09-12T16:12:34Z"
+          |      "validUntil": "2024-09-12T16:12:34Z"
           |    },
           |    {
           |      "eori": "GB1234567890",
           |      "validFrom": "2024-10-12T16:12:34Z",
-          |      "validTo": "2024-10-12T16:12:34Z"
+          |      "validUntil": "2024-10-12T16:12:34Z"
           |    }
           |  ]
           |}
@@ -62,12 +62,12 @@ class EoriHistoryResponseSpec extends SpecBase {
         EoriHistoricItem(
           eori = "GB1234567890",
           validFrom = java.time.Instant.parse("2024-10-12T16:12:34Z"),
-          validTo = java.time.Instant.parse("2024-10-12T16:12:34Z")
+          validUntil = java.time.Instant.parse("2024-10-12T16:12:34Z")
         ),
         EoriHistoricItem(
           eori = "GB1234567890",
           validFrom = java.time.Instant.parse("2024-09-12T16:12:34Z"),
-          validTo = java.time.Instant.parse("2024-09-12T16:12:34Z")
+          validUntil = java.time.Instant.parse("2024-09-12T16:12:34Z")
         )
       )
     }

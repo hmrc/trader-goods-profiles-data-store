@@ -22,7 +22,7 @@ import java.time.Instant
 case class EoriHistoricItem(
   eori: String,
   validFrom: Instant,
-  validTo: Instant
+  validUntil: Instant
 )
 
 object EoriHistoricItem {
