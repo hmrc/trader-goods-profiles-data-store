@@ -97,9 +97,9 @@ class CustomsDataStoreConnectorSpec
 
       val mockEoriHistoryResponse = EoriHistoryResponse(
         Seq(
-          EoriHistoricItem("eori1", Instant.parse("2024-02-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z")),
-          EoriHistoricItem("eori1", Instant.parse("2024-03-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z")),
-          EoriHistoricItem("eori1", Instant.parse("2024-01-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z"))
+          EoriHistoricItem("eori1", Instant.parse("2024-02-20T00:00:00Z"), Some(Instant.parse("2024-01-20T00:00:00Z"))),
+          EoriHistoricItem("eori1", Instant.parse("2024-03-20T00:00:00Z"), Some(Instant.parse("2024-01-20T00:00:00Z"))),
+          EoriHistoricItem("eori1", Instant.parse("2024-01-20T00:00:00Z"), Some(Instant.parse("2024-01-20T00:00:00Z")))
         )
       )
       wireMockServer.stubFor(
@@ -109,9 +109,9 @@ class CustomsDataStoreConnectorSpec
 
       val expectedResponse = EoriHistoryResponse(
         Seq(
-          EoriHistoricItem("eori1", Instant.parse("2024-03-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z")),
-          EoriHistoricItem("eori1", Instant.parse("2024-02-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z")),
-          EoriHistoricItem("eori1", Instant.parse("2024-01-20T00:00:00Z"), Instant.parse("2024-01-20T00:00:00Z"))
+          EoriHistoricItem("eori1", Instant.parse("2024-03-20T00:00:00Z"), Some(Instant.parse("2024-01-20T00:00:00Z"))),
+          EoriHistoricItem("eori1", Instant.parse("2024-02-20T00:00:00Z"), Some(Instant.parse("2024-01-20T00:00:00Z"))),
+          EoriHistoricItem("eori1", Instant.parse("2024-01-20T00:00:00Z"), Some(Instant.parse("2024-01-20T00:00:00Z")))
         )
       )
 
