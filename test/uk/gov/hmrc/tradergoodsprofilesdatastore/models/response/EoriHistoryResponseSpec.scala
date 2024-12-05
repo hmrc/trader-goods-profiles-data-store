@@ -21,13 +21,28 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 
 class EoriHistoryResponseSpec extends SpecBase {
   "EoriHistoryResponse" - {
-    "must serialize" in {
+    "must serialize when all fields are populated" in {
       val eoriHistoryResponse = EoriHistoryResponse(
         eoriHistory = Seq(
           EoriHistoricItem(
             eori = "GB1234567890",
             validFrom = java.time.Instant.parse("2024-10-12T16:12:34Z"),
-            validUntil = java.time.Instant.parse("2024-10-12T16:12:34Z")
+            validUntil = Some(java.time.Instant.parse("2024-10-12T16:12:34Z"))
+          )
+        )
+      )
+
+      val json = Json.toJson(eoriHistoryResponse)
+      json.validate[EoriHistoryResponse].asOpt.value mustBe eoriHistoryResponse
+    }
+
+    "must serialize when validUntil is missing" in {
+      val eoriHistoryResponse = EoriHistoryResponse(
+        eoriHistory = Seq(
+          EoriHistoricItem(
+            eori = "GB1234567890",
+            validFrom = java.time.Instant.parse("2024-10-12T16:12:34Z"),
+            validUntil = None
           )
         )
       )
@@ -43,8 +58,7 @@ class EoriHistoryResponseSpec extends SpecBase {
           |  "eoriHistory": [
           |    {
           |      "eori": "GB1234567890",
-          |      "validFrom": "2024-09-12T16:12:34Z",
-          |      "validUntil": "2024-09-12T16:12:34Z"
+          |      "validFrom": "2024-09-12T16:12:34Z"
           |    },
           |    {
           |      "eori": "GB1234567890",
@@ -62,12 +76,12 @@ class EoriHistoryResponseSpec extends SpecBase {
         EoriHistoricItem(
           eori = "GB1234567890",
           validFrom = java.time.Instant.parse("2024-10-12T16:12:34Z"),
-          validUntil = java.time.Instant.parse("2024-10-12T16:12:34Z")
+          validUntil = Some(java.time.Instant.parse("2024-10-12T16:12:34Z"))
         ),
         EoriHistoricItem(
           eori = "GB1234567890",
           validFrom = java.time.Instant.parse("2024-09-12T16:12:34Z"),
-          validUntil = java.time.Instant.parse("2024-09-12T16:12:34Z")
+          validUntil = None
         )
       )
     }

@@ -256,12 +256,12 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
                   EoriHistoricItem(
                     requestEori,
                     Instant.parse("2024-04-20T00:00:00Z"),
-                    Instant.parse("2024-10-20T00:00:00Z")
+                    Some(Instant.parse("2024-10-20T00:00:00Z"))
                   ),
                   EoriHistoricItem(
                     "previousEori",
                     Instant.parse("2024-03-20T00:00:00Z"),
-                    Instant.parse("2024-10-20T00:00:00Z")
+                    Some(Instant.parse("2024-10-20T00:00:00Z"))
                   )
                 )
               )
@@ -315,17 +315,17 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
                   EoriHistoricItem(
                     requestEori,
                     Instant.parse("2024-05-20T00:00:00Z"),
-                    Instant.parse("2024-10-20T00:00:00Z")
+                    Some(Instant.parse("2024-10-20T00:00:00Z"))
                   ),
                   EoriHistoricItem(
                     "previousEori",
                     Instant.parse("2024-04-20T00:00:00Z"),
-                    Instant.parse("2024-10-20T00:00:00Z")
+                    Some(Instant.parse("2024-10-20T00:00:00Z"))
                   ),
                   EoriHistoricItem(
                     "eori2",
                     Instant.parse("2024-03-20T00:00:00Z"),
-                    Instant.parse("2024-09-20T00:00:00Z")
+                    Some(Instant.parse("2024-09-20T00:00:00Z"))
                   )
                 )
               )
@@ -391,17 +391,17 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
                   EoriHistoricItem(
                     requestEori,
                     Instant.parse("2024-05-20T00:00:00Z"),
-                    Instant.parse("2024-10-20T00:00:00Z")
+                    Some(Instant.parse("2024-10-20T00:00:00Z"))
                   ),
                   EoriHistoricItem(
                     "previousEori",
                     Instant.parse("2024-04-20T00:00:00Z"),
-                    Instant.parse("2024-10-20T00:00:00Z")
+                    Some(Instant.parse("2024-10-20T00:00:00Z"))
                   ),
                   EoriHistoricItem(
                     "eori2",
                     Instant.parse("2024-03-20T00:00:00Z"),
-                    Instant.parse("2024-09-20T00:00:00Z")
+                    Some(Instant.parse("2024-09-20T00:00:00Z"))
                   )
                 )
               )
@@ -460,7 +460,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
                   EoriHistoricItem(
                     requestEori,
                     Instant.parse("2024-04-20T00:00:00Z"),
-                    Instant.parse("2024-10-20T00:00:00Z")
+                    Some(Instant.parse("2024-10-20T00:00:00Z"))
                   )
                 )
               )
@@ -512,12 +512,12 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
                   EoriHistoricItem(
                     requestEori,
                     Instant.parse("2024-04-20T00:00:00Z"),
-                    Instant.parse("2024-10-20T00:00:00Z")
+                    Some(Instant.parse("2024-10-20T00:00:00Z"))
                   ),
                   EoriHistoricItem(
                     "previousEori",
                     Instant.parse("2024-04-20T00:00:00Z"),
-                    Instant.parse("2024-10-20T00:00:00Z")
+                    Some(Instant.parse("2024-10-20T00:00:00Z"))
                   )
                 )
               )
@@ -551,12 +551,12 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
                   EoriHistoricItem(
                     requestEori,
                     Instant.parse("2024-04-20T00:00:00Z"),
-                    Instant.parse("2024-10-20T00:00:00Z")
+                    Some(Instant.parse("2024-10-20T00:00:00Z"))
                   ),
                   EoriHistoricItem(
                     "previousEori",
                     Instant.parse("2024-04-20T00:00:00Z"),
-                    Instant.parse("2024-10-20T00:00:00Z")
+                    Some(Instant.parse("2024-10-20T00:00:00Z"))
                   )
                 )
               )
