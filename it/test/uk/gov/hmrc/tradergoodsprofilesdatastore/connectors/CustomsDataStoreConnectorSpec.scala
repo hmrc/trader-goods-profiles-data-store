@@ -42,6 +42,7 @@ class CustomsDataStoreConnectorSpec
   private lazy val app: Application =
     new GuiceApplicationBuilder()
       .configure("microservice.services.customs-data-store.port" -> wireMockPort)
+      .configure("features.stub-verified-email" -> false)
       .overrides(
         bind[StoreLatestAction].to[FakeStoreLatestAction]
       )

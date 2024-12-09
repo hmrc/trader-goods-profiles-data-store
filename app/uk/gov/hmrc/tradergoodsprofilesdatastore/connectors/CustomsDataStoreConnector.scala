@@ -33,7 +33,7 @@ class CustomsDataStoreConnector @Inject() (config: Configuration, httpClient: Ht
 
   private val baseUrlCustomsDataStore: Service = config.get[Service]("microservice.services.customs-data-store")
   private val stubbedCustomsDataStore: Service = config.get[Service]("microservice.services.stubbed-customs-data-store")
-  private val stubVerifiedEmail: Boolean       = config.get[Boolean]("stub-verified-email")
+  private val stubVerifiedEmail: Boolean       = config.get[Boolean]("features.stub-verified-email")
 
   private def emailUrl(eori: String) = if (stubVerifiedEmail) {
     url"$stubbedCustomsDataStore/customs-data-store/eori/$eori/verified-email"
