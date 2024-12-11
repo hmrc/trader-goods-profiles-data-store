@@ -21,6 +21,8 @@ ScoverageKeys.coverageMinimumStmtTotal := 90
 ScoverageKeys.coverageFailOnMinimum := true
 ScoverageKeys.coverageHighlighting := true
 
+Test / javaOptions += "-Dlogger.conf=logback-test.xml"
+
 lazy val it = project
   .enablePlugins(PlayScala)
   .dependsOn(microservice % "test->test")

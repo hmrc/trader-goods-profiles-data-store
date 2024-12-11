@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
+import org.mongodb.scala.model.Filters
 import org.scalactic.source.Position
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
@@ -87,7 +88,7 @@ class RecordsRepositorySpec
     active = true,
     toReview = false,
     reviewReason = Some("no reason"),
-    declarable = "IMMI ready",
+    declarable = "IMMI Ready",
     ukimsNumber = Some("XIUKIM47699357400020231115081800"),
     nirmsNumber = Some("RMS-GB-123456"),
     niphlNumber = Some("6 S12345"),
@@ -114,7 +115,7 @@ class RecordsRepositorySpec
     active = true,
     toReview = false,
     reviewReason = Some("no reason"),
-    declarable = "IMMI ready",
+    declarable = "IMMI Ready",
     ukimsNumber = Some("XIUKIM47699357400020231115081800"),
     nirmsNumber = Some("RMS-GB-123456"),
     niphlNumber = Some("6 S12345"),
@@ -141,7 +142,7 @@ class RecordsRepositorySpec
     active = true,
     toReview = false,
     reviewReason = Some("no reason"),
-    declarable = "IMMI ready",
+    declarable = "IMMI Ready",
     ukimsNumber = Some("XIUKIM47699357400020231115081800"),
     nirmsNumber = Some("RMS-GB-123456"),
     niphlNumber = Some("6 S12345"),
@@ -180,7 +181,7 @@ class RecordsRepositorySpec
     active = true,
     toReview = false,
     reviewReason = Some("no reason"),
-    declarable = "IMMI ready",
+    declarable = "IMMI Ready",
     ukimsNumber = Some("XIUKIM47699357400020231115081800"),
     nirmsNumber = Some("RMS-GB-123456"),
     niphlNumber = Some("6 S12345"),
@@ -209,7 +210,7 @@ class RecordsRepositorySpec
     active = false,
     toReview = false,
     reviewReason = Some("no reason"),
-    declarable = "IMMI ready",
+    declarable = "IMMI Ready",
     ukimsNumber = Some("XIUKIM47699357400020231115081800"),
     nirmsNumber = Some("RMS-GB-123456"),
     niphlNumber = Some("6 S12345"),
@@ -655,6 +656,100 @@ class RecordsRepositorySpec
     }
 
     mustPreserveMdc(repository.deleteRecordsByEori(sampleGoodsItemRecord.eori))
+  }
+
+  ".searchTermFilter" - {
+
+    "when searchTerm is None" in {
+      val result = repository.searchTermFilter(None)
+      result mustEqual Filters.exists("traderRef")
+    }
+
+    "when searchTerm is Some" - {
+
+      "should return a filter that matches traderRef, goodsDescription, or comcode" in {
+        val searchTerm = "test"
+        val result = repository.searchTermFilter(Some(searchTerm))
+        val expectedFilter = Filters.or(
+          Filters.regex("traderRef", searchTerm, "i"),
+          Filters.regex("goodsDescription", searchTerm, "i"),
+          Filters.regex("comcode", searchTerm, "i")
+        )
+        result mustEqual expectedFilter
+      }
+
+      "should escape special characters in the searchTerm" in {
+        val searchTerm = "^$*+?.(){}[]"
+        val escapedSearchTerm = "\\^\\$\\*\\+\\?\\.\\(\\)\\{\\}\\[\\]"
+        val result = repository.searchTermFilter(Some(searchTerm))
+        val expectedFilter = Filters.or(
+          Filters.regex("traderRef", escapedSearchTerm, "i"),
+          Filters.regex("goodsDescription", escapedSearchTerm, "i"),
+          Filters.regex("comcode", escapedSearchTerm, "i")
+        )
+        result mustEqual expectedFilter
+      }
+    }
+  }
+
+  ".countryOfOriginFilter" - {
+
+    "when countryOfOrigin is None" in {
+      val result = repository.countryOfOriginFilter(None)
+      result mustEqual Filters.exists("countryOfOrigin")
+    }
+
+    "when countryOfOrigin is Some" in {
+      val countryOfOrigin = "AU"
+      val result = repository.countryOfOriginFilter(Some(countryOfOrigin))
+      val expectedFilter = Filters.equal("countryOfOrigin", countryOfOrigin)
+      result mustEqual expectedFilter
+    }
+  }
+
+  ".declarableFilter" - {
+
+    "when all options are None" in {
+      val result = repository.declarableFilter(None, None, None)
+      result mustEqual Filters.exists("declarable")
+    }
+
+    "when IMMIReady is Some(true)" in {
+      val result = repository.declarableFilter(Some(true), None, None)
+      val expectedFilter = Filters.or(Filters.equal("declarable", "IMMI Ready"))
+      result mustEqual expectedFilter
+    }
+
+    "when notReadyForIMMI is Some(true)" in {
+      val result = repository.declarableFilter(None, Some(true), None)
+      val expectedFilter = Filters.or(Filters.equal("declarable", "Not ready for IMMI"))
+      result mustEqual expectedFilter
+    }
+
+    "when actionNeeded is Some(true)" in {
+      val result = repository.declarableFilter(None, None, Some(true))
+      val expectedFilter = Filters.or(Filters.equal("declarable", "Not Ready For Use"))
+      result mustEqual expectedFilter
+    }
+
+    "when multiple options are Some(true)" in {
+      val result = repository.declarableFilter(Some(true), Some(true), None)
+      val expectedFilter = Filters.or(
+        Filters.equal("declarable", "IMMI Ready"),
+        Filters.equal("declarable", "Not ready for IMMI")
+      )
+      result mustEqual expectedFilter
+    }
+
+    "when all options are Some(true)" in {
+      val result = repository.declarableFilter(Some(true), Some(true), Some(true))
+      val expectedFilter = Filters.or(
+        Filters.equal("declarable", "IMMI Ready"),
+        Filters.equal("declarable", "Not ready for IMMI"),
+        Filters.equal("declarable", "Not Ready For Use")
+      )
+      result mustEqual expectedFilter
+    }
   }
 
   private def mustPreserveMdc[A](f: => Future[A])(implicit pos: Position): Unit =

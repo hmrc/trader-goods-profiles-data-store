@@ -27,42 +27,75 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class FilterRecordsController @Inject() (
-  recordsRepository: RecordsRepository,
-  cc: ControllerComponents,
-  identify: IdentifierAction,
-  storeLatest: StoreLatestAction
-)(implicit ec: ExecutionContext)
-    extends BackendController(cc) {
+class FilterRecordsController @Inject()(
+                                         recordsRepository: RecordsRepository,
+                                         cc: ControllerComponents,
+                                         identify: IdentifierAction,
+                                         storeLatest: StoreLatestAction
+                                       )(implicit ec: ExecutionContext)
+  extends BackendController(cc) {
 
   def filterLocalRecords(
-    eori: String,
-    searchTerm: Option[String],
-    exactMatch: Option[Boolean],
-    field: Option[String],
-    pageOpt: Option[Int],
-    sizeOpt: Option[Int]
-  ): Action[AnyContent] =
+                          eori: String,
+                          searchTerm: Option[String],
+                          exactMatch: Option[Boolean],
+                          field: Option[String],
+                          pageOpt: Option[Int],
+                          sizeOpt: Option[Int]
+                        ): Action[AnyContent] =
     (identify andThen storeLatest).async {
-      val validFields  = Set("traderRef", "goodsDescription", "comcode")
+      val validFields = Set("traderRef", "goodsDescription", "comcode")
       val isExactMatch = exactMatch.getOrElse(true)
 
       field match {
         case Some(value) if !validFields.contains(value) =>
           Future.successful(BadRequest("Invalid field parameter"))
-        case _                                           =>
+        case _ =>
           for {
             filteredRecords <- recordsRepository.filterRecords(eori, searchTerm, field, isExactMatch)
           } yield {
-            val size             = sizeOpt.getOrElse(localPageSize)
-            val page             = pageOpt.getOrElse(localStartingPage)
-            val skip             = (page - 1) * size
+            val size = sizeOpt.getOrElse(localPageSize)
+            val page = pageOpt.getOrElse(localStartingPage)
+            val skip = (page - 1) * size
             val paginatedRecords = filteredRecords.slice(skip, skip + size)
 
-            val pagination         = buildPagination(Some(size), Some(page), filteredRecords.size.toLong)
+            val pagination = buildPagination(Some(size), Some(page), filteredRecords.size.toLong)
             val getRecordsResponse = GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination = pagination)
             Ok(Json.toJson(getRecordsResponse))
           }
       }
     }
+
+  def filterIteration( // TODO: Rename this to filterLocalRecords
+                       searchTerm: Option[String],
+                       countryOfOrigin: Option[String],
+                       IMMIReady: Option[Boolean],
+                       notReadyForIMMI: Option[Boolean],
+                       actionNeeded: Option[Boolean],
+                       pageOpt: Option[Int],
+                       sizeOpt: Option[Int]
+                     ): Action[AnyContent] = {
+    (identify andThen storeLatest).async { request =>
+      val eori = request.eori
+
+      for {
+        filteredRecords <- recordsRepository.filterRecordsIteration(eori,
+          searchTerm,
+          countryOfOrigin,
+          IMMIReady,
+          notReadyForIMMI,
+          actionNeeded
+        )
+      } yield {
+        val size = sizeOpt.getOrElse(localPageSize)
+        val page = pageOpt.getOrElse(localStartingPage)
+        val skip = (page - 1) * size
+        val paginatedRecords = filteredRecords.slice(skip, skip + size)
+
+        val pagination = buildPagination(Some(size), Some(page), filteredRecords.size.toLong)
+        val getRecordsResponse = GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination = pagination)
+        Ok(Json.toJson(getRecordsResponse))
+      }
+    }
+  }
 }

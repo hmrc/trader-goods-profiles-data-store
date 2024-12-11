@@ -80,7 +80,7 @@ class RouterConnectorSpec
     active = true,
     toReview = false,
     reviewReason = Some("no reason"),
-    declarable = "IMMI ready",
+    declarable = "IMMI Ready",
     ukimsNumber = Some("XIUKIM47699357400020231115081800"),
     nirmsNumber = Some("RMS-GB-123456"),
     niphlNumber = Some("6 S12345"),
