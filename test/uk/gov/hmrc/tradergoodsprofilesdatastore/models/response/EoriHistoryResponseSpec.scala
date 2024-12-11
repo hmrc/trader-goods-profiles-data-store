@@ -27,7 +27,7 @@ class EoriHistoryResponseSpec extends SpecBase {
           EoriHistoricItem(
             eori = "GB1234567890",
             validFrom = java.time.LocalDate.parse("1986-03-20"),
-            validUntil = Some(java.time.LocalDate.parse("1986-03-20"))
+            validUntil = Some(java.time.LocalDate.parse("9999-12-31"))
           )
         )
       )
@@ -63,7 +63,7 @@ class EoriHistoryResponseSpec extends SpecBase {
           |    {
           |      "eori": "GB1234567890",
           |      "validFrom": "1986-03-20",
-          |      "validUntil": "1986-03-20"
+          |      "validUntil": "9999-12-31"
           |    }
           |  ]
           |}
@@ -76,7 +76,7 @@ class EoriHistoryResponseSpec extends SpecBase {
         EoriHistoricItem(
           eori = "GB1234567890",
           validFrom = java.time.LocalDate.parse("1986-03-20"),
-          validUntil = Some(java.time.LocalDate.parse("1986-03-20"))
+          validUntil = Some(java.time.LocalDate.parse("9999-12-31"))
         ),
         EoriHistoricItem(
           eori = "GB1234567890",
