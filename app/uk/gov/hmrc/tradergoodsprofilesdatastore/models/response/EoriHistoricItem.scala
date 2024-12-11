@@ -17,12 +17,13 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 
 import play.api.libs.json._
-import java.time.Instant
+
+import java.time.LocalDate
 
 case class EoriHistoricItem(
   eori: String,
-  validFrom: Instant,
-  validUntil: Option[Instant]
+  validFrom: LocalDate,
+  validUntil: Option[LocalDate]
 )
 
 object EoriHistoricItem {
