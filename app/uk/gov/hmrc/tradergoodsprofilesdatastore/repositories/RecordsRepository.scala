@@ -32,30 +32,30 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class RecordsRepository @Inject()(
-                                   override val mongoComponent: MongoComponent
-                                 )(implicit ec: ExecutionContext)
-  extends PlayMongoRepository[GoodsItemRecord](
-    collectionName = "goodsItemRecords",
-    mongoComponent = mongoComponent,
-    domainFormat = GoodsItemRecord.goodsItemRecordsMongoFormat,
-    indexes = Seq(
-      IndexModel(
-        Indexes.compoundIndex(
-          Indexes.ascending("eori"),
-          Indexes.ascending("_id")
+class RecordsRepository @Inject() (
+  override val mongoComponent: MongoComponent
+)(implicit ec: ExecutionContext)
+    extends PlayMongoRepository[GoodsItemRecord](
+      collectionName = "goodsItemRecords",
+      mongoComponent = mongoComponent,
+      domainFormat = GoodsItemRecord.goodsItemRecordsMongoFormat,
+      indexes = Seq(
+        IndexModel(
+          Indexes.compoundIndex(
+            Indexes.ascending("eori"),
+            Indexes.ascending("_id")
+          ),
+          IndexOptions()
+            .name("eori_recordId_idx")
         ),
-        IndexOptions()
-          .name("eori_recordId_idx")
-      ),
-      IndexModel(
-        Indexes.ascending("traderRef"),
-        IndexOptions().collation(
-          caseInsensitiveCollation
+        IndexModel(
+          Indexes.ascending("traderRef"),
+          IndexOptions().collation(
+            caseInsensitiveCollation
+          )
         )
       )
     )
-  )
     with Transactions {
 
   // We will be handling the timing out of this data with a worker
@@ -92,7 +92,7 @@ class RecordsRepository @Inject()(
       )
     } else {
       val escapedSearchString = escapeRegexSpecialChars(value)
-      val searchPattern = s".*$escapedSearchString.*"
+      val searchPattern       = s".*$escapedSearchString.*"
       // TODO we must not allow people to give us regexes to execute
       Filters.or(
         Filters.regex("traderRef", searchPattern, "i"),
@@ -103,7 +103,7 @@ class RecordsRepository @Inject()(
 
   def updateRecords(eori: String, records: Seq[GoodsItemRecord]): Future[Done] = Mdc.preservingMdc {
     val (activeRecords, inactiveRecords) = records.partition(_.active)
-    val inactiveRecordIds = inactiveRecords.map(_.recordId)
+    val inactiveRecordIds                = inactiveRecords.map(_.recordId)
     withSessionAndTransaction { session =>
       collection
         .bulkWrite(
@@ -149,11 +149,11 @@ class RecordsRepository @Inject()(
 
   // TODO need to add an appropriate index for this to search
   def filterRecords(
-                     eori: String,
-                     searchTerm: Option[String],
-                     field: Option[String],
-                     exactMatch: Boolean
-                   ): Future[Seq[GoodsItemRecord]] = Mdc.preservingMdc {
+    eori: String,
+    searchTerm: Option[String],
+    field: Option[String],
+    exactMatch: Boolean
+  ): Future[Seq[GoodsItemRecord]] = Mdc.preservingMdc {
     searchTerm match {
       case Some(value) =>
         field match {
@@ -182,7 +182,7 @@ class RecordsRepository @Inject()(
               )
               .sort(byLatest)
               .toFuture()
-          case _ =>
+          case _                 =>
             collection
               .find[GoodsItemRecord](
                 Filters.and(
@@ -193,11 +193,11 @@ class RecordsRepository @Inject()(
               .sort(byLatest)
               .toFuture()
         }
-      case None => Future.successful(Seq.empty)
+      case None        => Future.successful(Seq.empty)
     }
   }
 
-  def searchTermFilter(searchTerm: Option[String]): Bson = {
+  def searchTermFilter(searchTerm: Option[String]): Bson =
     searchTerm match {
       case Some(value) =>
         val escapedValue = escapeRegexSpecialChars(value)
@@ -206,22 +206,20 @@ class RecordsRepository @Inject()(
           Filters.regex("goodsDescription", escapedValue, "i"),
           Filters.regex("comcode", escapedValue, "i")
         )
-      case None => Filters.exists("traderRef")
+      case None        => Filters.exists("traderRef")
     }
-  }
 
-  def countryOfOriginFilter(countryOfOrigin: Option[String]): Bson = {
+  def countryOfOriginFilter(countryOfOrigin: Option[String]): Bson =
     countryOfOrigin match {
       case Some(value) => Filters.equal("countryOfOrigin", value)
-      case None => Filters.exists("countryOfOrigin")
+      case None        => Filters.exists("countryOfOrigin")
     }
-  }
 
   def declarableFilter(
-                        IMMIReady: Option[Boolean],
-                        notReadyForIMMI: Option[Boolean],
-                        actionNeeded: Option[Boolean]
-                      ): Bson = {
+    IMMIReady: Option[Boolean],
+    notReadyForIMMI: Option[Boolean],
+    actionNeeded: Option[Boolean]
+  ): Bson = {
     val conditions = List(
       if (IMMIReady.contains(true)) Some(Filters.equal("declarable", "IMMI Ready")) else None,
       if (notReadyForIMMI.contains(true)) Some(Filters.equal("declarable", "Not ready for IMMI")) else None,
@@ -236,13 +234,13 @@ class RecordsRepository @Inject()(
   }
 
   def filterRecordsIteration(
-                              eori: String,
-                              searchTerm: Option[String],
-                              countryOfOrigin: Option[String],
-                              IMMIReady: Option[Boolean],
-                              notReadyForIMMI: Option[Boolean],
-                              actionNeeded: Option[Boolean]
-                            ): Future[Seq[GoodsItemRecord]] = Mdc.preservingMdc {
+    eori: String,
+    searchTerm: Option[String],
+    countryOfOrigin: Option[String],
+    IMMIReady: Option[Boolean],
+    notReadyForIMMI: Option[Boolean],
+    actionNeeded: Option[Boolean]
+  ): Future[Seq[GoodsItemRecord]] = Mdc.preservingMdc {
     collection
       .find[GoodsItemRecord](
         Filters.and(

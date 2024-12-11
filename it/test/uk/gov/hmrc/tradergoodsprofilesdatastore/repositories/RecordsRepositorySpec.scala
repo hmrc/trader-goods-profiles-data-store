@@ -38,7 +38,7 @@ import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 
 class RecordsRepositorySpec
-    extends AnyFreeSpec
+  extends AnyFreeSpec
     with Matchers
     with DefaultPlayMongoRepositorySupport[GoodsItemRecord]
     with ScalaFutures
@@ -68,7 +68,7 @@ class RecordsRepositorySpec
     traderRef = Some("updated-reference")
   )
 
-  val testEori                               = "GB123456789001"
+  val testEori = "GB123456789001"
   val sampleGoodsItemRecord: GoodsItemRecord = GoodsItemRecord(
     eori = testEori,
     actorId = "GB098765432112",
@@ -150,15 +150,15 @@ class RecordsRepositorySpec
     updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
   )
 
-  private val traderRefSearchTerm               = "BAN001002"
-  private val traderRefPartialSearchTerm        = "1001"
-  private val traderRefSearchField              = "traderRef"
-  private val goodsDescriptionSearchTerm        = "Tomatoes"
+  private val traderRefSearchTerm = "BAN001002"
+  private val traderRefPartialSearchTerm = "1001"
+  private val traderRefSearchField = "traderRef"
+  private val goodsDescriptionSearchTerm = "Tomatoes"
   private val goodsDescriptionPartialSearchTerm = "Organic"
-  private val goodsDescriptionSearchField       = "goodsDescription"
-  private val comCodeSearchTerm                 = "10410100"
-  private val comCodePartialSearchTerm          = "10410"
-  private val comCodeSearchField                = "comcode"
+  private val goodsDescriptionSearchField = "goodsDescription"
+  private val comCodeSearchTerm = "10410100"
+  private val comCodePartialSearchTerm = "10410"
+  private val comCodeSearchField = "comcode"
 
   private val latestRecordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204p"
 
@@ -622,7 +622,7 @@ class RecordsRepositorySpec
       val results = repository.collection.find().toFuture().futureValue
 
       results.length mustBe 2
-      results must contain only (
+      results must contain only(
         sampleGoodsItemRecord.copy(toReview = true),
         sampleGoodsItemRecord.copy(recordId = "3", toReview = true)
       )
@@ -749,6 +749,162 @@ class RecordsRepositorySpec
         Filters.equal("declarable", "Not Ready For Use")
       )
       result mustEqual expectedFilter
+    }
+  }
+
+  ".filterRecordsIteration" - {
+
+    "when all filters are None" in {
+      insert(sampleGoodsItemRecord).futureValue
+      insert(sampleGoodsItemRecord.copy(recordId = "2")).futureValue
+
+      val result = repository.filterRecordsIteration(
+        sampleGoodsItemRecord.eori,
+        None,
+        None,
+        None,
+        None,
+        None
+      ).futureValue
+
+      result.size mustEqual 2
+    }
+
+    "when searchTerm filter is applied" - {
+      "for traderRef" in {
+        insert(sampleGoodsItemRecord).futureValue
+        insert(sampleGoodsItemRecord.copy(recordId = "2", traderRef = "test data")).futureValue
+
+        val result = repository.filterRecordsIteration(
+          sampleGoodsItemRecord.eori,
+          Some("test"),
+          None,
+          None,
+          None,
+          None
+        ).futureValue
+
+        result.size mustEqual 1
+        result.head.traderRef mustEqual "test data"
+      }
+
+      "for goodsDescription" in {
+        insert(sampleGoodsItemRecord).futureValue
+        insert(sampleGoodsItemRecord.copy(recordId = "2", goodsDescription = "test data")).futureValue
+
+        val result = repository.filterRecordsIteration(
+          sampleGoodsItemRecord.eori,
+          Some("test"),
+          None,
+          None,
+          None,
+          None
+        ).futureValue
+
+        result.size mustEqual 1
+        result.head.goodsDescription mustEqual "test data"
+      }
+
+      "for comcode" in {
+        insert(sampleGoodsItemRecord).futureValue
+        insert(sampleGoodsItemRecord.copy(recordId = "2", comcode = "test data")).futureValue
+
+        val result = repository.filterRecordsIteration(
+          sampleGoodsItemRecord.eori,
+          Some("test"),
+          None,
+          None,
+          None,
+          None
+        ).futureValue
+
+        result.size mustEqual 1
+        result.head.comcode mustEqual "test data"
+      }
+    }
+
+    "when countryOfOrigin filter is applied" in {
+      insert(sampleGoodsItemRecord).futureValue
+      insert(sampleGoodsItemRecord.copy(recordId = "2", countryOfOrigin = "AU")).futureValue
+
+      val result = repository.filterRecordsIteration(
+        sampleGoodsItemRecord.eori,
+        None,
+        Some("AU"),
+        None,
+        None,
+        None
+      ).futureValue
+
+      result.size mustEqual 1
+      result.head.countryOfOrigin mustEqual "AU"
+    }
+
+    "when IMMIReady filter is applied" in {
+      insert(sampleGoodsItemRecord.copy(declarable = "Not Ready For Use")).futureValue
+      insert(sampleGoodsItemRecord.copy(recordId = "2", declarable = "IMMI Ready")).futureValue
+
+      val result = repository.filterRecordsIteration(
+        sampleGoodsItemRecord.eori,
+        None,
+        None,
+        Some(true),
+        None,
+        None
+      ).futureValue
+
+      result.size mustEqual 1
+      result.head.declarable mustEqual "IMMI Ready"
+    }
+
+    "when notReadyForIMMI filter is applied" in {
+      insert(sampleGoodsItemRecord).futureValue
+      insert(sampleGoodsItemRecord.copy(recordId = "2", declarable = "Not ready for IMMI")).futureValue
+
+      val result = repository.filterRecordsIteration(
+        sampleGoodsItemRecord.eori,
+        None,
+        None,
+        None,
+        Some(true),
+        None
+      ).futureValue
+
+      result.size mustEqual 1
+      result.head.declarable mustEqual "Not ready for IMMI"
+    }
+
+    "when actionNeeded filter is applied" in {
+      insert(sampleGoodsItemRecord).futureValue
+      insert(sampleGoodsItemRecord.copy(recordId = "2", declarable = "Not Ready For Use")).futureValue
+
+      val result = repository.filterRecordsIteration(
+        sampleGoodsItemRecord.eori,
+        None,
+        None,
+        None,
+        None,
+        Some(true)
+      ).futureValue
+
+      result.size mustEqual 1
+      result.head.declarable mustEqual "Not Ready For Use"
+    }
+
+    "when multiple filters are applied" in {
+      insert(sampleGoodsItemRecord).futureValue
+      insert(sampleGoodsItemRecord.copy(recordId = "2", goodsDescription = "Apples", countryOfOrigin = "AU", declarable = "IMMI Ready")).futureValue
+
+      val result = repository.filterRecordsIteration(
+        sampleGoodsItemRecord.eori,
+        Some("Apples"),
+        Some("AU"),
+        Some(true),
+        None,
+        None
+      ).futureValue
+
+      result.size mustEqual 1
     }
   }
 
