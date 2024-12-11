@@ -30,7 +30,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeStoreLatestAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Email, EoriHistoricItem, EoriHistoryResponse}
 
-import java.time.Instant
+import java.time.{Instant, LocalDate}
 
 class CustomsDataStoreConnectorSpec
     extends AnyFreeSpec
@@ -98,9 +98,9 @@ class CustomsDataStoreConnectorSpec
 
       val mockEoriHistoryResponse = EoriHistoryResponse(
         Seq(
-          EoriHistoricItem("eori1", Instant.parse("2024-02-20T00:00:00Z"), Some(Instant.parse("2024-01-20T00:00:00Z"))),
-          EoriHistoricItem("eori1", Instant.parse("2024-03-20T00:00:00Z"), Some(Instant.parse("2024-01-20T00:00:00Z"))),
-          EoriHistoricItem("eori1", Instant.parse("2024-01-20T00:00:00Z"), Some(Instant.parse("2024-01-20T00:00:00Z")))
+          EoriHistoricItem("eori1", LocalDate.parse("2024-02-20"), Some(LocalDate.parse("2024-01-20"))),
+          EoriHistoricItem("eori1", LocalDate.parse("2024-03-20"), Some(LocalDate.parse("2024-01-20"))),
+          EoriHistoricItem("eori1", LocalDate.parse("2024-01-20"), Some(LocalDate.parse("2024-01-20")))
         )
       )
       wireMockServer.stubFor(
@@ -110,9 +110,9 @@ class CustomsDataStoreConnectorSpec
 
       val expectedResponse = EoriHistoryResponse(
         Seq(
-          EoriHistoricItem("eori1", Instant.parse("2024-03-20T00:00:00Z"), Some(Instant.parse("2024-01-20T00:00:00Z"))),
-          EoriHistoricItem("eori1", Instant.parse("2024-02-20T00:00:00Z"), Some(Instant.parse("2024-01-20T00:00:00Z"))),
-          EoriHistoricItem("eori1", Instant.parse("2024-01-20T00:00:00Z"), Some(Instant.parse("2024-01-20T00:00:00Z")))
+          EoriHistoricItem("eori1", LocalDate.parse("2024-03-20"), Some(LocalDate.parse("2024-01-20"))),
+          EoriHistoricItem("eori1", LocalDate.parse("2024-02-20"), Some(LocalDate.parse("2024-01-20"))),
+          EoriHistoricItem("eori1", LocalDate.parse("2024-01-20"), Some(LocalDate.parse("2024-01-20")))
         )
       )
 

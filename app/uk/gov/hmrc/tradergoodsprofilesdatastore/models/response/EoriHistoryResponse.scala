@@ -18,7 +18,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 
 import play.api.libs.json._
 
-import java.time.Instant
+import java.time.LocalDate
 
 case class EoriHistoryResponse(
   eoriHistory: Seq[EoriHistoricItem]
@@ -26,7 +26,7 @@ case class EoriHistoryResponse(
 
 object EoriHistoryResponse {
   implicit val reads: Reads[EoriHistoryResponse] = (
-    (__ \ "eoriHistory").read[Seq[EoriHistoricItem]].map(_.sortBy(_.validFrom)(Ordering[Instant].reverse))
+    (__ \ "eoriHistory").read[Seq[EoriHistoricItem]].map(_.sortBy(_.validFrom)(Ordering[LocalDate].reverse))
   ).map(EoriHistoryResponse.apply)
 
   implicit val writes: Writes[EoriHistoryResponse] = Json.writes[EoriHistoryResponse]

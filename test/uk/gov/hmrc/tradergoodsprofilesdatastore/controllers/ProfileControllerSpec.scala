@@ -19,7 +19,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchersSugar.eqTo
-import org.mockito.Mockito.{atLeastOnce, never, times, verify, when}
+import org.mockito.Mockito._
 import org.mockito.MockitoSugar.reset
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
@@ -38,7 +38,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.ProfileRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{EoriHistoricItem, EoriHistoryResponse, ProfileResponse}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{ProfileRepository, RecordsRepository, RecordsSummaryRepository}
 
-import java.time.Instant
+import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
 
 class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
@@ -255,13 +255,13 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
                 Seq(
                   EoriHistoricItem(
                     requestEori,
-                    Instant.parse("2024-04-20T00:00:00Z"),
-                    Some(Instant.parse("2024-10-20T00:00:00Z"))
+                    LocalDate.parse("2024-04-20"),
+                    Some(LocalDate.parse("2024-10-20"))
                   ),
                   EoriHistoricItem(
                     "previousEori",
-                    Instant.parse("2024-03-20T00:00:00Z"),
-                    Some(Instant.parse("2024-10-20T00:00:00Z"))
+                    LocalDate.parse("2024-03-20"),
+                    Some(LocalDate.parse("2024-10-20"))
                   )
                 )
               )
@@ -314,18 +314,18 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
                 Seq(
                   EoriHistoricItem(
                     requestEori,
-                    Instant.parse("2024-05-20T00:00:00Z"),
-                    Some(Instant.parse("2024-10-20T00:00:00Z"))
+                    LocalDate.parse("2024-05-20"),
+                    Some(LocalDate.parse("2024-10-20"))
                   ),
                   EoriHistoricItem(
                     "previousEori",
-                    Instant.parse("2024-04-20T00:00:00Z"),
-                    Some(Instant.parse("2024-10-20T00:00:00Z"))
+                    LocalDate.parse("2024-04-20"),
+                    Some(LocalDate.parse("2024-10-20"))
                   ),
                   EoriHistoricItem(
                     "eori2",
-                    Instant.parse("2024-03-20T00:00:00Z"),
-                    Some(Instant.parse("2024-09-20T00:00:00Z"))
+                    LocalDate.parse("2024-03-20"),
+                    Some(LocalDate.parse("2024-09-20"))
                   )
                 )
               )
@@ -390,18 +390,18 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
                 Seq(
                   EoriHistoricItem(
                     requestEori,
-                    Instant.parse("2024-05-20T00:00:00Z"),
-                    Some(Instant.parse("2024-10-20T00:00:00Z"))
+                    LocalDate.parse("2024-05-20"),
+                    Some(LocalDate.parse("2024-10-20"))
                   ),
                   EoriHistoricItem(
                     "previousEori",
-                    Instant.parse("2024-04-20T00:00:00Z"),
-                    Some(Instant.parse("2024-10-20T00:00:00Z"))
+                    LocalDate.parse("2024-04-20"),
+                    Some(LocalDate.parse("2024-10-20"))
                   ),
                   EoriHistoricItem(
                     "eori2",
-                    Instant.parse("2024-03-20T00:00:00Z"),
-                    Some(Instant.parse("2024-09-20T00:00:00Z"))
+                    LocalDate.parse("2024-03-20"),
+                    Some(LocalDate.parse("2024-09-20"))
                   )
                 )
               )
@@ -459,8 +459,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
                 Seq(
                   EoriHistoricItem(
                     requestEori,
-                    Instant.parse("2024-04-20T00:00:00Z"),
-                    Some(Instant.parse("2024-10-20T00:00:00Z"))
+                    LocalDate.parse("2024-04-20"),
+                    Some(LocalDate.parse("2024-10-20"))
                   )
                 )
               )
@@ -511,13 +511,13 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
                 Seq(
                   EoriHistoricItem(
                     requestEori,
-                    Instant.parse("2024-04-20T00:00:00Z"),
-                    Some(Instant.parse("2024-10-20T00:00:00Z"))
+                    LocalDate.parse("2024-04-20"),
+                    Some(LocalDate.parse("2024-10-20"))
                   ),
                   EoriHistoricItem(
                     "previousEori",
-                    Instant.parse("2024-04-20T00:00:00Z"),
-                    Some(Instant.parse("2024-10-20T00:00:00Z"))
+                    LocalDate.parse("2024-04-20"),
+                    Some(LocalDate.parse("2024-10-20"))
                   )
                 )
               )
@@ -550,13 +550,13 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
                 Seq(
                   EoriHistoricItem(
                     requestEori,
-                    Instant.parse("2024-04-20T00:00:00Z"),
-                    Some(Instant.parse("2024-10-20T00:00:00Z"))
+                    LocalDate.parse("2024-04-20"),
+                    Some(LocalDate.parse("2024-10-20"))
                   ),
                   EoriHistoricItem(
                     "previousEori",
-                    Instant.parse("2024-04-20T00:00:00Z"),
-                    Some(Instant.parse("2024-10-20T00:00:00Z"))
+                    LocalDate.parse("2024-04-20"),
+                    Some(LocalDate.parse("2024-10-20"))
                   )
                 )
               )
