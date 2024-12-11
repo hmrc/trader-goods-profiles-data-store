@@ -26,8 +26,8 @@ class EoriHistoryResponseSpec extends SpecBase {
         eoriHistory = Seq(
           EoriHistoricItem(
             eori = "GB1234567890",
-            validFrom = java.time.Instant.parse("2024-10-12T16:12:34Z"),
-            validUntil = Some(java.time.Instant.parse("2024-10-12T16:12:34Z"))
+            validFrom = java.time.LocalDate.parse("1986-03-20"),
+            validUntil = Some(java.time.LocalDate.parse("9999-12-31"))
           )
         )
       )
@@ -41,7 +41,7 @@ class EoriHistoryResponseSpec extends SpecBase {
         eoriHistory = Seq(
           EoriHistoricItem(
             eori = "GB1234567890",
-            validFrom = java.time.Instant.parse("2024-10-12T16:12:34Z"),
+            validFrom = java.time.LocalDate.parse("1986-03-20"),
             validUntil = None
           )
         )
@@ -58,12 +58,12 @@ class EoriHistoryResponseSpec extends SpecBase {
           |  "eoriHistory": [
           |    {
           |      "eori": "GB1234567890",
-          |      "validFrom": "2024-09-12T16:12:34Z"
+          |      "validFrom": "1976-03-20"
           |    },
           |    {
           |      "eori": "GB1234567890",
-          |      "validFrom": "2024-10-12T16:12:34Z",
-          |      "validUntil": "2024-10-12T16:12:34Z"
+          |      "validFrom": "1986-03-20",
+          |      "validUntil": "9999-12-31"
           |    }
           |  ]
           |}
@@ -75,12 +75,12 @@ class EoriHistoryResponseSpec extends SpecBase {
       eoriHistoryResponse.eoriHistory mustBe Seq(
         EoriHistoricItem(
           eori = "GB1234567890",
-          validFrom = java.time.Instant.parse("2024-10-12T16:12:34Z"),
-          validUntil = Some(java.time.Instant.parse("2024-10-12T16:12:34Z"))
+          validFrom = java.time.LocalDate.parse("1986-03-20"),
+          validUntil = Some(java.time.LocalDate.parse("9999-12-31"))
         ),
         EoriHistoricItem(
           eori = "GB1234567890",
-          validFrom = java.time.Instant.parse("2024-09-12T16:12:34Z"),
+          validFrom = java.time.LocalDate.parse("1976-03-20"),
           validUntil = None
         )
       )
