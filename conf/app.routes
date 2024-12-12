@@ -20,7 +20,7 @@ POST       /traders/:eori/records/:recordId/advice  uk.gov.hmrc.tradergoodsprofi
 PUT        /traders/:eori/records/:recordId/advice  uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.WithdrawAdviceController.withdrawAdvice(eori: String, recordId: String)
 
 # Notification
-GET        /traders/:eori/email                     uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.EmailController.getEmail(eori: String)
+GET        /traders/email                     uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.EmailController.getEmail
 POST       /download-data-notification              uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DownloadDataSummaryController.submitNotification()
 
 # Download
