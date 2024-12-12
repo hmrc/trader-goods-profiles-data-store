@@ -1,8 +1,8 @@
 # microservice specific routes
 # Profile
-PUT        /traders/:eori/profile                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.setProfile(eori: String)
-GET        /customs/traders/goods-profiles/:eori    uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.getProfile(eori: String)
-HEAD       /traders/:eori/profile                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.doesProfileExist(eori: String)
+PUT        /traders/profile                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.setProfile
+GET        /customs/traders/goods-profiles    uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.getProfile
+HEAD       /traders/profile                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.doesProfileExist
 
 # Record
 DELETE     /traders/:eori/records/:recordId         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DeleteRecordController.deleteRecord(eori: String, recordId: String)
