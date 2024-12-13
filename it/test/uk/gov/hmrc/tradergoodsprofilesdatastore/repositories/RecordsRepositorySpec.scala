@@ -908,6 +908,31 @@ class RecordsRepositorySpec
     }
   }
 
+  "isTraderReferenceUnique" - {
+
+    "when the trader reference is unique" in {
+      insert(sampleGoodsItemRecord).futureValue
+
+      val result = repository.isTraderReferenceUnique(sampleGoodsItemRecord.eori, "uniqueRef").futureValue
+      result mustEqual true
+    }
+
+    "when the trader reference is not unique" in {
+      insert(sampleGoodsItemRecord.copy(traderRef = "duplicateRef")).futureValue
+      insert(sampleGoodsItemRecord.copy(recordId = "2", traderRef = "duplicateRef")).futureValue
+
+      val result = repository.isTraderReferenceUnique(sampleGoodsItemRecord.eori, "duplicateRef").futureValue
+      result mustEqual false
+    }
+
+    "when there are no records for the given eori" in {
+      val result = repository.isTraderReferenceUnique("nonExistentEori", "anyRef").futureValue
+      result mustEqual true
+    }
+
+    mustPreserveMdc(repository.isTraderReferenceUnique(sampleGoodsItemRecord.eori, "uniqueRef"))
+  }
+
   private def mustPreserveMdc[A](f: => Future[A])(implicit pos: Position): Unit =
     "must preserve MDC" in {
 

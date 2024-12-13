@@ -93,4 +93,12 @@ class FilterRecordsController @Inject() (
         Ok(Json.toJson(getRecordsResponse))
       }
     }
+
+  def isTraderReferenceUnique(traderReference: String): Action[AnyContent] =
+    (identify andThen storeLatest).async { implicit request =>
+      recordsRepository.isTraderReferenceUnique(request.eori, traderReference).map {
+        case true  => Ok(Json.obj("isUnique" -> true))
+        case false => Ok(Json.obj("isUnique" -> false))
+      }
+    }
 }

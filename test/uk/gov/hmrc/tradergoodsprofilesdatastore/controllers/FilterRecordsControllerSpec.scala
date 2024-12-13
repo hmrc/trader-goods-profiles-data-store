@@ -395,4 +395,55 @@ class FilterRecordsControllerSpec
         )
     }
   }
+
+  "isTraderReferenceUnique" - {
+
+    "return 200 and true when the trader reference is unique" in {
+      val traderReference = "uniqueRef"
+      val requestEori     = "eori"
+      val getUrl          = routes.FilterRecordsController.isTraderReferenceUnique(traderReference).url
+
+      val validFakeGetRequest = FakeRequest("GET", getUrl)
+
+      when(mockRecordsRepository.isTraderReferenceUnique(any(), any())) thenReturn Future.successful(true)
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[RouterConnector].toInstance(mockRouterConnector),
+          bind[RecordsRepository].toInstance(mockRecordsRepository)
+        )
+        .build()
+
+      running(application) {
+        val result = route(application, validFakeGetRequest).value
+        status(result) shouldBe Status.OK
+        contentAsString(result) mustBe Json.obj("isUnique" -> true).toString
+      }
+      verify(mockRecordsRepository, atLeastOnce()).isTraderReferenceUnique(eqTo(requestEori), eqTo(traderReference))
+    }
+
+    "return 200 and false when the trader reference is not unique" in {
+      val traderReference = "duplicateRef"
+      val requestEori     = "eori"
+      val getUrl          = routes.FilterRecordsController.isTraderReferenceUnique(traderReference).url
+
+      val validFakeGetRequest = FakeRequest("GET", getUrl)
+
+      when(mockRecordsRepository.isTraderReferenceUnique(any(), any())) thenReturn Future.successful(false)
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[RouterConnector].toInstance(mockRouterConnector),
+          bind[RecordsRepository].toInstance(mockRecordsRepository)
+        )
+        .build()
+
+      running(application) {
+        val result = route(application, validFakeGetRequest).value
+        status(result) shouldBe Status.OK
+        contentAsString(result) mustBe Json.obj("isUnique" -> false).toString
+      }
+      verify(mockRecordsRepository, atLeastOnce()).isTraderReferenceUnique(eqTo(requestEori), eqTo(traderReference))
+    }
+  }
 }

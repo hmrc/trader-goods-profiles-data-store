@@ -253,4 +253,16 @@ class RecordsRepository @Inject() (
       .sort(byLatest)
       .toFuture()
   }
+
+  def isTraderReferenceUnique(eori: String, traderReference: String): Future[Boolean] = Mdc.preservingMdc {
+    collection
+      .countDocuments(
+        Filters.and(
+          byEori(eori),
+          Filters.equal("traderRef", traderReference)
+        )
+      )
+      .toFuture()
+      .map(_ == 0)
+  }
 }
