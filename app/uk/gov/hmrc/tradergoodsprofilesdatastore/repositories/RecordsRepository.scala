@@ -196,4 +196,73 @@ class RecordsRepository @Inject() (
       case None        => Future.successful(Seq.empty)
     }
   }
+
+  def searchTermFilter(searchTerm: Option[String]): Bson =
+    searchTerm match {
+      case Some(value) =>
+        val escapedValue = escapeRegexSpecialChars(value)
+        Filters.or(
+          Filters.regex("traderRef", escapedValue, "i"),
+          Filters.regex("goodsDescription", escapedValue, "i"),
+          Filters.regex("comcode", escapedValue, "i")
+        )
+      case None        => Filters.exists("traderRef")
+    }
+
+  def countryOfOriginFilter(countryOfOrigin: Option[String]): Bson =
+    countryOfOrigin match {
+      case Some(value) => Filters.equal("countryOfOrigin", value)
+      case None        => Filters.exists("countryOfOrigin")
+    }
+
+  def declarableFilter(
+    IMMIReady: Option[Boolean],
+    notReadyForIMMI: Option[Boolean],
+    actionNeeded: Option[Boolean]
+  ): Bson = {
+    val conditions = List(
+      if (IMMIReady.contains(true)) Some(Filters.equal("declarable", "IMMI Ready")) else None,
+      if (notReadyForIMMI.contains(true)) Some(Filters.equal("declarable", "Not ready for IMMI")) else None,
+      if (actionNeeded.contains(true)) Some(Filters.equal("declarable", "Not Ready For Use")) else None
+    ).flatten
+
+    if (conditions.isEmpty) {
+      Filters.exists("declarable")
+    } else {
+      Filters.or(conditions: _*)
+    }
+  }
+
+  def filterRecordsIteration(
+    eori: String,
+    searchTerm: Option[String],
+    countryOfOrigin: Option[String],
+    IMMIReady: Option[Boolean],
+    notReadyForIMMI: Option[Boolean],
+    actionNeeded: Option[Boolean]
+  ): Future[Seq[GoodsItemRecord]] = Mdc.preservingMdc {
+    collection
+      .find[GoodsItemRecord](
+        Filters.and(
+          byEori(eori),
+          searchTermFilter(searchTerm),
+          countryOfOriginFilter(countryOfOrigin),
+          declarableFilter(IMMIReady, notReadyForIMMI, actionNeeded)
+        )
+      )
+      .sort(byLatest)
+      .toFuture()
+  }
+
+  def isTraderReferenceUnique(eori: String, traderReference: String): Future[Boolean] = Mdc.preservingMdc {
+    collection
+      .countDocuments(
+        Filters.and(
+          byEori(eori),
+          Filters.equal("traderRef", traderReference)
+        )
+      )
+      .toFuture()
+      .map(_ == 0)
+  }
 }

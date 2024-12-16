@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
+import org.mongodb.scala.model.Filters
 import org.scalactic.source.Position
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
@@ -37,7 +38,7 @@ import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 
 class RecordsRepositorySpec
-    extends AnyFreeSpec
+  extends AnyFreeSpec
     with Matchers
     with DefaultPlayMongoRepositorySupport[GoodsItemRecord]
     with ScalaFutures
@@ -67,7 +68,7 @@ class RecordsRepositorySpec
     traderRef = Some("updated-reference")
   )
 
-  val testEori                               = "GB123456789001"
+  val testEori = "GB123456789001"
   val sampleGoodsItemRecord: GoodsItemRecord = GoodsItemRecord(
     eori = testEori,
     actorId = "GB098765432112",
@@ -87,7 +88,7 @@ class RecordsRepositorySpec
     active = true,
     toReview = false,
     reviewReason = Some("no reason"),
-    declarable = "IMMI ready",
+    declarable = "IMMI Ready",
     ukimsNumber = Some("XIUKIM47699357400020231115081800"),
     nirmsNumber = Some("RMS-GB-123456"),
     niphlNumber = Some("6 S12345"),
@@ -114,7 +115,7 @@ class RecordsRepositorySpec
     active = true,
     toReview = false,
     reviewReason = Some("no reason"),
-    declarable = "IMMI ready",
+    declarable = "IMMI Ready",
     ukimsNumber = Some("XIUKIM47699357400020231115081800"),
     nirmsNumber = Some("RMS-GB-123456"),
     niphlNumber = Some("6 S12345"),
@@ -141,7 +142,7 @@ class RecordsRepositorySpec
     active = true,
     toReview = false,
     reviewReason = Some("no reason"),
-    declarable = "IMMI ready",
+    declarable = "IMMI Ready",
     ukimsNumber = Some("XIUKIM47699357400020231115081800"),
     nirmsNumber = Some("RMS-GB-123456"),
     niphlNumber = Some("6 S12345"),
@@ -149,15 +150,15 @@ class RecordsRepositorySpec
     updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
   )
 
-  private val traderRefSearchTerm               = "BAN001002"
-  private val traderRefPartialSearchTerm        = "1001"
-  private val traderRefSearchField              = "traderRef"
-  private val goodsDescriptionSearchTerm        = "Tomatoes"
+  private val traderRefSearchTerm = "BAN001002"
+  private val traderRefPartialSearchTerm = "1001"
+  private val traderRefSearchField = "traderRef"
+  private val goodsDescriptionSearchTerm = "Tomatoes"
   private val goodsDescriptionPartialSearchTerm = "Organic"
-  private val goodsDescriptionSearchField       = "goodsDescription"
-  private val comCodeSearchTerm                 = "10410100"
-  private val comCodePartialSearchTerm          = "10410"
-  private val comCodeSearchField                = "comcode"
+  private val goodsDescriptionSearchField = "goodsDescription"
+  private val comCodeSearchTerm = "10410100"
+  private val comCodePartialSearchTerm = "10410"
+  private val comCodeSearchField = "comcode"
 
   private val latestRecordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204p"
 
@@ -180,7 +181,7 @@ class RecordsRepositorySpec
     active = true,
     toReview = false,
     reviewReason = Some("no reason"),
-    declarable = "IMMI ready",
+    declarable = "IMMI Ready",
     ukimsNumber = Some("XIUKIM47699357400020231115081800"),
     nirmsNumber = Some("RMS-GB-123456"),
     niphlNumber = Some("6 S12345"),
@@ -209,7 +210,7 @@ class RecordsRepositorySpec
     active = false,
     toReview = false,
     reviewReason = Some("no reason"),
-    declarable = "IMMI ready",
+    declarable = "IMMI Ready",
     ukimsNumber = Some("XIUKIM47699357400020231115081800"),
     nirmsNumber = Some("RMS-GB-123456"),
     niphlNumber = Some("6 S12345"),
@@ -621,7 +622,7 @@ class RecordsRepositorySpec
       val results = repository.collection.find().toFuture().futureValue
 
       results.length mustBe 2
-      results must contain only (
+      results must contain only(
         sampleGoodsItemRecord.copy(toReview = true),
         sampleGoodsItemRecord.copy(recordId = "3", toReview = true)
       )
@@ -655,6 +656,281 @@ class RecordsRepositorySpec
     }
 
     mustPreserveMdc(repository.deleteRecordsByEori(sampleGoodsItemRecord.eori))
+  }
+
+  ".searchTermFilter" - {
+
+    "when searchTerm is None" in {
+      val result = repository.searchTermFilter(None)
+      result mustEqual Filters.exists("traderRef")
+    }
+
+    "when searchTerm is Some" - {
+
+      "should return a filter that matches traderRef, goodsDescription, or comcode" in {
+        val searchTerm = "test"
+        val result = repository.searchTermFilter(Some(searchTerm))
+        val expectedFilter = Filters.or(
+          Filters.regex("traderRef", searchTerm, "i"),
+          Filters.regex("goodsDescription", searchTerm, "i"),
+          Filters.regex("comcode", searchTerm, "i")
+        )
+        result mustEqual expectedFilter
+      }
+
+      "should escape special characters in the searchTerm" in {
+        val searchTerm = "^$*+?.(){}[]"
+        val escapedSearchTerm = "\\^\\$\\*\\+\\?\\.\\(\\)\\{\\}\\[\\]"
+        val result = repository.searchTermFilter(Some(searchTerm))
+        val expectedFilter = Filters.or(
+          Filters.regex("traderRef", escapedSearchTerm, "i"),
+          Filters.regex("goodsDescription", escapedSearchTerm, "i"),
+          Filters.regex("comcode", escapedSearchTerm, "i")
+        )
+        result mustEqual expectedFilter
+      }
+    }
+  }
+
+  ".countryOfOriginFilter" - {
+
+    "when countryOfOrigin is None" in {
+      val result = repository.countryOfOriginFilter(None)
+      result mustEqual Filters.exists("countryOfOrigin")
+    }
+
+    "when countryOfOrigin is Some" in {
+      val countryOfOrigin = "AU"
+      val result = repository.countryOfOriginFilter(Some(countryOfOrigin))
+      val expectedFilter = Filters.equal("countryOfOrigin", countryOfOrigin)
+      result mustEqual expectedFilter
+    }
+  }
+
+  ".declarableFilter" - {
+
+    "when all options are None" in {
+      val result = repository.declarableFilter(None, None, None)
+      result mustEqual Filters.exists("declarable")
+    }
+
+    "when IMMIReady is Some(true)" in {
+      val result = repository.declarableFilter(Some(true), None, None)
+      val expectedFilter = Filters.or(Filters.equal("declarable", "IMMI Ready"))
+      result mustEqual expectedFilter
+    }
+
+    "when notReadyForIMMI is Some(true)" in {
+      val result = repository.declarableFilter(None, Some(true), None)
+      val expectedFilter = Filters.or(Filters.equal("declarable", "Not ready for IMMI"))
+      result mustEqual expectedFilter
+    }
+
+    "when actionNeeded is Some(true)" in {
+      val result = repository.declarableFilter(None, None, Some(true))
+      val expectedFilter = Filters.or(Filters.equal("declarable", "Not Ready For Use"))
+      result mustEqual expectedFilter
+    }
+
+    "when multiple options are Some(true)" in {
+      val result = repository.declarableFilter(Some(true), Some(true), None)
+      val expectedFilter = Filters.or(
+        Filters.equal("declarable", "IMMI Ready"),
+        Filters.equal("declarable", "Not ready for IMMI")
+      )
+      result mustEqual expectedFilter
+    }
+
+    "when all options are Some(true)" in {
+      val result = repository.declarableFilter(Some(true), Some(true), Some(true))
+      val expectedFilter = Filters.or(
+        Filters.equal("declarable", "IMMI Ready"),
+        Filters.equal("declarable", "Not ready for IMMI"),
+        Filters.equal("declarable", "Not Ready For Use")
+      )
+      result mustEqual expectedFilter
+    }
+  }
+
+  ".filterRecordsIteration" - {
+
+    "when all filters are None" in {
+      insert(sampleGoodsItemRecord).futureValue
+      insert(sampleGoodsItemRecord.copy(recordId = "2")).futureValue
+
+      val result = repository.filterRecordsIteration(
+        sampleGoodsItemRecord.eori,
+        None,
+        None,
+        None,
+        None,
+        None
+      ).futureValue
+
+      result.size mustEqual 2
+    }
+
+    "when searchTerm filter is applied" - {
+      "for traderRef" in {
+        insert(sampleGoodsItemRecord).futureValue
+        insert(sampleGoodsItemRecord.copy(recordId = "2", traderRef = "test data")).futureValue
+
+        val result = repository.filterRecordsIteration(
+          sampleGoodsItemRecord.eori,
+          Some("test"),
+          None,
+          None,
+          None,
+          None
+        ).futureValue
+
+        result.size mustEqual 1
+        result.head.traderRef mustEqual "test data"
+      }
+
+      "for goodsDescription" in {
+        insert(sampleGoodsItemRecord).futureValue
+        insert(sampleGoodsItemRecord.copy(recordId = "2", goodsDescription = "test data")).futureValue
+
+        val result = repository.filterRecordsIteration(
+          sampleGoodsItemRecord.eori,
+          Some("test"),
+          None,
+          None,
+          None,
+          None
+        ).futureValue
+
+        result.size mustEqual 1
+        result.head.goodsDescription mustEqual "test data"
+      }
+
+      "for comcode" in {
+        insert(sampleGoodsItemRecord).futureValue
+        insert(sampleGoodsItemRecord.copy(recordId = "2", comcode = "test data")).futureValue
+
+        val result = repository.filterRecordsIteration(
+          sampleGoodsItemRecord.eori,
+          Some("test"),
+          None,
+          None,
+          None,
+          None
+        ).futureValue
+
+        result.size mustEqual 1
+        result.head.comcode mustEqual "test data"
+      }
+    }
+
+    "when countryOfOrigin filter is applied" in {
+      insert(sampleGoodsItemRecord).futureValue
+      insert(sampleGoodsItemRecord.copy(recordId = "2", countryOfOrigin = "AU")).futureValue
+
+      val result = repository.filterRecordsIteration(
+        sampleGoodsItemRecord.eori,
+        None,
+        Some("AU"),
+        None,
+        None,
+        None
+      ).futureValue
+
+      result.size mustEqual 1
+      result.head.countryOfOrigin mustEqual "AU"
+    }
+
+    "when IMMIReady filter is applied" in {
+      insert(sampleGoodsItemRecord.copy(declarable = "Not Ready For Use")).futureValue
+      insert(sampleGoodsItemRecord.copy(recordId = "2", declarable = "IMMI Ready")).futureValue
+
+      val result = repository.filterRecordsIteration(
+        sampleGoodsItemRecord.eori,
+        None,
+        None,
+        Some(true),
+        None,
+        None
+      ).futureValue
+
+      result.size mustEqual 1
+      result.head.declarable mustEqual "IMMI Ready"
+    }
+
+    "when notReadyForIMMI filter is applied" in {
+      insert(sampleGoodsItemRecord).futureValue
+      insert(sampleGoodsItemRecord.copy(recordId = "2", declarable = "Not ready for IMMI")).futureValue
+
+      val result = repository.filterRecordsIteration(
+        sampleGoodsItemRecord.eori,
+        None,
+        None,
+        None,
+        Some(true),
+        None
+      ).futureValue
+
+      result.size mustEqual 1
+      result.head.declarable mustEqual "Not ready for IMMI"
+    }
+
+    "when actionNeeded filter is applied" in {
+      insert(sampleGoodsItemRecord).futureValue
+      insert(sampleGoodsItemRecord.copy(recordId = "2", declarable = "Not Ready For Use")).futureValue
+
+      val result = repository.filterRecordsIteration(
+        sampleGoodsItemRecord.eori,
+        None,
+        None,
+        None,
+        None,
+        Some(true)
+      ).futureValue
+
+      result.size mustEqual 1
+      result.head.declarable mustEqual "Not Ready For Use"
+    }
+
+    "when multiple filters are applied" in {
+      insert(sampleGoodsItemRecord).futureValue
+      insert(sampleGoodsItemRecord.copy(recordId = "2", goodsDescription = "Apples", countryOfOrigin = "AU", declarable = "IMMI Ready")).futureValue
+
+      val result = repository.filterRecordsIteration(
+        sampleGoodsItemRecord.eori,
+        Some("Apples"),
+        Some("AU"),
+        Some(true),
+        None,
+        None
+      ).futureValue
+
+      result.size mustEqual 1
+    }
+  }
+
+  "isTraderReferenceUnique" - {
+
+    "when the trader reference is unique" in {
+      insert(sampleGoodsItemRecord).futureValue
+
+      val result = repository.isTraderReferenceUnique(sampleGoodsItemRecord.eori, "uniqueRef").futureValue
+      result mustEqual true
+    }
+
+    "when the trader reference is not unique" in {
+      insert(sampleGoodsItemRecord.copy(traderRef = "duplicateRef")).futureValue
+      insert(sampleGoodsItemRecord.copy(recordId = "2", traderRef = "duplicateRef")).futureValue
+
+      val result = repository.isTraderReferenceUnique(sampleGoodsItemRecord.eori, "duplicateRef").futureValue
+      result mustEqual false
+    }
+
+    "when there are no records for the given eori" in {
+      val result = repository.isTraderReferenceUnique("nonExistentEori", "anyRef").futureValue
+      result mustEqual true
+    }
+
+    mustPreserveMdc(repository.isTraderReferenceUnique(sampleGoodsItemRecord.eori, "uniqueRef"))
   }
 
   private def mustPreserveMdc[A](f: => Future[A])(implicit pos: Position): Unit =

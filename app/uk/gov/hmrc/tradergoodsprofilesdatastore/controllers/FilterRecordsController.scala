@@ -65,4 +65,40 @@ class FilterRecordsController @Inject() (
           }
       }
     }
+
+  def filterIteration( // TODO: Rename this to filterLocalRecords when frontend changes are implemented and delete the old logic relating to old filtering (TGP-3003)
+    searchTerm: Option[String],
+    countryOfOrigin: Option[String],
+    IMMIReady: Option[Boolean],
+    notReadyForIMMI: Option[Boolean],
+    actionNeeded: Option[Boolean],
+    pageOpt: Option[Int],
+    sizeOpt: Option[Int]
+  ): Action[AnyContent] =
+    (identify andThen storeLatest).async { request =>
+      val eori = request.eori
+
+      for {
+        filteredRecords <-
+          recordsRepository
+            .filterRecordsIteration(eori, searchTerm, countryOfOrigin, IMMIReady, notReadyForIMMI, actionNeeded)
+      } yield {
+        val size             = sizeOpt.getOrElse(localPageSize)
+        val page             = pageOpt.getOrElse(localStartingPage)
+        val skip             = (page - 1) * size
+        val paginatedRecords = filteredRecords.slice(skip, skip + size)
+
+        val pagination         = buildPagination(Some(size), Some(page), filteredRecords.size.toLong)
+        val getRecordsResponse = GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination = pagination)
+        Ok(Json.toJson(getRecordsResponse))
+      }
+    }
+
+  def isTraderReferenceUnique(traderReference: String): Action[AnyContent] =
+    (identify andThen storeLatest).async { implicit request =>
+      recordsRepository.isTraderReferenceUnique(request.eori, traderReference).map {
+        case true  => Ok(Json.obj("isUnique" -> true))
+        case false => Ok(Json.obj("isUnique" -> false))
+      }
+    }
 }
