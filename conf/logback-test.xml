@@ -1,0 +1,6 @@
+<configuration>
+    <logger name="STDOUT" level="ERROR"/>
+    <root level="ERROR">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>

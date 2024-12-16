@@ -1,30 +1,36 @@
 # microservice specific routes
 # Profile
-PUT        /traders/profile                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.setProfile
-GET        /customs/traders/goods-profiles    uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.getProfile
-HEAD       /traders/profile                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.doesProfileExist
+PUT        /traders/profile                                                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.setProfile
+GET        /customs/traders/goods-profiles                                    uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.getProfile
+HEAD       /traders/profile                                                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.ProfileController.doesProfileExist
 
 # Record
-DELETE     /traders/:eori/records/:recordId         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DeleteRecordController.deleteRecord(eori: String, recordId: String)
-GET        /traders/:eori/records                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.GetRecordsController.getLocalRecords(eori: String, page: Option[Int], size: Option[Int])
-POST       /traders/:eori/records                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.CreateRecordController.createRecord(eori: String)
-GET        /traders/:eori/records/filter            uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.FilterRecordsController.filterLocalRecords(eori: String, searchTerm: Option[String], exactMatch: Option[Boolean], field: Option[String], page: Option[Int], size: Option[Int])
-GET        /traders/:eori/records-summary           uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.RecordsSummaryController.recordsSummary(eori: String)
-HEAD       /traders/:eori/checkRecords              uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.RecordsSummaryController.recordsSummary(eori: String)
-GET        /traders/:eori/records/:recordId         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.GetRecordsController.getRecord(eori: String, recordId: String)
-PATCH      /traders/:eori/records/:recordId         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.UpdateRecordController.patchRecord(eori: String, recordId: String)
-PUT        /traders/:eori/records/:recordId         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.UpdateRecordController.putRecord(eori: String, recordId: String)
+GET        /traders/:eori/records                                                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.GetRecordsController.getLocalRecords(eori: String, page: Option[Int], size: Option[Int])
+POST       /traders/:eori/records                                                   uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.CreateRecordController.createRecord(eori: String)
+DELETE     /traders/:eori/records/:recordId                                         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DeleteRecordController.deleteRecord(eori: String, recordId: String)
+
+GET        /traders/:eori/records/filter                                            uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.FilterRecordsController.filterLocalRecords(eori: String, searchTerm: Option[String], exactMatch: Option[Boolean], field: Option[String], page: Option[Int], size: Option[Int])
+GET        /traders/records/filter                                                  uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.FilterRecordsController.filterIteration(searchTerm: Option[String], countryOfOrigin: Option[String], IMMIReady: Option[Boolean], notReadyForIMMI: Option[Boolean], actionNeeded: Option[Boolean], pageOpt: Option[Int], sizeOpt: Option[Int])
+GET        /traders/records/is-trader-reference-unique/:traderReference             uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.FilterRecordsController.isTraderReferenceUnique(traderReference: String)
+
+GET        /traders/:eori/records-summary                                           uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.RecordsSummaryController.recordsSummary(eori: String)
+
+GET        /traders/:eori/records/:recordId                                         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.GetRecordsController.getRecord(eori: String, recordId: String)
+PATCH      /traders/:eori/records/:recordId                                         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.UpdateRecordController.patchRecord(eori: String, recordId: String)
+PUT        /traders/:eori/records/:recordId                                         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.UpdateRecordController.putRecord(eori: String, recordId: String)
+HEAD       /traders/:eori/checkRecords                                              uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.RecordsSummaryController.recordsSummary(eori: String)
 
 # Advice
-POST       /traders/records/:recordId/advice  uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.RequestAdviceController.requestAdvice(recordId: String)
-PUT        /traders/records/:recordId/advice  uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.WithdrawAdviceController.withdrawAdvice(recordId: String)
+POST       /traders/records/:recordId/advice                                  uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.RequestAdviceController.requestAdvice(recordId: String)
+PUT        /traders/records/:recordId/advice                                  uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.WithdrawAdviceController.withdrawAdvice(recordId: String)
 
 # Notification
-GET        /traders/email                     uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.EmailController.getEmail
-POST       /download-data-notification              uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DownloadDataSummaryController.submitNotification()
+GET        /traders/email                                                     uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.EmailController.getEmail
+POST       /download-data-notification                                              uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DownloadDataSummaryController.submitNotification()
 
 # Download
-GET        /traders/download-data             uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DownloadDataSummaryController.getDownloadData
-POST       /traders/download-data             uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DownloadDataSummaryController.requestDownloadData
-GET        /traders/download-data-summary     uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DownloadDataSummaryController.getDownloadDataSummaries
-PATCH      /traders/download-data-summary     uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DownloadDataSummaryController.touchDownloadDataSummaries
+GET        /traders/download-data                                             uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DownloadDataSummaryController.getDownloadData
+POST       /traders/download-data                                             uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DownloadDataSummaryController.requestDownloadData
+
+GET        /traders/download-data-summary                                     uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DownloadDataSummaryController.getDownloadDataSummaries
+PATCH      /traders/download-data-summary                                     uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DownloadDataSummaryController.touchDownloadDataSummaries

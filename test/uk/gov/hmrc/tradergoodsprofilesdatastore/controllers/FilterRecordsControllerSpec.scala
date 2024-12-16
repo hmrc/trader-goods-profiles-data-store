@@ -255,4 +255,195 @@ class FilterRecordsControllerSpec
     }
   }
 
+  "filterIteration" - {
+
+    "return 200 and the paginated records from the data store with size 10 and page 1 and 25 records in db" in {
+      val recordsSize     = 25
+      val page            = 1
+      val size            = 10
+      val searchTerm      = Some("Organic")
+      val countryOfOrigin = Some("AU")
+      val IMMIReady       = Some(true)
+      val requestEori     = "eori"
+      val getUrl          = routes.FilterRecordsController
+        .filterIteration(searchTerm, countryOfOrigin, IMMIReady, None, None, Some(page), Some(size))
+        .url
+
+      val validFakeGetRequest = FakeRequest("GET", getUrl)
+      val records             = getTestRecords(requestEori, recordsSize)
+      val paginatedRecords    = records.slice(0, 10)
+
+      val pagination = Pagination(recordsSize, page, 3, Some(page + 1), None)
+
+      when(mockRecordsRepository.filterRecordsIteration(any(), any(), any(), any(), any(), any())) thenReturn Future
+        .successful(records)
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[RouterConnector].toInstance(mockRouterConnector),
+          bind[RecordsRepository].toInstance(mockRecordsRepository)
+        )
+        .build()
+
+      running(application) {
+        val result = route(application, validFakeGetRequest).value
+        status(result) shouldBe Status.OK
+        contentAsString(result) mustBe Json
+          .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
+          .toString
+      }
+      verify(mockRecordsRepository, atLeastOnce())
+        .filterRecordsIteration(
+          eqTo(requestEori),
+          eqTo(searchTerm),
+          eqTo(countryOfOrigin),
+          eqTo(IMMIReady),
+          eqTo(None),
+          eqTo(None)
+        )
+    }
+
+    "return 200 and the paginated records from the data store with size 10 and page 2 and 25 records in db" in {
+      val recordsSize     = 25
+      val page            = 2
+      val size            = 10
+      val searchTerm      = Some("Organic")
+      val countryOfOrigin = Some("AU")
+      val IMMIReady       = Some(true)
+      val requestEori     = "eori"
+      val getUrl          = routes.FilterRecordsController
+        .filterIteration(searchTerm, countryOfOrigin, IMMIReady, None, None, Some(page), Some(size))
+        .url
+
+      val validFakeGetRequest = FakeRequest("GET", getUrl)
+      val records             = getTestRecords(requestEori, recordsSize)
+      val paginatedRecords    = records.slice(10, 20)
+
+      val pagination = Pagination(recordsSize, page, 3, Some(page + 1), Some(page - 1))
+
+      when(mockRecordsRepository.filterRecordsIteration(any(), any(), any(), any(), any(), any())) thenReturn Future
+        .successful(records)
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[RouterConnector].toInstance(mockRouterConnector),
+          bind[RecordsRepository].toInstance(mockRecordsRepository)
+        )
+        .build()
+
+      running(application) {
+        val result = route(application, validFakeGetRequest).value
+        status(result) shouldBe Status.OK
+        contentAsString(result) mustBe Json
+          .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
+          .toString
+      }
+      verify(mockRecordsRepository, atLeastOnce())
+        .filterRecordsIteration(
+          eqTo(requestEori),
+          eqTo(searchTerm),
+          eqTo(countryOfOrigin),
+          eqTo(IMMIReady),
+          eqTo(None),
+          eqTo(None)
+        )
+    }
+
+    "return 200 and the paginated records from the data store with size 10 and page 1 and 5 records in db" in {
+      val recordsSize     = 5
+      val page            = 1
+      val size            = 10
+      val searchTerm      = Some("Organic")
+      val countryOfOrigin = Some("AU")
+      val IMMIReady       = Some(true)
+      val requestEori     = "eori"
+      val getUrl          = routes.FilterRecordsController
+        .filterIteration(searchTerm, countryOfOrigin, IMMIReady, None, None, Some(page), Some(size))
+        .url
+
+      val validFakeGetRequest = FakeRequest("GET", getUrl)
+      val records             = getTestRecords(requestEori, recordsSize)
+      val paginatedRecords    = records.slice(0, 5)
+
+      val pagination = Pagination(recordsSize, page, 1, None, None)
+
+      when(mockRecordsRepository.filterRecordsIteration(any(), any(), any(), any(), any(), any())) thenReturn Future
+        .successful(records)
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[RouterConnector].toInstance(mockRouterConnector),
+          bind[RecordsRepository].toInstance(mockRecordsRepository)
+        )
+        .build()
+
+      running(application) {
+        val result = route(application, validFakeGetRequest).value
+        status(result) shouldBe Status.OK
+        contentAsString(result) mustBe Json
+          .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
+          .toString
+      }
+      verify(mockRecordsRepository, atLeastOnce())
+        .filterRecordsIteration(
+          eqTo(requestEori),
+          eqTo(searchTerm),
+          eqTo(countryOfOrigin),
+          eqTo(IMMIReady),
+          eqTo(None),
+          eqTo(None)
+        )
+    }
+  }
+
+  "isTraderReferenceUnique" - {
+
+    "return 200 and true when the trader reference is unique" in {
+      val traderReference = "uniqueRef"
+      val requestEori     = "eori"
+      val getUrl          = routes.FilterRecordsController.isTraderReferenceUnique(traderReference).url
+
+      val validFakeGetRequest = FakeRequest("GET", getUrl)
+
+      when(mockRecordsRepository.isTraderReferenceUnique(any(), any())) thenReturn Future.successful(true)
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[RouterConnector].toInstance(mockRouterConnector),
+          bind[RecordsRepository].toInstance(mockRecordsRepository)
+        )
+        .build()
+
+      running(application) {
+        val result = route(application, validFakeGetRequest).value
+        status(result) shouldBe Status.OK
+        contentAsString(result) mustBe Json.obj("isUnique" -> true).toString
+      }
+      verify(mockRecordsRepository, atLeastOnce()).isTraderReferenceUnique(eqTo(requestEori), eqTo(traderReference))
+    }
+
+    "return 200 and false when the trader reference is not unique" in {
+      val traderReference = "duplicateRef"
+      val requestEori     = "eori"
+      val getUrl          = routes.FilterRecordsController.isTraderReferenceUnique(traderReference).url
+
+      val validFakeGetRequest = FakeRequest("GET", getUrl)
+
+      when(mockRecordsRepository.isTraderReferenceUnique(any(), any())) thenReturn Future.successful(false)
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[RouterConnector].toInstance(mockRouterConnector),
+          bind[RecordsRepository].toInstance(mockRecordsRepository)
+        )
+        .build()
+
+      running(application) {
+        val result = route(application, validFakeGetRequest).value
+        status(result) shouldBe Status.OK
+        contentAsString(result) mustBe Json.obj("isUnique" -> false).toString
+      }
+      verify(mockRecordsRepository, atLeastOnce()).isTraderReferenceUnique(eqTo(requestEori), eqTo(traderReference))
+    }
+  }
 }
