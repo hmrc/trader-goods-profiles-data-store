@@ -32,8 +32,8 @@ class WithdrawAdviceController @Inject() (
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
-  def withdrawAdvice(eori: String, recordId: String): Action[WithdrawReasonRequest] =
+  def withdrawAdvice(recordId: String): Action[WithdrawReasonRequest] =
     identify.async(parse.json[WithdrawReasonRequest]) { implicit request =>
-      routerConnector.withdrawAdvice(eori, recordId, request.body).map(_ => NoContent)
+      routerConnector.withdrawAdvice(request.eori, recordId, request.body).map(_ => NoContent)
     }
 }

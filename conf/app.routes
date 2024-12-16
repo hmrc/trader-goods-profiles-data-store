@@ -16,8 +16,8 @@ PATCH      /traders/:eori/records/:recordId         uk.gov.hmrc.tradergoodsprofi
 PUT        /traders/:eori/records/:recordId         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.UpdateRecordController.putRecord(eori: String, recordId: String)
 
 # Advice
-POST       /traders/:eori/records/:recordId/advice  uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.RequestAdviceController.requestAdvice(eori: String, recordId: String)
-PUT        /traders/:eori/records/:recordId/advice  uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.WithdrawAdviceController.withdrawAdvice(eori: String, recordId: String)
+POST       /traders/records/:recordId/advice  uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.RequestAdviceController.requestAdvice(recordId: String)
+PUT        /traders/records/:recordId/advice  uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.WithdrawAdviceController.withdrawAdvice(recordId: String)
 
 # Notification
 GET        /traders/email                     uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.EmailController.getEmail
