@@ -38,12 +38,11 @@ class GetRecordsController @Inject() (
     extends BackendController(cc) {
 
   def getLocalRecords(
-    eori: String,
     pageOpt: Option[Int],
     sizeOpt: Option[Int]
-  ): Action[AnyContent] = (identify andThen storeLatest).async {
-    recordsRepository.getCount(eori).flatMap { totalRecords =>
-      recordsRepository.getMany(eori, pageOpt, sizeOpt).map { records =>
+  ): Action[AnyContent] = (identify andThen storeLatest).async { implicit request =>
+    recordsRepository.getCount(request.eori).flatMap { totalRecords =>
+      recordsRepository.getMany(request.eori, pageOpt, sizeOpt).map { records =>
         val getRecordsResponse =
           GetRecordsResponse(goodsItemRecords = records, buildPagination(sizeOpt, pageOpt, totalRecords))
         Ok(Json.toJson(getRecordsResponse))
@@ -51,9 +50,9 @@ class GetRecordsController @Inject() (
     }
   }
 
-  def getRecord(eori: String, recordId: String): Action[AnyContent] = identify.async { implicit request =>
+  def getRecord(recordId: String): Action[AnyContent] = identify.async { implicit request =>
     routerConnector
-      .getRecord(eori, recordId)
+      .getRecord(request.eori, recordId)
       .map {
         case Some(record) if record.active => Ok(Json.toJson(record))
         case _                             => NotFound

@@ -36,12 +36,12 @@ import scala.concurrent.{ExecutionContext, Future}
 class WithdrawAdviceControllerSpec extends SpecBase with MockitoSugar {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
-  private val testEori              = "GB123456789099"
+  private val testEori              = "eori"
   private val testRecordId          = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f"
 
   private val withdrawReason = WithdrawReasonRequest(Some("REASON"))
 
-  private val withdrawUrl = routes.WithdrawAdviceController.withdrawAdvice(testEori, testRecordId).url
+  private val withdrawUrl = routes.WithdrawAdviceController.withdrawAdvice(testRecordId).url
 
   s"PUT $withdrawUrl" - {
 
@@ -61,7 +61,7 @@ class WithdrawAdviceControllerSpec extends SpecBase with MockitoSugar {
 
       running(application) {
 
-        val request = FakeRequest(routes.WithdrawAdviceController.withdrawAdvice(testEori, testRecordId))
+        val request = FakeRequest(routes.WithdrawAdviceController.withdrawAdvice(testRecordId))
           .withHeaders("Content-Type" -> "application/json")
           .withJsonBody(Json.toJson(withdrawReason))
 

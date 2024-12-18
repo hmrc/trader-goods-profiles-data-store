@@ -36,8 +36,8 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataSummary, Fil
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummaryRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.services.SdesService
 
-import java.time.{Clock, Instant, ZoneOffset}
 import java.time.temporal.ChronoUnit
+import java.time.{Clock, Instant, ZoneOffset}
 import scala.concurrent.{ExecutionContext, Future}
 
 class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
@@ -53,9 +53,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
     "return 200 and the DownloadDataSummaries" in {
 
-      lazy val downloadDataSummaryUrl = routes.DownloadDataSummaryController
-        .getDownloadDataSummaries(testEori)
-        .url
+      lazy val downloadDataSummaryUrl = routes.DownloadDataSummaryController.getDownloadDataSummaries.url
 
       lazy val validFakeGetRequest = FakeRequest("GET", downloadDataSummaryUrl)
       val downloadDataSummary      = DownloadDataSummary(summaryId, testEori, FileInProgress, now, now, None)
@@ -82,9 +80,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
     "return 200 and empty list if the DownloadDataSummaries are not present" in {
 
-      lazy val downloadDataSummaryUrl = routes.DownloadDataSummaryController
-        .getDownloadDataSummaries(testEori)
-        .url
+      lazy val downloadDataSummaryUrl = routes.DownloadDataSummaryController.getDownloadDataSummaries.url
 
       lazy val validFakeGetRequest = FakeRequest("GET", downloadDataSummaryUrl)
 
@@ -110,9 +106,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
     "return 204 and update summaries" in {
 
-      lazy val downloadDataSummaryUrl = routes.DownloadDataSummaryController
-        .touchDownloadDataSummaries(testEori)
-        .url
+      lazy val downloadDataSummaryUrl = routes.DownloadDataSummaryController.touchDownloadDataSummaries.url
 
       lazy val validFakePatchRequest = FakeRequest("PATCH", downloadDataSummaryUrl)
 
@@ -135,9 +129,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
     "return 200 and empty list if the DownloadDataSummaries are not present" in {
 
-      lazy val downloadDataSummaryUrl = routes.DownloadDataSummaryController
-        .getDownloadDataSummaries(testEori)
-        .url
+      lazy val downloadDataSummaryUrl = routes.DownloadDataSummaryController.getDownloadDataSummaries.url
 
       lazy val validFakeGetRequest = FakeRequest("GET", downloadDataSummaryUrl)
 
@@ -534,9 +526,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
       val correlationId = CorrelationId(summaryId)
 
-      lazy val downloadDataSummaryUrl = routes.DownloadDataSummaryController
-        .requestDownloadData(testEori)
-        .url
+      lazy val downloadDataSummaryUrl = routes.DownloadDataSummaryController.requestDownloadData.url
       lazy val validFakePostRequest   = FakeRequest("POST", downloadDataSummaryUrl)
 
       val mockRouterConnector = mock[RouterConnector]
@@ -607,9 +597,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         )
       )
 
-      lazy val downloadDataUrl = routes.DownloadDataSummaryController
-        .getDownloadData(testEori)
-        .url
+      lazy val downloadDataUrl = routes.DownloadDataSummaryController.getDownloadData.url
 
       lazy val validFakeGetRequest = FakeRequest("GET", downloadDataUrl)
 

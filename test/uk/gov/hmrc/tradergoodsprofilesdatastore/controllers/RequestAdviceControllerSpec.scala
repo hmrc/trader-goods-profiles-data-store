@@ -36,12 +36,12 @@ import scala.concurrent.{ExecutionContext, Future}
 class RequestAdviceControllerSpec extends SpecBase with MockitoSugar {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
-  private val testEori              = "GB123456789099"
+  private val testEori              = "eori"
   private val testRecordId          = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f"
 
   private val advice = AdviceRequest(testEori, "TESTNAME", testEori, testRecordId, "TEST@email.com")
 
-  private lazy val requestUrl = routes.RequestAdviceController.requestAdvice(testEori, testRecordId).url
+  private lazy val requestUrl = routes.RequestAdviceController.requestAdvice(testRecordId).url
 
   s"POST $requestUrl" - {
 
@@ -61,7 +61,7 @@ class RequestAdviceControllerSpec extends SpecBase with MockitoSugar {
 
       running(application) {
 
-        val request = FakeRequest(routes.RequestAdviceController.requestAdvice(testEori, testRecordId))
+        val request = FakeRequest(routes.RequestAdviceController.requestAdvice(testRecordId))
           .withHeaders("Content-Type" -> "application/json")
           .withJsonBody(Json.toJson(advice))
 

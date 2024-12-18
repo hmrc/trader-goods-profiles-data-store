@@ -45,7 +45,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
 
   implicit val ec: ExecutionContext = ExecutionContext.global
 
-  val requestEori = "GB123456789099"
+  val requestEori = "eori"
 
   private val profileRequest = ProfileRequest(
     actorId = "GB123456789099",
@@ -54,9 +54,9 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
     niphlNumber = Some("6 S12345")
   )
 
-  private val setUrl                = routes.ProfileController.setProfile(requestEori).url
-  private val getUrl                = routes.ProfileController.getProfile(requestEori).url
-  private val doesExistUrl          = routes.ProfileController.doesProfileExist(requestEori).url
+  private val setUrl                = routes.ProfileController.setProfile.url
+  private val getUrl                = routes.ProfileController.getProfile.url
+  private val doesExistUrl          = routes.ProfileController.doesProfileExist.url
   private val validFakePutRequest   =
     FakeRequest("PUT", setUrl, FakeHeaders(Seq(CONTENT_TYPE -> JSON)), Json.toJson(profileRequest))
   private val invalidFakePutRequest = FakeRequest("PUT", setUrl, FakeHeaders(Seq(CONTENT_TYPE -> JSON)), "{}")

@@ -37,7 +37,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class CreateRecordControllerSpec extends SpecBase with MockitoSugar {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
-  val testEori                      = "GB123456789099"
+  val testEori                      = "eori"
 
   private val goodsRecord =
     CreateRecordRequest(
@@ -67,7 +67,7 @@ class CreateRecordControllerSpec extends SpecBase with MockitoSugar {
 
   private val testRecordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f"
 
-  private val createUrl = routes.CreateRecordController.createRecord(testEori).url
+  private val createUrl = routes.CreateRecordController.createRecord.url
 
   private val validFakeCreateRequest = FakeRequest("POST", createUrl)
 

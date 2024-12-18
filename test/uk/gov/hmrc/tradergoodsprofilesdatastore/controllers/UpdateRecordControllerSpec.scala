@@ -38,12 +38,12 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
 
-  val testEori             = "GB123456789099"
+  val testEori             = "eori"
   private val testRecordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f"
 
-  private val patchRecordUrl = routes.UpdateRecordController.patchRecord(testEori, testRecordId).url
+  private val patchRecordUrl = routes.UpdateRecordController.patchRecord(testRecordId).url
 
-  private val putRecordUrl = routes.UpdateRecordController.putRecord(testEori, testRecordId).url
+  private val putRecordUrl = routes.UpdateRecordController.putRecord(testRecordId).url
 
   private val validFakeUpdateRequest = FakeRequest("PATCH", patchRecordUrl)
 

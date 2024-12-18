@@ -32,8 +32,8 @@ class CreateRecordController @Inject() (
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
-  def createRecord(eori: String): Action[CreateRecordRequest] =
+  def createRecord: Action[CreateRecordRequest] =
     identify.async(parse.json[CreateRecordRequest]) { implicit request =>
-      routerConnector.createRecord(request.body, eori).map(record => Ok(record.recordId))
+      routerConnector.createRecord(request.body, request.eori).map(record => Ok(record.recordId))
     }
 }
