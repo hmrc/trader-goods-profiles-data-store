@@ -45,9 +45,9 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
 
       val recordsSize = 10
       val page        = 1
-      val requestEori = "GB123456789099"
+      val requestEori = "eori"
       val getUrl      = routes.GetRecordsController
-        .getLocalRecords(requestEori, Some(page), Some(recordsSize))
+        .getLocalRecords(Some(page), Some(recordsSize))
         .url
 
       val validFakeGetRequest = FakeRequest("GET", getUrl)
@@ -80,9 +80,9 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
 
       val recordsSize = 10
       val page        = 1
-      val requestEori = "GB123456789099"
+      val requestEori = "eori"
       val getUrl      = routes.GetRecordsController
-        .getLocalRecords(requestEori, Some(page), Some(recordsSize))
+        .getLocalRecords(Some(page), Some(recordsSize))
         .url
 
       val validFakeGetRequest = FakeRequest("GET", getUrl)
@@ -116,9 +116,9 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
 
       val recordsSize = 10
       val page        = 1
-      val requestEori = "GB123456789099"
+      val requestEori = "eori"
       val getUrl      = routes.GetRecordsController
-        .getLocalRecords(requestEori, Some(page), Some(recordsSize))
+        .getLocalRecords(Some(page), Some(recordsSize))
         .url
 
       val validFakeGetRequest = FakeRequest("GET", getUrl)
@@ -152,9 +152,9 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
 
       val recordsSize = 10
       val page        = 1
-      val requestEori = "GB123456789099"
+      val requestEori = "eori"
       val getUrl      = routes.GetRecordsController
-        .getLocalRecords(requestEori, Some(page), Some(recordsSize))
+        .getLocalRecords(Some(page), Some(recordsSize))
         .url
 
       val validFakeGetRequest = FakeRequest("GET", getUrl)
@@ -188,9 +188,9 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
 
       val recordsSize = 10
       val page        = 1
-      val requestEori = "GB123456789099"
+      val requestEori = "eori"
       val getUrl      = routes.GetRecordsController
-        .getLocalRecords(requestEori, Some(page), Some(recordsSize))
+        .getLocalRecords(Some(page), Some(recordsSize))
         .url
 
       val validFakeGetRequest = FakeRequest("GET", getUrl)
@@ -224,9 +224,9 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
 
       val recordsSize = 10
       val page        = 2
-      val requestEori = "GB123456789099"
+      val requestEori = "eori"
       val getUrl      = routes.GetRecordsController
-        .getLocalRecords(requestEori, Some(page), Some(recordsSize))
+        .getLocalRecords(Some(page), Some(recordsSize))
         .url
 
       val validFakeGetRequest = FakeRequest("GET", getUrl)
@@ -260,9 +260,9 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
 
       val recordsSize = 10
       val page        = 3
-      val requestEori = "GB123456789099"
+      val requestEori = "eori"
       val getUrl      = routes.GetRecordsController
-        .getLocalRecords(requestEori, Some(page), Some(recordsSize))
+        .getLocalRecords(Some(page), Some(recordsSize))
         .url
 
       val validFakeGetRequest = FakeRequest("GET", getUrl)
@@ -296,9 +296,9 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
 
       val recordsSize = 10
       val page        = 1
-      val requestEori = "GB123456789099"
+      val requestEori = "eori"
       val getUrl      = routes.GetRecordsController
-        .getLocalRecords(requestEori, Some(page), Some(recordsSize))
+        .getLocalRecords(Some(page), Some(recordsSize))
         .url
 
       val validFakeGetRequest = FakeRequest("GET", getUrl)
@@ -332,9 +332,9 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
 
       val recordsSize = 10
       val page        = 100
-      val requestEori = "GB123456789099"
+      val requestEori = "eori"
       val getUrl      = routes.GetRecordsController
-        .getLocalRecords(requestEori, Some(page), Some(recordsSize))
+        .getLocalRecords(Some(page), Some(recordsSize))
         .url
 
       val validFakeGetRequest = FakeRequest("GET", getUrl)
@@ -368,9 +368,9 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
 
       val recordsSize = 10
       val page        = -10
-      val requestEori = "GB123456789099"
+      val requestEori = "eori"
       val getUrl      = routes.GetRecordsController
-        .getLocalRecords(requestEori, Some(page), Some(recordsSize))
+        .getLocalRecords(Some(page), Some(recordsSize))
         .url
 
       val validFakeGetRequest = FakeRequest("GET", getUrl)
@@ -402,10 +402,10 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
   "getRecord" - {
 
     "return Ok with record in body when it is found" in {
-      val requestEori   = "GB123456789099"
+      val requestEori   = "eori"
       val record        = getGoodsItemRecord(requestEori)
       val getRecordsUrl = routes.GetRecordsController
-        .getRecord(requestEori, record.recordId)
+        .getRecord(record.recordId)
         .url
 
       val validFakeGetRequest = FakeRequest("GET", getRecordsUrl)
@@ -430,10 +430,10 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
     }
 
     "return 404 when the record is inactive" in {
-      val requestEori   = "GB123456789099"
+      val requestEori   = "eori"
       val record        = getGoodsInactiveItemRecord(requestEori)
       val getRecordsUrl = routes.GetRecordsController
-        .getRecord(requestEori, record.recordId)
+        .getRecord(record.recordId)
         .url
 
       val validFakeGetRequest = FakeRequest("GET", getRecordsUrl)
@@ -457,10 +457,10 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
     }
 
     "return 404 when record does not exist because it has never existed" in {
-      val requestEori   = "GB123456789099"
+      val requestEori   = "eori"
       val record        = getGoodsInactiveItemRecord(requestEori)
       val getRecordsUrl = routes.GetRecordsController
-        .getRecord(requestEori, record.recordId)
+        .getRecord(record.recordId)
         .url
 
       val validFakeGetRequest = FakeRequest("GET", getRecordsUrl)

@@ -32,17 +32,17 @@ class UpdateRecordController @Inject() (
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
-  def patchRecord(eori: String, recordId: String): Action[PatchRecordRequest] =
+  def patchRecord(recordId: String): Action[PatchRecordRequest] =
     identify.async(parse.json[PatchRecordRequest]) { implicit request =>
-      routerConnector.patchRecord(request.body, eori, recordId).map {
+      routerConnector.patchRecord(request.body, request.eori, recordId).map {
         case true  => Ok
         case false => NotFound
       }
     }
 
-  def putRecord(eori: String, recordId: String): Action[PutRecordRequest] =
+  def putRecord(recordId: String): Action[PutRecordRequest] =
     identify.async(parse.json[PutRecordRequest]) { implicit request =>
-      routerConnector.putRecord(request.body, eori, recordId).map {
+      routerConnector.putRecord(request.body, request.eori, recordId).map {
         case true  => Ok
         case false => NotFound
       }

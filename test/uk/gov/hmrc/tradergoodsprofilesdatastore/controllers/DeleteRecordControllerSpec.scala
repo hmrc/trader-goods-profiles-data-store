@@ -36,10 +36,10 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
 
-  val testEori             = "GB123456789099"
+  val testEori             = "eori"
   private val testRecordId = "8ebb6b04-6ab0-4fe2-ad62-e6389a8a204f"
 
-  private val getUrl = routes.DeleteRecordController.deleteRecord(testEori, testRecordId).url
+  private val getUrl = routes.DeleteRecordController.deleteRecord(testRecordId).url
 
   private val validFakeGetRequest = FakeRequest("DELETE", getUrl)
 

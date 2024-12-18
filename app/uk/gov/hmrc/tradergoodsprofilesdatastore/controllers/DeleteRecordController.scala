@@ -31,8 +31,8 @@ class DeleteRecordController @Inject() (
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
-  def deleteRecord(eori: String, recordId: String): Action[AnyContent] = identify.async { implicit request =>
-    routerConnector.deleteRecord(eori, recordId).map {
+  def deleteRecord(recordId: String): Action[AnyContent] = identify.async { implicit request =>
+    routerConnector.deleteRecord(request.eori, recordId).map {
       case true  => NoContent
       case false => NotFound
     }

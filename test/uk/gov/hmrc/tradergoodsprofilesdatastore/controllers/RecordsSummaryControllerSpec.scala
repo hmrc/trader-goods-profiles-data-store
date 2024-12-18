@@ -40,10 +40,8 @@ class RecordsSummaryControllerSpec extends SpecBase with MockitoSugar with GetRe
   "recordsSummary" - {
     "return 200 and the RecordsSummary if it exists" in {
 
-      val requestEori            = "GB123456789099"
-      lazy val recordsSummaryUrl = routes.RecordsSummaryController
-        .recordsSummary(requestEori)
-        .url
+      val requestEori            = "eori"
+      lazy val recordsSummaryUrl = routes.RecordsSummaryController.recordsSummary.url
 
       lazy val validFakeGetRequest = FakeRequest("GET", recordsSummaryUrl)
       val recordsSummary           = RecordsSummary(requestEori, None, lastUpdated = Instant.now)
@@ -69,10 +67,8 @@ class RecordsSummaryControllerSpec extends SpecBase with MockitoSugar with GetRe
 
     "return 404 if the RecordsSummary is not present" in {
 
-      val requestEori            = "GB123456789099"
-      lazy val recordsSummaryUrl = routes.RecordsSummaryController
-        .recordsSummary(requestEori)
-        .url
+      val requestEori            = "eori"
+      lazy val recordsSummaryUrl = routes.RecordsSummaryController.recordsSummary.url
 
       lazy val validFakeGetRequest = FakeRequest("GET", recordsSummaryUrl)
 
