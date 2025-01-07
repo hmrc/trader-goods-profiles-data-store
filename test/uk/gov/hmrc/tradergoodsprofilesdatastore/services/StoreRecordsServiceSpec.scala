@@ -35,8 +35,8 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsRespo
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{RecordsRepository, RecordsSummaryRepository}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
 
-import java.time.{Clock, Instant, ZoneOffset}
 import java.time.temporal.ChronoUnit
+import java.time.{Clock, Instant, ZoneOffset}
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
 class StoreRecordsServiceSpec

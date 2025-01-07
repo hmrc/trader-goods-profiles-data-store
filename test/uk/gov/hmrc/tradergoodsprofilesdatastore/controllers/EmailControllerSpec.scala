@@ -42,13 +42,10 @@ class EmailControllerSpec extends SpecBase with MockitoSugar with GetRecordsResp
   "getEmail" - {
 
     "return 200 with email in body when it is found" in {
-      val requestEori = "GB123456789099"
       val timestamp   = Instant.now
       val address     = "email@test.co.uk"
       val email       = Email(address, timestamp)
-      val getEmailUrl = routes.EmailController
-        .getEmail(requestEori)
-        .url
+      val getEmailUrl = routes.EmailController.getEmail.url
 
       val validFakeGetRequest = FakeRequest("GET", getEmailUrl)
 
@@ -71,10 +68,7 @@ class EmailControllerSpec extends SpecBase with MockitoSugar with GetRecordsResp
     }
 
     "return 404 when email does not exist" in {
-      val requestEori = "GB123456789099"
-      val getEmailUrl = routes.EmailController
-        .getEmail(requestEori)
-        .url
+      val getEmailUrl = routes.EmailController.getEmail.url
 
       val validFakeGetRequest = FakeRequest("GET", getEmailUrl)
 

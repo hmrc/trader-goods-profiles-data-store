@@ -32,8 +32,8 @@ class RequestAdviceController @Inject() (
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
-  def requestAdvice(eori: String, recordId: String): Action[AdviceRequest] =
+  def requestAdvice(recordId: String): Action[AdviceRequest] =
     identify.async(parse.json[AdviceRequest]) { implicit request =>
-      routerConnector.requestAdvice(eori, recordId, request.body).map(_ => Created)
+      routerConnector.requestAdvice(request.eori, recordId, request.body).map(_ => Created)
     }
 }

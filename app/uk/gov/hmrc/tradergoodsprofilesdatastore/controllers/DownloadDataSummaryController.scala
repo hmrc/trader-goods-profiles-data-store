@@ -30,8 +30,8 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataSummary, Fil
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummaryRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.services.SdesService
 
-import java.time.temporal.ChronoUnit
 import java.time.Clock
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -48,15 +48,15 @@ class DownloadDataSummaryController @Inject() (
     extends BackendController(cc)
     with Logging {
 
-  def getDownloadDataSummaries(eori: String): Action[AnyContent] = identify.async {
+  def getDownloadDataSummaries: Action[AnyContent] = identify.async { implicit request =>
     downloadDataSummaryRepository
-      .get(eori)
+      .get(request.eori)
       .map(summaries => Ok(Json.toJson(summaries)))
   }
 
-  def touchDownloadDataSummaries(eori: String): Action[AnyContent] = identify.async {
+  def touchDownloadDataSummaries: Action[AnyContent] = identify.async { implicit request =>
     downloadDataSummaryRepository
-      .updateSeen(eori)
+      .updateSeen(request.eori)
       .map(_ => NoContent)
   }
 
@@ -120,14 +120,14 @@ class DownloadDataSummaryController @Inject() (
       Future.successful(Done)
     }
 
-  def requestDownloadData(eori: String): Action[AnyContent] = identify.async { implicit request =>
-    routerConnector.getRequestDownloadData(eori).flatMap { correlationId =>
+  def requestDownloadData: Action[AnyContent] = identify.async { implicit request =>
+    routerConnector.getRequestDownloadData(request.eori).flatMap { correlationId =>
       val createdAt = clock.instant
       downloadDataSummaryRepository
         .set(
           DownloadDataSummary(
             correlationId.correlationId,
-            eori,
+            request.eori,
             FileInProgress,
             createdAt,
             createdAt.plus(30, ChronoUnit.DAYS),
@@ -138,8 +138,8 @@ class DownloadDataSummaryController @Inject() (
     }
   }
 
-  def getDownloadData(eori: String): Action[AnyContent] = identify.async { implicit request =>
-    secureDataExchangeProxyConnector.getFilesAvailableUrl(eori).map { downloadDatas =>
+  def getDownloadData: Action[AnyContent] = identify.async { implicit request =>
+    secureDataExchangeProxyConnector.getFilesAvailableUrl(request.eori).map { downloadDatas =>
       Ok(Json.toJson(downloadDatas))
     }
   }

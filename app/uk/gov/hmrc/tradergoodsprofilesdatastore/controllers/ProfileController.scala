@@ -41,47 +41,46 @@ class ProfileController @Inject() (
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
-  def setProfile(eori: String): Action[ProfileRequest] = identify.async(parse.json[ProfileRequest]) {
-    implicit request =>
-      val updateOrCreateProfile =
-        if (config.checkForHistoricProfile)
-          routerConnector.hasHistoricProfile(eori).flatMap { hasHistoric =>
-            if (hasHistoric) routerConnector.updateTraderProfile(request.body, eori)
-            else routerConnector.createTraderProfile(request.body, eori)
-          }
-        else routerConnector.updateTraderProfile(request.body, eori)
+  def setProfile: Action[ProfileRequest] = identify.async(parse.json[ProfileRequest]) { implicit request =>
+    val updateOrCreateProfile =
+      if (config.checkForHistoricProfile)
+        routerConnector.hasHistoricProfile(request.eori).flatMap { hasHistoric =>
+          if (hasHistoric) routerConnector.updateTraderProfile(request.body, request.eori)
+          else routerConnector.createTraderProfile(request.body, request.eori)
+        }
+      else routerConnector.updateTraderProfile(request.body, request.eori)
 
-      for {
-        _ <- updateOrCreateProfile
-        _ <- profileRepository.set(eori, request.body)
-      } yield Ok
+    for {
+      _ <- updateOrCreateProfile
+      _ <- profileRepository.set(request.eori, request.body)
+    } yield Ok
   }
 
-  def getProfile(eori: String): Action[AnyContent] = identify.async {
+  def getProfile: Action[AnyContent] = identify.async { implicit request =>
     profileRepository
-      .get(eori)
+      .get(request.eori)
       .map {
         case Some(profile) => Ok(Json.toJson(profile))
         case None          => NotFound
       }
   }
 
-  def doesProfileExist(eori: String): Action[AnyContent] = identify.async { implicit request =>
+  def doesProfileExist: Action[AnyContent] = identify.async { implicit request =>
     profileRepository
-      .get(eori)
+      .get(request.eori)
       .flatMap {
         case Some(_) => Future.successful(Ok)
         case None    =>
-          customsDataStoreConnector.getEoriHistory(eori).flatMap {
+          customsDataStoreConnector.getEoriHistory(request.eori).flatMap {
             case Some(eoriHistoryResponse) =>
-              val filteredEoriHistory = eoriHistoryResponse.eoriHistory.filterNot(_.eori == eori)
+              val filteredEoriHistory = eoriHistoryResponse.eoriHistory.filterNot(_.eori == request.eori)
               if (filteredEoriHistory.isEmpty) {
                 Future.successful(NotFound)
               } else {
                 val latestEoriResult = profileRepository.get(filteredEoriHistory.head.eori).flatMap {
                   case Some(historicProfile) =>
                     for {
-                      updateResult <- profileRepository.updateEori(historicProfile.eori, eori)
+                      updateResult <- profileRepository.updateEori(historicProfile.eori, request.eori)
                       _            <- recordsRepository.deleteRecordsByEori(historicProfile.eori)
                       _            <- recordsSummaryRepository.deleteByEori(historicProfile.eori)
                     } yield updateResult
