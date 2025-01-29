@@ -162,7 +162,7 @@ class StoreRecordsServiceSpec
         )
 
         val result = await(service.storeRecords(requestEori, None)(hc))
-        result shouldBe false
+        result shouldBe true
 
         val done = Promise[Done]()
         eventually {

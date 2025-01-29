@@ -61,7 +61,7 @@ class StoreRecordsService @Inject() (
   )(implicit hc: HeaderCarrier): Future[Boolean] =
     if (totalRecords > pageSize) {
       storeRecordsRecursively(eori, startingPage + 1, lastUpdatedDate, pageSize)
-        .flatMap(timeBeforeLastCall => recordsSummaryRepository.set(eori, None, timeBeforeLastCall).map(_ => false))
+        .flatMap(timeBeforeLastCall => recordsSummaryRepository.set(eori, None, timeBeforeLastCall).map(_ => true))
         .recover { case NonFatal(_) =>
           recordsSummaryRepository.update(eori, None, None)
           false
