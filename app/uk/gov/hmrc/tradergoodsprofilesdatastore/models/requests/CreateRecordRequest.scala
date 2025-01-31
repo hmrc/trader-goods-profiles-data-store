@@ -57,5 +57,5 @@ object CreateRecordRequest {
       (JsPath \ "countryOfOrigin").write[String] and
       (JsPath \ "comcodeEffectiveFromDate").write[Instant] and
       (JsPath \ "comcodeEffectiveToDate").writeNullable[Instant] and
-      (JsPath \ "category").writeNullable[Int])(unlift(CreateRecordRequest.unapply))
+      (JsPath \ "category").writeNullable[Int])(o => Tuple.fromProductTyped(o))
 }
