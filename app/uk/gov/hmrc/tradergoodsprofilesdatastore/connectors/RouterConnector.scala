@@ -20,6 +20,7 @@ import org.apache.pekko.Done
 import play.api.Configuration
 import play.api.http.Status._
 import play.api.libs.json.Json
+import play.api.libs.ws.writeableOf_JsValue
 import sttp.model.Uri
 import sttp.model.Uri.UriContext
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw

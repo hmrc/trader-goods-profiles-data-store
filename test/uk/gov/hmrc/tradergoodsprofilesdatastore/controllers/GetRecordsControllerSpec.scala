@@ -16,12 +16,13 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
-import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchersSugar.eqTo
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.{atLeastOnce, times, verify, when}
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.scalatest.matchers.should.*
+import org.scalatest.matchers.should.Matchers.shouldBe
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
+import play.api.inject
 import play.api.inject.bind
 import play.api.libs.json.Json
 import play.api.test.FakeRequest

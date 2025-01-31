@@ -17,6 +17,7 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
 import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.gridfs.SingleObservableFuture
 import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository

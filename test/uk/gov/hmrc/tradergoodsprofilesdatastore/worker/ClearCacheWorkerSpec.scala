@@ -17,16 +17,18 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.worker
 
 import org.apache.pekko.actor.{ActorSystem, Cancellable, Scheduler}
-import org.mockito.ArgumentMatchersSugar.{any, eqTo}
-import org.mockito.MockitoSugar.{reset, verify, verifyZeroInteractions, when}
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.mockito.MockitoSugar.mock
+import play.api.inject
 import play.api.inject.ApplicationLifecycle
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.services.ClearCacheService
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import scala.concurrent.{ExecutionContext, Future}
 
 class ClearCacheWorkerSpec extends AnyWordSpecLike with BeforeAndAfterEach {
@@ -73,8 +75,8 @@ class ClearCacheWorkerSpec extends AnyWordSpecLike with BeforeAndAfterEach {
 
       new ClearCacheWorker(appConfig, applicationLifecycle, actorSystem, clearCacheService)
 
-      verifyZeroInteractions(scheduler)
-      verifyZeroInteractions(applicationLifecycle)
+      verifyNoInteractions(scheduler)
+      verifyNoInteractions(applicationLifecycle)
     }
 
   }
