@@ -22,8 +22,8 @@ import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.Eventually.eventually
-import org.scalatest.matchers.should.*
-import org.scalatest.matchers.should.Matchers.shouldBe
+
+
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.Logging
 import play.api.test.Helpers._
@@ -93,7 +93,7 @@ class StoreRecordsServiceSpec
           )
 
         val result = await(service.storeRecords(requestEori, None)(hc))
-        result.value shouldBe true
+        result.value mustBe true
 
         verify(mockRouterConnector, times(1))
           .getRecords(eqTo(requestEori), eqTo(None), eqTo(Some(0)), eqTo(Some(pageSize)))(any())
@@ -131,7 +131,7 @@ class StoreRecordsServiceSpec
           )
 
         val result = await(service.storeRecords(requestEori, None)(hc))
-        result shouldBe true
+        result mustBe true
 
         verify(mockRouterConnector, times(1))
           .getRecords(any(), any(), any(), any())(any())
@@ -163,7 +163,7 @@ class StoreRecordsServiceSpec
         )
 
         val result = await(service.storeRecords(requestEori, None)(hc))
-        result shouldBe true
+        result mustBe true
 
         val done = Promise[Done]()
         eventually {
@@ -199,7 +199,7 @@ class StoreRecordsServiceSpec
         )
 
         val result = await(service.storeRecords(requestEori, None)(hc))
-        result shouldBe false
+        result mustBe false
 
         val done = Promise[Done]()
         eventually {

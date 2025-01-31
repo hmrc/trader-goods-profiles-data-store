@@ -19,8 +19,8 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito._
-import org.scalatest.matchers.should.*
-import org.scalatest.matchers.should.Matchers.shouldBe
+
+
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject
 import play.api.libs.json.Json
@@ -67,7 +67,7 @@ class RequestAdviceControllerSpec extends SpecBase with MockitoSugar {
           .withJsonBody(Json.toJson(advice))
 
         val result = route(application, request).value
-        status(result) shouldBe CREATED
+        status(result) mustBe CREATED
 
         withClue("must call the relevant services with the correct details") {
           verify(mockRouterConnector, times(1))

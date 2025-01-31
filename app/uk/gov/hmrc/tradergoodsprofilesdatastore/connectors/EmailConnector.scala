@@ -20,13 +20,12 @@ import org.apache.pekko.Done
 import play.api.Configuration
 import play.api.http.Status.ACCEPTED
 import play.api.libs.json.Json
-import play.api.libs.ws.writeableOf_JsValue
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps, UpstreamErrorResponse}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.email.{DownloadRecordEmailParameters, DownloadRecordEmailRequest}
-
+import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 

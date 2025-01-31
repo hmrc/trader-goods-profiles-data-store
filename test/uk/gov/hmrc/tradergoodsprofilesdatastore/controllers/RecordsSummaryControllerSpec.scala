@@ -18,8 +18,8 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
-import org.scalatest.matchers.should.*
-import org.scalatest.matchers.should.Matchers.shouldBe
+
+
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
 import play.api.inject
@@ -60,7 +60,7 @@ class RecordsSummaryControllerSpec extends SpecBase with MockitoSugar with GetRe
         .build()
       running(application) {
         val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.OK
+        status(result) mustBe Status.OK
         contentAsJson(result) mustEqual Json.toJson(recordsSummary)
       }
 
@@ -84,7 +84,7 @@ class RecordsSummaryControllerSpec extends SpecBase with MockitoSugar with GetRe
         .build()
       running(application) {
         val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.NOT_FOUND
+        status(result) mustBe Status.NOT_FOUND
       }
 
       verify(mockRecordsSummaryRepository, times(1)).get(requestEori)

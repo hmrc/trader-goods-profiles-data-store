@@ -18,8 +18,8 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.{atLeastOnce, verify, when}
-import org.scalatest.matchers.should.*
-import org.scalatest.matchers.should.Matchers.shouldBe
+
+
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject
 import play.api.libs.json.Json
@@ -146,7 +146,7 @@ class CreateRecordControllerSpec extends SpecBase with MockitoSugar {
           .withHeaders("Content-Type" -> "application/json")
           .withJsonBody(Json.toJson(goodsRecord))
         val result  = route(application, request).value
-        status(result) shouldBe OK
+        status(result) mustBe OK
 
         withClue("must call the relevant services with the correct details") {
           verify(mockRouterConnector, atLeastOnce())
@@ -174,7 +174,7 @@ class CreateRecordControllerSpec extends SpecBase with MockitoSugar {
           .withHeaders("Content-Type" -> "application/json")
           .withJsonBody(Json.toJson(goodsItemRecordWithoutCategory))
         val result  = route(application, request).value
-        status(result) shouldBe OK
+        status(result) mustBe OK
 
         withClue("must call the relevant services with the correct details") {
           verify(mockRouterConnector, atLeastOnce())

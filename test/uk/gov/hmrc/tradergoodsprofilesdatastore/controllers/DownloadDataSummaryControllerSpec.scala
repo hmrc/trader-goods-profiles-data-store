@@ -19,8 +19,8 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.{atLeastOnce, never, verify, when}
-import org.scalatest.matchers.should.*
-import org.scalatest.matchers.should.Matchers.shouldBe
+
+
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories._
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
@@ -74,7 +74,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         .build()
       running(application) {
         val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.OK
+        status(result) mustBe Status.OK
         contentAsJson(result) mustEqual Json.toJson(Seq(downloadDataSummary))
       }
 
@@ -97,7 +97,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         .build()
       running(application) {
         val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.OK
+        status(result) mustBe Status.OK
         contentAsJson(result) mustEqual JsArray()
       }
 
@@ -124,7 +124,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         .build()
       running(application) {
         val result = route(application, validFakePatchRequest).value
-        status(result) shouldBe Status.NO_CONTENT
+        status(result) mustBe Status.NO_CONTENT
       }
 
       verify(mockDownloadDataSummaryRepository).updateSeen(testEori)
@@ -146,7 +146,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         .build()
       running(application) {
         val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.OK
+        status(result) mustBe Status.OK
         contentAsJson(result) mustEqual JsArray()
       }
 
@@ -209,7 +209,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
       running(application) {
         val result = route(application, validFakePostRequest).value
-        status(result) shouldBe Status.NO_CONTENT
+        status(result) mustBe Status.NO_CONTENT
       }
 
       withClue("must call the relevant services with the correct details") {
@@ -275,7 +275,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
       running(application) {
         val result = route(application, validFakePostRequest).value
-        status(result) shouldBe Status.NO_CONTENT
+        status(result) mustBe Status.NO_CONTENT
       }
 
       withClue("must call the relevant services with the correct details") {
@@ -564,7 +564,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         val request = validFakePostRequest
           .withHeaders("Content-Type" -> "application/json")
         val result  = route(application, request).value
-        status(result) shouldBe ACCEPTED
+        status(result) mustBe ACCEPTED
 
         withClue("must call the relevant services with the correct details") {
           verify(mockRouterConnector).getRequestDownloadData(eqTo(testEori))(any())
@@ -619,7 +619,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         val request = validFakeGetRequest
           .withHeaders("Content-Type" -> "application/json")
         val result  = route(application, request).value
-        status(result) shouldBe OK
+        status(result) mustBe OK
         contentAsJson(result) mustEqual Json.toJson(Seq(downloadData))
 
         withClue("must call the relevant services with the correct details") {

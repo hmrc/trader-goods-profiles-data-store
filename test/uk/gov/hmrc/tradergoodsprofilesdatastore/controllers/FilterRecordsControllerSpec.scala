@@ -19,8 +19,8 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.{atLeastOnce, never, verify, when}
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.matchers.should.*
-import org.scalatest.matchers.should.Matchers.shouldBe
+
+
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
 import play.api.inject
@@ -98,7 +98,7 @@ class FilterRecordsControllerSpec
 
       running(application) {
         val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.OK
+        status(result) mustBe Status.OK
         contentAsString(result) mustBe Json
           .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
           .toString
@@ -136,7 +136,7 @@ class FilterRecordsControllerSpec
 
       running(application) {
         val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.OK
+        status(result) mustBe Status.OK
         contentAsString(result) mustBe Json
           .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
           .toString
@@ -175,7 +175,7 @@ class FilterRecordsControllerSpec
 
       running(application) {
         val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.OK
+        status(result) mustBe Status.OK
         contentAsString(result) mustBe Json
           .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
           .toString
@@ -211,7 +211,7 @@ class FilterRecordsControllerSpec
 
       running(application) {
         val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.OK
+        status(result) mustBe Status.OK
         contentAsString(result) mustBe Json
           .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
           .toString
@@ -247,7 +247,7 @@ class FilterRecordsControllerSpec
 
       running(application) {
         val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.BAD_REQUEST
+        status(result) mustBe Status.BAD_REQUEST
 
         verify(mockRecordsRepository, never())
           .filterRecords(eqTo(requestEori), eqTo(Some(searchTerm)), eqTo(Some(field)), eqTo(true))
@@ -288,7 +288,7 @@ class FilterRecordsControllerSpec
 
       running(application) {
         val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.OK
+        status(result) mustBe Status.OK
         contentAsString(result) mustBe Json
           .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
           .toString
@@ -334,7 +334,7 @@ class FilterRecordsControllerSpec
 
       running(application) {
         val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.OK
+        status(result) mustBe Status.OK
         contentAsString(result) mustBe Json
           .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
           .toString
@@ -380,7 +380,7 @@ class FilterRecordsControllerSpec
 
       running(application) {
         val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.OK
+        status(result) mustBe Status.OK
         contentAsString(result) mustBe Json
           .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
           .toString
@@ -417,7 +417,7 @@ class FilterRecordsControllerSpec
 
       running(application) {
         val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.OK
+        status(result) mustBe Status.OK
         contentAsString(result) mustBe Json.obj("isUnique" -> true).toString
       }
       verify(mockRecordsRepository, atLeastOnce()).isTraderReferenceUnique(eqTo(requestEori), eqTo(traderReference))
@@ -441,7 +441,7 @@ class FilterRecordsControllerSpec
 
       running(application) {
         val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.OK
+        status(result) mustBe Status.OK
         contentAsString(result) mustBe Json.obj("isUnique" -> false).toString
       }
       verify(mockRecordsRepository, atLeastOnce()).isTraderReferenceUnique(eqTo(requestEori), eqTo(traderReference))

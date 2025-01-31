@@ -20,7 +20,6 @@ import org.apache.pekko.Done
 import play.api.Configuration
 import play.api.http.Status._
 import play.api.libs.json.Json
-import play.api.libs.ws.writeableOf_JsValue
 import sttp.model.Uri
 import sttp.model.Uri.UriContext
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
@@ -29,9 +28,10 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps, Upstream
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests._
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{CorrelationId, GetRecordsResponse, GoodsItemRecord}
-
+import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 
 class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2)(implicit ec: ExecutionContext) {
 
