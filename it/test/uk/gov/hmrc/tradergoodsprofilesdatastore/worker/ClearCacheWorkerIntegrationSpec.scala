@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.worker
 
-import org.mockito.ArgumentMatchersSugar.{any, eqTo}
-import org.mockito.Mockito.verify
-import org.mockito.MockitoSugar.when
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.{verify, when}
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mongodb.scala.model.Filters
 import org.scalatest.concurrent.{Eventually, IntegrationPatience}
 import org.scalatestplus.mockito.MockitoSugar.mock
@@ -48,10 +48,10 @@ class ClearCacheWorkerIntegrationSpec
     with Eventually {
 
   implicit val ec: ExecutionContext                                = ExecutionContext.global
-  protected override lazy val repository: RecordsSummaryRepository = new RecordsSummaryRepository(mongoComponent)
+  protected override val repository: RecordsSummaryRepository = new RecordsSummaryRepository(mongoComponent)
 
   "should start ClearCacheWorker" in {
-    lazy val recordsRepository = new RecordsRepository(mongoComponent)
+    lazy val recordsRepository: RecordsRepository = new RecordsRepository(mongoComponent)
     recordsRepository.updateRecords(testEori, Seq(goodsItemRecord)).futureValue
     insert(sampleRecordSummary).futureValue
 
@@ -71,7 +71,7 @@ class ClearCacheWorkerIntegrationSpec
 
   "should fail to clear the cache in case of error" in {
     val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
-    val mockRecordsRepository        = mock[RecordsRepository]
+    val mockRecordsRepository = mock[RecordsRepository]
 
     when(mockRecordsSummaryRepository.getByLastUpdatedBefore(any))
       .thenReturn(
@@ -79,17 +79,15 @@ class ClearCacheWorkerIntegrationSpec
         Future.successful(Seq(sampleRecordSummary)),
         Future.successful(Seq.empty)
       )
-    when(mockRecordsSummaryRepository.deleteByEori(any)).thenReturn(Future.successful(1))
-    when(mockRecordsRepository.deleteRecordsByEori(any)).thenReturn(Future.successful(1))
+    when(mockRecordsSummaryRepository.deleteByEori(any)).thenReturn(Future.successful(1L))
+    when(mockRecordsRepository.deleteRecordsByEori(any)).thenReturn(Future.successful(1L))
 
     val app: Application = buildApplication(mockRecordsSummaryRepository, mockRecordsRepository)
 
     running(app) {
-
       eventually {
         verify(mockRecordsSummaryRepository).deleteByEori(eqTo(testEori))
         verify(mockRecordsRepository).deleteRecordsByEori(eqTo(testEori))
-        successful()
       }
     }
   }
@@ -140,7 +138,7 @@ class ClearCacheWorkerIntegrationSpec
       updatedDateTime = Instant.parse("2024-10-12T16:12:34Z")
     )
 
-  private def sampleRecordSummary =
+  private def sampleRecordSummary: RecordsSummary =
     RecordsSummary(
       eori = testEori,
       currentUpdate = Some(Update(0, 0)),

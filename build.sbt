@@ -2,7 +2,7 @@ import scoverage.ScoverageKeys
 import uk.gov.hmrc.DefaultBuildSettings
 
 ThisBuild / majorVersion := 0
-ThisBuild / scalaVersion := "3.3.4"
+ThisBuild / scalaVersion := "3.5.0"
 PlayKeys.playDefaultPort := 10906
 
 lazy val microservice = Project("trader-goods-profiles-data-store", file("."))

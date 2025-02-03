@@ -55,7 +55,7 @@ class ClearCacheServiceSpec extends PlaySpec with BeforeAndAfterEach {
 
     when(mongoLockRepository.takeLock(any, any, any))
       .thenReturn(Future.successful(Some(Lock("clear-cache-lock", "123", Instant.now, Instant.now))))
-    when(mongoLockRepository.releaseLock(any, any)).thenReturn(Future.successful(Done))
+    when(mongoLockRepository.releaseLock(any, any)).thenReturn(Future.successful(()))
   }
 
   "clearCache" should {
@@ -78,6 +78,7 @@ class ClearCacheServiceSpec extends PlaySpec with BeforeAndAfterEach {
     }
 
     "delete a cache" in {
+
       val sampleRecordsSummary: RecordsSummary = RecordsSummary(
         eori = testEori,
         currentUpdate = Some(Update(0, 0)),
@@ -85,8 +86,8 @@ class ClearCacheServiceSpec extends PlaySpec with BeforeAndAfterEach {
       )
       when(recordsSummaryRepository.getByLastUpdatedBefore(any))
         .thenReturn(Future.successful(Seq(sampleRecordsSummary)))
-      when(recordsRepository.deleteRecordsByEori(any)).thenReturn(Future.successful(1))
-      when(recordsSummaryRepository.deleteByEori(any)).thenReturn(Future.successful(1))
+      when(recordsRepository.deleteRecordsByEori(any)).thenReturn(Future.successful(1L))
+      when(recordsSummaryRepository.deleteByEori(any)).thenReturn(Future.successful(1L))
 
       val expiredBefore = Instant.now
       await(sut.clearCache(expiredBefore))

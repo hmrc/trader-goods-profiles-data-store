@@ -33,7 +33,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeStoreLatestAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.PatchRecordRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Assessment, Condition, GoodsItemRecord}
-
+import org.mongodb.scala.ObservableFuture
 import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 

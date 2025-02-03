@@ -45,7 +45,7 @@ class ProfileRepositorySpec
 
   private val profileEori                       = "test-eori"
   private val profileRequest                    = ProfileRequest("test-actor-id", "test-ukims", Some("test-nirms"), Some("test-niphl"))
-  private val profileResponse                   =
+  private val profileResponse: ProfileResponse                   =
     ProfileResponse(
       profileEori,
       "test-actor-id",
@@ -54,7 +54,7 @@ class ProfileRepositorySpec
       Some("test-niphl"),
       eoriChanged = Some(false)
     )
-  private val profileResponseWithoutEoriChanged =
+  private val profileResponseWithoutEoriChanged: ProfileResponse =
     ProfileResponse(
       profileEori,
       "test-actor-id",
@@ -64,7 +64,7 @@ class ProfileRepositorySpec
       eoriChanged = None
     )
 
-  protected override val repository = new ProfileRepository(mongoComponent = mongoComponent)
+  protected override val repository: ProfileRepository = new ProfileRepository(mongoComponent = mongoComponent)
 
   private def byEori =
     Filters.equal("eori", profileResponse.eori)
@@ -72,6 +72,7 @@ class ProfileRepositorySpec
   ".set" - {
 
     "must create a record when there is none" in {
+
       val setResult     = repository.set(profileEori, profileRequest).futureValue
       val updatedRecord = find(byEori).futureValue.headOption.value
 

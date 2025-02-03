@@ -19,7 +19,6 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{atLeastOnce, verify, when}
 
-
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject
 import play.api.test.FakeRequest

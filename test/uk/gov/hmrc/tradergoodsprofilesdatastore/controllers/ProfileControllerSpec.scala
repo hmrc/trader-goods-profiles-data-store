@@ -266,8 +266,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
           )
 
           when(mockProfileRepository.updateEori(any(), any())) thenReturn Future.successful(true)
-          when(mockRecordsRepository.deleteRecordsByEori(any())) thenReturn Future.successful(1)
-          when(mockRecordsSummaryRepository.deleteByEori(any())) thenReturn Future.successful(1)
+          when(mockRecordsRepository.deleteRecordsByEori(any())) thenReturn Future.successful(1L)
+          when(mockRecordsSummaryRepository.deleteByEori(any())) thenReturn Future.successful(1L)
 
           val historicEoriProfile = ProfileResponse(
             eori = "previousEori",
@@ -340,8 +340,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
 
           when(mockProfileRepository.get(eqTo("previousEori"))) thenReturn Future.successful(Some(historicEoriProfile))
           when(mockProfileRepository.updateEori(any(), any())) thenReturn Future.successful(true)
-          when(mockRecordsRepository.deleteRecordsByEori(eqTo("previousEori"))) thenReturn Future.successful(1)
-          when(mockRecordsSummaryRepository.deleteByEori(eqTo("previousEori"))) thenReturn Future.successful(1)
+          when(mockRecordsRepository.deleteRecordsByEori(eqTo("previousEori"))) thenReturn Future.successful(1L)
+          when(mockRecordsSummaryRepository.deleteByEori(eqTo("previousEori"))) thenReturn Future.successful(1L)
 
           val olderHistoricEoriProfile = ProfileResponse(
             eori = "eori2",
@@ -353,9 +353,9 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
           )
 
           when(mockProfileRepository.get(eqTo("eori2"))) thenReturn Future.successful(Some(olderHistoricEoriProfile))
-          when(mockProfileRepository.deleteByEori(eqTo("eori2"))) thenReturn Future.successful(1)
-          when(mockRecordsRepository.deleteRecordsByEori(eqTo("eori2"))) thenReturn Future.successful(1)
-          when(mockRecordsSummaryRepository.deleteByEori(eqTo("eori2"))) thenReturn Future.successful(1)
+          when(mockProfileRepository.deleteByEori(eqTo("eori2"))) thenReturn Future.successful(1L)
+          when(mockRecordsRepository.deleteRecordsByEori(eqTo("eori2"))) thenReturn Future.successful(1L)
+          when(mockRecordsSummaryRepository.deleteByEori(eqTo("eori2"))) thenReturn Future.successful(1L)
 
           val application = applicationBuilder()
             .overrides(
@@ -406,8 +406,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
           )
 
           when(mockProfileRepository.updateEori(any(), any())) thenReturn Future.successful(true)
-          when(mockRecordsRepository.deleteRecordsByEori(eqTo("previousEori"))) thenReturn Future.successful(1)
-          when(mockRecordsSummaryRepository.deleteByEori(eqTo("previousEori"))) thenReturn Future.successful(1)
+          when(mockRecordsRepository.deleteRecordsByEori(eqTo("previousEori"))) thenReturn Future.successful(1L)
+          when(mockRecordsSummaryRepository.deleteByEori(eqTo("previousEori"))) thenReturn Future.successful(1L)
 
           val historicEoriProfile = ProfileResponse(
             eori = "previousEori",
@@ -571,7 +571,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
 
           when(mockProfileRepository.get(eqTo("previousEori"))) thenReturn Future.successful(Some(historicEoriProfile))
           when(mockProfileRepository.updateEori(any(), any())) thenReturn Future.successful(false)
-          when(mockRecordsRepository.deleteRecordsByEori(any())) thenReturn Future.successful(0)
+          when(mockRecordsRepository.deleteRecordsByEori(any())) thenReturn Future.successful(0L)
 
           val application = applicationBuilder()
             .overrides(

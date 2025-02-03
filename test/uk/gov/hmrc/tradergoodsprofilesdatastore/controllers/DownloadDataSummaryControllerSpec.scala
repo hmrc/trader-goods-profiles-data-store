@@ -20,7 +20,6 @@ import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.{atLeastOnce, never, verify, when}
 
-
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories._
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
@@ -114,7 +113,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       lazy val validFakePatchRequest = FakeRequest("PATCH", downloadDataSummaryUrl)
 
       val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
-      when(mockDownloadDataSummaryRepository.updateSeen(any())) thenReturn Future.successful(1)
+      when(mockDownloadDataSummaryRepository.updateSeen(any())) thenReturn Future.successful(1L)
 
       val application = applicationBuilder()
         .overrides(
