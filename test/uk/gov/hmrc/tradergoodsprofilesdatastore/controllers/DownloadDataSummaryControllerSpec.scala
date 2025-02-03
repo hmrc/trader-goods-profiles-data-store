@@ -20,7 +20,6 @@ import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.{atLeastOnce, never, verify, when}
 
-
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories._
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status

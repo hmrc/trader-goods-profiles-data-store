@@ -23,7 +23,6 @@ import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.Eventually.eventually
 
-
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.Logging
 import play.api.test.Helpers._

@@ -19,7 +19,6 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 
-
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
 import play.api.inject
