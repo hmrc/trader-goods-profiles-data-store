@@ -17,13 +17,13 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.services
 
 import org.apache.pekko.Done
-import org.mockito.ArgumentMatchersSugar.{any, eqTo}
-import org.mockito.Mockito.{never, times}
-import org.mockito.MockitoSugar.{reset, verify, verifyZeroInteractions, when}
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.mockito.MockitoSugar.mock
 import org.scalatestplus.play.PlaySpec
-import play.api.test.Helpers.{await, defaultAwaitTimeout}
+import play.api.test.Helpers._
 import uk.gov.hmrc.mongo.lock.{Lock, MongoLockRepository}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.TestConstants.testEori
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary
@@ -105,7 +105,7 @@ class ClearCacheServiceSpec extends PlaySpec with BeforeAndAfterEach {
 
       verify(recordsSummaryRepository, times(1)).getByLastUpdatedBefore(eqTo(expiredBefore))
       verify(recordsSummaryRepository, never()).deleteByEori(any)
-      verifyZeroInteractions(recordsRepository)
+      verifyNoInteractions(recordsRepository)
     }
 
     "should not delete cache if recordsRepository fails to delete records" in {

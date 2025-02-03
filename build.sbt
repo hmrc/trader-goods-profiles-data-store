@@ -2,7 +2,7 @@ import scoverage.ScoverageKeys
 import uk.gov.hmrc.DefaultBuildSettings
 
 ThisBuild / majorVersion := 0
-ThisBuild / scalaVersion := "2.13.12"
+ThisBuild / scalaVersion := "3.3.4"
 PlayKeys.playDefaultPort := 10906
 
 lazy val microservice = Project("trader-goods-profiles-data-store", file("."))
@@ -15,7 +15,7 @@ lazy val microservice = Project("trader-goods-profiles-data-store", file("."))
     scalacOptions += "-Wconf:src=routes/.*:s"
   )
   .settings(resolvers += Resolver.jcenterRepo)
-  .settings(CodeCoverageSettings.settings: _*)
+  .settings(CodeCoverageSettings.settings *)
 
 ScoverageKeys.coverageMinimumStmtTotal := 90
 ScoverageKeys.coverageFailOnMinimum := true

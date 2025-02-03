@@ -19,13 +19,13 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.services
 import org.apache.pekko.Done
 import org.apache.pekko.util.Helpers.Requiring
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito.{reset, times, verify, when}
+import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.Eventually.eventually
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.Logging
-import play.api.test.Helpers.{await, defaultAwaitTimeout}
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
@@ -92,7 +92,7 @@ class StoreRecordsServiceSpec
           )
 
         val result = await(service.storeRecords(requestEori, None)(hc))
-        result.value shouldBe true
+        result.value mustBe true
 
         verify(mockRouterConnector, times(1))
           .getRecords(eqTo(requestEori), eqTo(None), eqTo(Some(0)), eqTo(Some(pageSize)))(any())
@@ -130,7 +130,7 @@ class StoreRecordsServiceSpec
           )
 
         val result = await(service.storeRecords(requestEori, None)(hc))
-        result shouldBe true
+        result mustBe true
 
         verify(mockRouterConnector, times(1))
           .getRecords(any(), any(), any(), any())(any())
@@ -162,7 +162,7 @@ class StoreRecordsServiceSpec
         )
 
         val result = await(service.storeRecords(requestEori, None)(hc))
-        result shouldBe true
+        result mustBe true
 
         val done = Promise[Done]()
         eventually {
@@ -198,7 +198,7 @@ class StoreRecordsServiceSpec
         )
 
         val result = await(service.storeRecords(requestEori, None)(hc))
-        result shouldBe false
+        result mustBe false
 
         val done = Promise[Done]()
         eventually {
