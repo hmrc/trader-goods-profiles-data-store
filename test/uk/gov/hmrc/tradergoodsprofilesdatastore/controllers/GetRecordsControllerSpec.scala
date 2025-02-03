@@ -57,8 +57,8 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
       val records               = getTestRecords(requestEori, recordsSize)
       val pagination            = Pagination(totalRecordsNum, page, totalPagesNum, Some(page + 1), None)
       val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.getCount(any())) thenReturn Future.successful(totalRecordsNum.toLong)
-      when(mockRecordsRepository.getMany(any(), any(), any())) thenReturn Future.successful(records)
+      when(mockRecordsRepository.getCount(any())).thenReturn(Future.successful(totalRecordsNum.toLong))
+      when(mockRecordsRepository.getMany(any(), any(), any())).thenReturn(Future.successful(records))
 
       val application = applicationBuilder()
         .overrides(
@@ -92,8 +92,8 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
       val records               = getTestRecords(requestEori, recordsSize)
       val pagination            = Pagination(totalRecordsNum, page, totalPagesNum, None, None)
       val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.getCount(any())) thenReturn Future.successful(totalRecordsNum.toLong)
-      when(mockRecordsRepository.getMany(any(), any(), any())) thenReturn Future.successful(records)
+      when(mockRecordsRepository.getCount(any())).thenReturn(Future.successful(totalRecordsNum.toLong))
+      when(mockRecordsRepository.getMany(any(), any(), any())).thenReturn(Future.successful(records))
 
       val application = applicationBuilder()
         .overrides(
@@ -128,8 +128,8 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
       val records               = getTestRecords(requestEori, recordsSize)
       val pagination            = Pagination(totalRecordsNum, page, totalPagesNum, None, None)
       val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.getCount(any())) thenReturn Future.successful(totalRecordsNum.toLong)
-      when(mockRecordsRepository.getMany(any(), any(), any())) thenReturn Future.successful(records)
+      when(mockRecordsRepository.getCount(any())).thenReturn(Future.successful(totalRecordsNum.toLong))
+      when(mockRecordsRepository.getMany(any(), any(), any())).thenReturn(Future.successful(records))
 
       val application = applicationBuilder()
         .overrides(
@@ -164,8 +164,8 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
       val records               = getTestRecords(requestEori, recordsSize)
       val pagination            = Pagination(totalRecordsNum, page, totalPagesNum, None, None)
       val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.getCount(any())) thenReturn Future.successful(totalRecordsNum.toLong)
-      when(mockRecordsRepository.getMany(any(), any(), any())) thenReturn Future.successful(records)
+      when(mockRecordsRepository.getCount(any())).thenReturn(Future.successful(totalRecordsNum.toLong))
+      when(mockRecordsRepository.getMany(any(), any(), any())).thenReturn(Future.successful(records))
 
       val application = applicationBuilder()
         .overrides(
@@ -200,8 +200,8 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
       val records               = getTestRecords(requestEori, recordsSize)
       val pagination            = Pagination(totalRecordsNum, page, totalPagesNum, Some(2), None)
       val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.getCount(any())) thenReturn Future.successful(totalRecordsNum.toLong)
-      when(mockRecordsRepository.getMany(any(), any(), any())) thenReturn Future.successful(records)
+      when(mockRecordsRepository.getCount(any())).thenReturn(Future.successful(totalRecordsNum.toLong))
+      when(mockRecordsRepository.getMany(any(), any(), any())).thenReturn(Future.successful(records))
 
       val application = applicationBuilder()
         .overrides(
@@ -236,8 +236,8 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
       val records               = getTestRecords(requestEori, recordsSize)
       val pagination            = Pagination(totalRecordsNum, page, totalPagesNum, None, Some(1))
       val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.getCount(any())) thenReturn Future.successful(totalRecordsNum.toLong)
-      when(mockRecordsRepository.getMany(any(), any(), any())) thenReturn Future.successful(records)
+      when(mockRecordsRepository.getCount(any())).thenReturn(Future.successful(totalRecordsNum.toLong))
+      when(mockRecordsRepository.getMany(any(), any(), any())).thenReturn(Future.successful(records))
 
       val application = applicationBuilder()
         .overrides(
@@ -272,8 +272,8 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
       val records               = getTestRecords(requestEori, recordsSize)
       val pagination            = Pagination(totalRecordsNum, page, totalPagesNum, None, Some(2))
       val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.getCount(any())) thenReturn Future.successful(totalRecordsNum.toLong)
-      when(mockRecordsRepository.getMany(any(), any(), any())) thenReturn Future.successful(records)
+      when(mockRecordsRepository.getCount(any())).thenReturn(Future.successful(totalRecordsNum.toLong))
+      when(mockRecordsRepository.getMany(any(), any(), any())).thenReturn(Future.successful(records))
 
       val application = applicationBuilder()
         .overrides(
@@ -308,8 +308,8 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
       val records               = getTestRecords(requestEori, recordsSize)
       val pagination            = Pagination(totalRecordsNum, page, totalPagesNum, None, None)
       val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.getCount(any())) thenReturn Future.successful(totalRecordsNum.toLong)
-      when(mockRecordsRepository.getMany(any(), any(), any())) thenReturn Future.successful(records)
+      when(mockRecordsRepository.getCount(any())).thenReturn(Future.successful(totalRecordsNum.toLong))
+      when(mockRecordsRepository.getMany(any(), any(), any())).thenReturn(Future.successful(records))
 
       val application = applicationBuilder()
         .overrides(
@@ -344,8 +344,8 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
       val records               = Seq.empty
       val pagination            = Pagination(totalRecordsNum, page, totalPagesNum, None, None)
       val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.getCount(any())) thenReturn Future.successful(totalRecordsNum.toLong)
-      when(mockRecordsRepository.getMany(any(), any(), any())) thenReturn Future.successful(records)
+      when(mockRecordsRepository.getCount(any())).thenReturn(Future.successful(totalRecordsNum.toLong))
+      when(mockRecordsRepository.getMany(any(), any(), any())).thenReturn(Future.successful(records))
 
       val application = applicationBuilder()
         .overrides(
@@ -377,10 +377,10 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
 
       val totalRecordsNum       = 35
       val mockRecordsRepository = mock[RecordsRepository]
-      when(mockRecordsRepository.getCount(any())) thenReturn Future.successful(totalRecordsNum.toLong)
-      when(mockRecordsRepository.getMany(any(), any(), any())) thenReturn Future.failed(
+      when(mockRecordsRepository.getCount(any())).thenReturn(Future.successful(totalRecordsNum.toLong))
+      when(mockRecordsRepository.getMany(any(), any(), any())).thenReturn(Future.failed(
         new RuntimeException("Skip cannot be negative")
-      )
+      ))
 
       val application = applicationBuilder()
         .overrides(
@@ -412,7 +412,7 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
 
       val mockRouterConnector = mock[RouterConnector]
 
-      when(mockRouterConnector.getRecord(any(), any())(any())) thenReturn Future.successful(Some(record))
+      when(mockRouterConnector.getRecord(any(), any())(any())).thenReturn(Future.successful(Some(record)))
 
       val application = applicationBuilder()
         .overrides(
@@ -440,7 +440,7 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
 
       val mockRouterConnector = mock[RouterConnector]
 
-      when(mockRouterConnector.getRecord(any(), any())(any())) thenReturn Future.successful(Some(record))
+      when(mockRouterConnector.getRecord(any(), any())(any())).thenReturn(Future.successful(Some(record)))
 
       val application = applicationBuilder()
         .overrides(
@@ -468,7 +468,7 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
 
       when(
         mockRouterConnector.getRecord(any(), any())(any())
-      ) thenReturn Future.successful(None)
+      ).thenReturn(Future.successful(None))
 
       val application = applicationBuilder()
         .overrides(

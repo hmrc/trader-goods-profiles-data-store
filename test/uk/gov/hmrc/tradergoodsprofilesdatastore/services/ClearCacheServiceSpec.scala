@@ -16,14 +16,13 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.services
 
-import org.apache.pekko.Done
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito._
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.mockito.MockitoSugar.mock
 import org.scalatestplus.play.PlaySpec
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.mongo.lock.{Lock, MongoLockRepository}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.TestConstants.testEori
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary

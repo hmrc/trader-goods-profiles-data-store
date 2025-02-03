@@ -67,7 +67,7 @@ class ClearCacheWorkerSpec extends AnyWordSpecLike with BeforeAndAfterEach {
         any[ExecutionContext]
       )
 
-      verify(applicationLifecycle).addStopHook(any[() => Future[_]])
+      verify(applicationLifecycle).addStopHook(any[() => Future[?]])
     }
 
     "not run the scheduler if it is disabled" in {

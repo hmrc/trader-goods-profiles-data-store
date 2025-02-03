@@ -132,7 +132,7 @@ class CreateRecordControllerSpec extends SpecBase with MockitoSugar {
       val mockRouterConnector = mock[RouterConnector]
       when(
         mockRouterConnector.createRecord(any(), any())(any())
-      ) thenReturn Future.successful(goodsItemRecord)
+      ).thenReturn(Future.successful(goodsItemRecord))
 
       val application = applicationBuilder()
         .overrides(
@@ -160,7 +160,7 @@ class CreateRecordControllerSpec extends SpecBase with MockitoSugar {
       val mockRouterConnector = mock[RouterConnector]
       when(
         mockRouterConnector.createRecord(any(), any())(any())
-      ) thenReturn Future.successful(goodsItemRecordWithoutCategory)
+      ).thenReturn(Future.successful(goodsItemRecordWithoutCategory))
 
       val application = applicationBuilder()
         .overrides(

@@ -104,7 +104,7 @@ class RecordsSummaryRepository @Inject() (
     collection
       .updateOne(
         filter = byEori(eori),
-        update = Updates.combine(updates: _*)
+        update = Updates.combine(updates *)
       )
       .head()
       .flatMap { result =>

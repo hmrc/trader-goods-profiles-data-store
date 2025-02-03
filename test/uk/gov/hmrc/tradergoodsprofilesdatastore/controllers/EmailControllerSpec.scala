@@ -52,7 +52,7 @@ class EmailControllerSpec extends SpecBase with MockitoSugar with GetRecordsResp
 
       val mockCustomsDataStoreConnector = mock[CustomsDataStoreConnector]
 
-      when(mockCustomsDataStoreConnector.getEmail(any())(any())) thenReturn Future.successful(Some(email))
+      when(mockCustomsDataStoreConnector.getEmail(any())(any())).thenReturn(Future.successful(Some(email)))
 
       val application = applicationBuilder()
         .overrides(
@@ -77,7 +77,7 @@ class EmailControllerSpec extends SpecBase with MockitoSugar with GetRecordsResp
 
       when(
         mockCustomsDataStoreConnector.getEmail(any())(any())
-      ) thenReturn Future.successful(None)
+      ).thenReturn(Future.successful(None))
 
       val application = applicationBuilder()
         .overrides(

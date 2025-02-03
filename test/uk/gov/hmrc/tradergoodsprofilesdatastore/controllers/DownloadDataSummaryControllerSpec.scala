@@ -61,9 +61,9 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       val downloadDataSummary      = DownloadDataSummary(summaryId, testEori, FileInProgress, now, now, None)
 
       val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
-      when(mockDownloadDataSummaryRepository.get(any())) thenReturn Future.successful(
+      when(mockDownloadDataSummaryRepository.get(any())).thenReturn(Future.successful(
         Seq(downloadDataSummary)
-      )
+      ))
 
       val application = applicationBuilder()
         .overrides(
@@ -87,7 +87,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       lazy val validFakeGetRequest = FakeRequest("GET", downloadDataSummaryUrl)
 
       val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
-      when(mockDownloadDataSummaryRepository.get(any())) thenReturn Future.successful(Seq.empty)
+      when(mockDownloadDataSummaryRepository.get(any())).thenReturn(Future.successful(Seq.empty))
 
       val application = applicationBuilder()
         .overrides(
@@ -113,7 +113,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       lazy val validFakePatchRequest = FakeRequest("PATCH", downloadDataSummaryUrl)
 
       val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
-      when(mockDownloadDataSummaryRepository.updateSeen(any())) thenReturn Future.successful(1L)
+      when(mockDownloadDataSummaryRepository.updateSeen(any())).thenReturn(Future.successful(1L))
 
       val application = applicationBuilder()
         .overrides(
@@ -136,7 +136,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       lazy val validFakeGetRequest = FakeRequest("GET", downloadDataSummaryUrl)
 
       val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
-      when(mockDownloadDataSummaryRepository.get(any())) thenReturn Future.successful(Seq.empty)
+      when(mockDownloadDataSummaryRepository.get(any())).thenReturn(Future.successful(Seq.empty))
 
       val application = applicationBuilder()
         .overrides(
@@ -194,9 +194,9 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
       val mockSdesService                   = mock[SdesService]
 
-      when(mockDownloadDataSummaryRepository.get(any(), any())) thenReturn Future.successful(Some(oldSummary))
-      when(mockDownloadDataSummaryRepository.set(any())) thenReturn Future.successful(Done)
-      when(mockSdesService.enqueueSubmission(any())) thenReturn Future.successful(Done)
+      when(mockDownloadDataSummaryRepository.get(any(), any())).thenReturn(Future.successful(Some(oldSummary)))
+      when(mockDownloadDataSummaryRepository.set(any())).thenReturn(Future.successful(Done))
+      when(mockSdesService.enqueueSubmission(any())).thenReturn(Future.successful(Done))
 
       val application = applicationBuilder()
         .overrides(
@@ -259,9 +259,9 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       val mockSdesService                   = mock[SdesService]
       val mockDataStoreAppConfig            = mock[DataStoreAppConfig]
 
-      when(mockDownloadDataSummaryRepository.get(any(), any())) thenReturn Future.successful(Some(oldSummary))
-      when(mockDownloadDataSummaryRepository.set(any())) thenReturn Future.successful(Done)
-      when(mockDataStoreAppConfig.sendNotificationEmail) thenReturn false
+      when(mockDownloadDataSummaryRepository.get(any(), any())).thenReturn(Future.successful(Some(oldSummary)))
+      when(mockDownloadDataSummaryRepository.set(any())).thenReturn(Future.successful(Done))
+      when(mockDataStoreAppConfig.sendNotificationEmail).thenReturn(false)
 
       val application = applicationBuilder()
         .overrides(
@@ -325,11 +325,11 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
       val mockSdesService                   = mock[SdesService]
 
-      when(mockDownloadDataSummaryRepository.get(any(), any())) thenReturn Future.successful(Some(oldSummary))
-      when(mockDownloadDataSummaryRepository.set(any())) thenReturn Future.successful(Done)
-      when(mockSdesService.enqueueSubmission(any())) thenReturn Future.failed(
+      when(mockDownloadDataSummaryRepository.get(any(), any())).thenReturn(Future.successful(Some(oldSummary)))
+      when(mockDownloadDataSummaryRepository.set(any())).thenReturn(Future.successful(Done))
+      when(mockSdesService.enqueueSubmission(any())).thenReturn(Future.failed(
         new RuntimeException("Work not queued!")
-      )
+      ))
 
       val application = applicationBuilder()
         .overrides(
@@ -416,7 +416,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
       val mockSdesService                   = mock[SdesService]
 
-      when(mockDownloadDataSummaryRepository.get(any(), any())) thenReturn Future.successful(None)
+      when(mockDownloadDataSummaryRepository.get(any(), any())).thenReturn(Future.successful(None))
 
       val application = applicationBuilder()
         .overrides(
@@ -535,12 +535,12 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
       when(
         mockRouterConnector.getRequestDownloadData(any())(any())
-      ) thenReturn Future.successful(correlationId)
+      ).thenReturn(Future.successful(correlationId))
 
       val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
       when(
         mockDownloadDataSummaryRepository.set(any())
-      ) thenReturn Future.successful(Done)
+      ).thenReturn(Future.successful(Done))
 
       val summary = DownloadDataSummary(
         summaryId,
@@ -606,7 +606,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       val mockSecureDataExchangeProxyConnector = mock[SecureDataExchangeProxyConnector]
       when(
         mockSecureDataExchangeProxyConnector.getFilesAvailableUrl(any())(any())
-      ) thenReturn Future.successful(Seq(downloadData))
+      ).thenReturn(Future.successful(Seq(downloadData)))
 
       val application = applicationBuilder()
         .overrides(

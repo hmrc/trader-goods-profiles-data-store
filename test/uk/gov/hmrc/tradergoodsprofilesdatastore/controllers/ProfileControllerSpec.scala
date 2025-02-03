@@ -91,10 +91,10 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
     "when the checkForHistoricProfile flag is set to true" - {
 
       "call update profile when historic profile exists, update repository and return 200 when valid data is posted" in {
-        when(dataStoreAppConfig.checkForHistoricProfile) thenReturn true
-        when(mockProfileRepository.set(any(), any())) thenReturn Future.successful(true)
-        when(mockRouterConnector.hasHistoricProfile(any())(any())) thenReturn Future.successful(true)
-        when(mockRouterConnector.updateTraderProfile(any(), any())(any())) thenReturn Future.successful(Done)
+        when(dataStoreAppConfig.checkForHistoricProfile).thenReturn(true)
+        when(mockProfileRepository.set(any(), any())).thenReturn(Future.successful(true))
+        when(mockRouterConnector.hasHistoricProfile(any())(any())).thenReturn(Future.successful(true))
+        when(mockRouterConnector.updateTraderProfile(any(), any())(any())).thenReturn(Future.successful(Done))
         val application = applicationBuilder()
           .overrides(
             inject.bind[ProfileRepository].toInstance(mockProfileRepository),
@@ -114,10 +114,10 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
       }
 
       "call create profile when historic profile does not exist, update repository and return 200 when valid data is posted" in {
-        when(dataStoreAppConfig.checkForHistoricProfile) thenReturn true
-        when(mockProfileRepository.set(any(), any())) thenReturn Future.successful(true)
-        when(mockRouterConnector.hasHistoricProfile(any())(any())) thenReturn Future.successful(false)
-        when(mockRouterConnector.createTraderProfile(any(), any())(any())) thenReturn Future.successful(Done)
+        when(dataStoreAppConfig.checkForHistoricProfile).thenReturn(true)
+        when(mockProfileRepository.set(any(), any())).thenReturn(Future.successful(true))
+        when(mockRouterConnector.hasHistoricProfile(any())(any())).thenReturn(Future.successful(false))
+        when(mockRouterConnector.createTraderProfile(any(), any())(any())).thenReturn(Future.successful(Done))
         val application = applicationBuilder()
           .overrides(
             inject.bind[ProfileRepository].toInstance(mockProfileRepository),
@@ -139,9 +139,9 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
 
     "when the checkForHistoricProfile flag is set to false" - {
       "call update profile, update repository and return 200 when valid data is posted" in {
-        when(dataStoreAppConfig.checkForHistoricProfile) thenReturn false
-        when(mockProfileRepository.set(any(), any())) thenReturn Future.successful(true)
-        when(mockRouterConnector.updateTraderProfile(any(), any())(any())) thenReturn Future.successful(Done)
+        when(dataStoreAppConfig.checkForHistoricProfile).thenReturn(false)
+        when(mockProfileRepository.set(any(), any())).thenReturn(Future.successful(true))
+        when(mockRouterConnector.updateTraderProfile(any(), any())(any())).thenReturn(Future.successful(Done))
         val application = applicationBuilder()
           .overrides(
             inject.bind[ProfileRepository].toInstance(mockProfileRepository),
@@ -161,8 +161,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
     }
 
     "return 400 when invalid data is posted" in {
-      when(mockProfileRepository.set(any(), any())) thenReturn Future.successful(true)
-      when(mockRouterConnector.updateTraderProfile(any(), any())(any())) thenReturn Future.successful(Done)
+      when(mockProfileRepository.set(any(), any())).thenReturn(Future.successful(true))
+      when(mockRouterConnector.updateTraderProfile(any(), any())(any())).thenReturn(Future.successful(Done))
       val application = applicationBuilder()
         .overrides(
           inject.bind[ProfileRepository].toInstance(mockProfileRepository),
@@ -183,7 +183,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
   s"GET $getUrl" - {
 
     "return 200 when data is found" in {
-      when(mockProfileRepository.get(any())) thenReturn Future.successful(Some(expectedProfileResponse))
+      when(mockProfileRepository.get(any())).thenReturn(Future.successful(Some(expectedProfileResponse)))
 
       val application = applicationBuilder()
         .overrides(
@@ -203,7 +203,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
 
     "return 404 when data is not found" in {
 
-      when(mockProfileRepository.get(any())) thenReturn Future.successful(None)
+      when(mockProfileRepository.get(any())).thenReturn(Future.successful(None))
 
       val application = applicationBuilder()
         .overrides(
@@ -226,7 +226,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
     "return 200" - {
 
       "when initial profile exists" in {
-        when(mockProfileRepository.get(any())) thenReturn Future.successful(Some(expectedProfileResponse))
+        when(mockProfileRepository.get(any())).thenReturn(Future.successful(Some(expectedProfileResponse)))
 
         val application = applicationBuilder()
           .overrides(
@@ -245,8 +245,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
       "when initial profile does not exist" - {
 
         "and historic eori data does exist and older historic profiles not found" in {
-          when(mockProfileRepository.get(eqTo(requestEori))) thenReturn Future.successful(None)
-          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())) thenReturn Future.successful(
+          when(mockProfileRepository.get(eqTo(requestEori))).thenReturn(Future.successful(None))
+          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(Future.successful(
             Some(
               EoriHistoryResponse(
                 Seq(
@@ -263,11 +263,11 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
                 )
               )
             )
-          )
+          ))
 
-          when(mockProfileRepository.updateEori(any(), any())) thenReturn Future.successful(true)
-          when(mockRecordsRepository.deleteRecordsByEori(any())) thenReturn Future.successful(1L)
-          when(mockRecordsSummaryRepository.deleteByEori(any())) thenReturn Future.successful(1L)
+          when(mockProfileRepository.updateEori(any(), any())).thenReturn(Future.successful(true))
+          when(mockRecordsRepository.deleteRecordsByEori(any())).thenReturn(Future.successful(1L))
+          when(mockRecordsSummaryRepository.deleteByEori(any())).thenReturn(Future.successful(1L))
 
           val historicEoriProfile = ProfileResponse(
             eori = "previousEori",
@@ -278,7 +278,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
             eoriChanged = Some(false)
           )
 
-          when(mockProfileRepository.get(eqTo("previousEori"))) thenReturn Future.successful(Some(historicEoriProfile))
+          when(mockProfileRepository.get(eqTo("previousEori"))).thenReturn(Future.successful(Some(historicEoriProfile)))
 
           val application = applicationBuilder()
             .overrides(
@@ -304,8 +304,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
         }
 
         "and historic eori data does exist and should delete older historic profiles" in {
-          when(mockProfileRepository.get(eqTo(requestEori))) thenReturn Future.successful(None)
-          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())) thenReturn Future.successful(
+          when(mockProfileRepository.get(eqTo(requestEori))).thenReturn(Future.successful(None))
+          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(Future.successful(
             Some(
               EoriHistoryResponse(
                 Seq(
@@ -327,7 +327,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
                 )
               )
             )
-          )
+          ))
 
           val historicEoriProfile = ProfileResponse(
             eori = "previousEori",
@@ -338,10 +338,10 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
             eoriChanged = Some(false)
           )
 
-          when(mockProfileRepository.get(eqTo("previousEori"))) thenReturn Future.successful(Some(historicEoriProfile))
-          when(mockProfileRepository.updateEori(any(), any())) thenReturn Future.successful(true)
-          when(mockRecordsRepository.deleteRecordsByEori(eqTo("previousEori"))) thenReturn Future.successful(1L)
-          when(mockRecordsSummaryRepository.deleteByEori(eqTo("previousEori"))) thenReturn Future.successful(1L)
+          when(mockProfileRepository.get(eqTo("previousEori"))).thenReturn(Future.successful(Some(historicEoriProfile)))
+          when(mockProfileRepository.updateEori(any(), any())).thenReturn(Future.successful(true))
+          when(mockRecordsRepository.deleteRecordsByEori(eqTo("previousEori"))).thenReturn(Future.successful(1L))
+          when(mockRecordsSummaryRepository.deleteByEori(eqTo("previousEori"))).thenReturn(Future.successful(1L))
 
           val olderHistoricEoriProfile = ProfileResponse(
             eori = "eori2",
@@ -352,10 +352,10 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
             eoriChanged = Some(false)
           )
 
-          when(mockProfileRepository.get(eqTo("eori2"))) thenReturn Future.successful(Some(olderHistoricEoriProfile))
-          when(mockProfileRepository.deleteByEori(eqTo("eori2"))) thenReturn Future.successful(1L)
-          when(mockRecordsRepository.deleteRecordsByEori(eqTo("eori2"))) thenReturn Future.successful(1L)
-          when(mockRecordsSummaryRepository.deleteByEori(eqTo("eori2"))) thenReturn Future.successful(1L)
+          when(mockProfileRepository.get(eqTo("eori2"))).thenReturn(Future.successful(Some(olderHistoricEoriProfile)))
+          when(mockProfileRepository.deleteByEori(eqTo("eori2"))).thenReturn(Future.successful(1L))
+          when(mockRecordsRepository.deleteRecordsByEori(eqTo("eori2"))).thenReturn(Future.successful(1L))
+          when(mockRecordsSummaryRepository.deleteByEori(eqTo("eori2"))).thenReturn(Future.successful(1L))
 
           val application = applicationBuilder()
             .overrides(
@@ -380,8 +380,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
         }
 
         "and historic eori data does exist and does not delete older historic profiles" in {
-          when(mockProfileRepository.get(eqTo(requestEori))) thenReturn Future.successful(None)
-          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())) thenReturn Future.successful(
+          when(mockProfileRepository.get(eqTo(requestEori))).thenReturn(Future.successful(None))
+          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(Future.successful(
             Some(
               EoriHistoryResponse(
                 Seq(
@@ -403,11 +403,11 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
                 )
               )
             )
-          )
+          ))
 
-          when(mockProfileRepository.updateEori(any(), any())) thenReturn Future.successful(true)
-          when(mockRecordsRepository.deleteRecordsByEori(eqTo("previousEori"))) thenReturn Future.successful(1L)
-          when(mockRecordsSummaryRepository.deleteByEori(eqTo("previousEori"))) thenReturn Future.successful(1L)
+          when(mockProfileRepository.updateEori(any(), any())).thenReturn(Future.successful(true))
+          when(mockRecordsRepository.deleteRecordsByEori(eqTo("previousEori"))).thenReturn(Future.successful(1L))
+          when(mockRecordsSummaryRepository.deleteByEori(eqTo("previousEori"))).thenReturn(Future.successful(1L))
 
           val historicEoriProfile = ProfileResponse(
             eori = "previousEori",
@@ -418,8 +418,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
             eoriChanged = Some(false)
           )
 
-          when(mockProfileRepository.get(eqTo("previousEori"))) thenReturn Future.successful(Some(historicEoriProfile))
-          when(mockProfileRepository.get(eqTo("eori2"))) thenReturn Future.successful(None)
+          when(mockProfileRepository.get(eqTo("previousEori"))).thenReturn(Future.successful(Some(historicEoriProfile)))
+          when(mockProfileRepository.get(eqTo("eori2"))).thenReturn(Future.successful(None))
 
           val application = applicationBuilder()
             .overrides(
@@ -449,8 +449,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
       "when initial profile does not exist" - {
 
         "and historic eori data does not exist" in {
-          when(mockProfileRepository.get(any())) thenReturn Future.successful(None)
-          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())) thenReturn Future.successful(
+          when(mockProfileRepository.get(any())).thenReturn(Future.successful(None))
+          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(Future.successful(
             Some(
               EoriHistoryResponse(
                 Seq(
@@ -462,7 +462,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
                 )
               )
             )
-          )
+          ))
 
           val application = applicationBuilder()
             .overrides(
@@ -481,8 +481,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
         }
 
         "and historic eori data not found" in {
-          when(mockProfileRepository.get(any())) thenReturn Future.successful(None)
-          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())) thenReturn Future.successful(None)
+          when(mockProfileRepository.get(any())).thenReturn(Future.successful(None))
+          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(Future.successful(None))
 
           val application = applicationBuilder()
             .overrides(
@@ -501,8 +501,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
         }
 
         "and eori history does exist, but latest historical eori profile does not exist" in {
-          when(mockProfileRepository.get(eqTo(requestEori))) thenReturn Future.successful(None)
-          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())) thenReturn Future.successful(
+          when(mockProfileRepository.get(eqTo(requestEori))).thenReturn(Future.successful(None))
+          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(Future.successful(
             Some(
               EoriHistoryResponse(
                 Seq(
@@ -519,9 +519,9 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
                 )
               )
             )
-          )
+          ))
 
-          when(mockProfileRepository.get(eqTo("previousEori"))) thenReturn Future.successful(None)
+          when(mockProfileRepository.get(eqTo("previousEori"))).thenReturn(Future.successful(None))
 
           val application = applicationBuilder()
             .overrides(
@@ -540,8 +540,8 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
         }
 
         "and updating historic eori with the new eori fails" in {
-          when(mockProfileRepository.get(eqTo(requestEori))) thenReturn Future.successful(None)
-          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())) thenReturn Future.successful(
+          when(mockProfileRepository.get(eqTo(requestEori))).thenReturn(Future.successful(None))
+          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(Future.successful(
             Some(
               EoriHistoryResponse(
                 Seq(
@@ -558,7 +558,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
                 )
               )
             )
-          )
+          ))
 
           val historicEoriProfile = ProfileResponse(
             eori = "previousEori",
@@ -569,9 +569,9 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
             eoriChanged = Some(false)
           )
 
-          when(mockProfileRepository.get(eqTo("previousEori"))) thenReturn Future.successful(Some(historicEoriProfile))
-          when(mockProfileRepository.updateEori(any(), any())) thenReturn Future.successful(false)
-          when(mockRecordsRepository.deleteRecordsByEori(any())) thenReturn Future.successful(0L)
+          when(mockProfileRepository.get(eqTo("previousEori"))).thenReturn(Future.successful(Some(historicEoriProfile)))
+          when(mockProfileRepository.updateEori(any(), any())).thenReturn(Future.successful(false))
+          when(mockRecordsRepository.deleteRecordsByEori(any())).thenReturn(Future.successful(0L))
 
           val application = applicationBuilder()
             .overrides(

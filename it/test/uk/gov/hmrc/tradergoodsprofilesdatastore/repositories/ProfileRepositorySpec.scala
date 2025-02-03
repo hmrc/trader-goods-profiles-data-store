@@ -43,8 +43,8 @@ class ProfileRepositorySpec
     prepareDatabase()
   }
 
-  private val profileEori                       = "test-eori"
-  private val profileRequest                    = ProfileRequest("test-actor-id", "test-ukims", Some("test-nirms"), Some("test-niphl"))
+  private val profileEori                                        = "test-eori"
+  private val profileRequest                                     = ProfileRequest("test-actor-id", "test-ukims", Some("test-nirms"), Some("test-niphl"))
   private val profileResponse: ProfileResponse                   =
     ProfileResponse(
       profileEori,

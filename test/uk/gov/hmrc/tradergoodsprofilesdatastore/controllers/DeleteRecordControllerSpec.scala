@@ -119,7 +119,7 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
 
       when(
         mockRouterConnector.deleteRecord(any(), any())(any())
-      ) thenReturn Future.successful(true)
+      ).thenReturn(Future.successful(true))
 
       val application = applicationBuilder()
         .overrides(
@@ -142,7 +142,7 @@ class DeleteRecordControllerSpec extends SpecBase with MockitoSugar {
 
       when(
         mockRouterConnector.deleteRecord(any(), any())(any())
-      ) thenReturn Future.successful(false)
+      ).thenReturn(Future.successful(false))
 
       val application = applicationBuilder()
         .overrides(

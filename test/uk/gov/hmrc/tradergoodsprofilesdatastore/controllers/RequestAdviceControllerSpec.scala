@@ -50,7 +50,7 @@ class RequestAdviceControllerSpec extends SpecBase with MockitoSugar {
       val mockRouterConnector = mock[RouterConnector]
       when(
         mockRouterConnector.requestAdvice(any(), any(), any())(any())
-      ) thenReturn Future.successful(Done)
+      ).thenReturn(Future.successful(Done))
 
       val application = applicationBuilder()
         .overrides(

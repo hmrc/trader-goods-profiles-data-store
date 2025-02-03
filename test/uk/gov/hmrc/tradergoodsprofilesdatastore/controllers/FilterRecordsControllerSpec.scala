@@ -16,10 +16,9 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{atLeastOnce, never, verify, when}
 import org.scalatest.BeforeAndAfterEach
-
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
 import play.api.inject
@@ -28,13 +27,14 @@ import play.api.libs.json.Json
 import play.api.mvc.Results.NoContent
 import play.api.mvc.{Action, AnyContent, Request}
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
 
+import scala.compiletime.uninitialized
 import scala.concurrent.{ExecutionContext, Future}
 
 class FilterRecordsControllerSpec
@@ -45,9 +45,9 @@ class FilterRecordsControllerSpec
 
   implicit val ec: ExecutionContext = ExecutionContext.global
 
-  var mockRecordsRepository: RecordsRepository = _
-  var mockRouterConnector: RouterConnector     = _
-  var mockAction: Action[AnyContent]           = _
+  var mockRecordsRepository: RecordsRepository = uninitialized
+  var mockRouterConnector: RouterConnector     = uninitialized
+  var mockAction: Action[AnyContent]           = uninitialized
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -55,13 +55,12 @@ class FilterRecordsControllerSpec
     mockRouterConnector = mock[RouterConnector]
     mockAction = mock[Action[AnyContent]]
 
-    when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn
-      Future.successful(
-        GetRecordsResponse(
-          goodsItemRecords = getTestRecords("GB123456789099", 10),
-          Pagination(25, 1, 3, Some(2), None)
-        )
+    when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())).thenReturn(Future.successful(
+      GetRecordsResponse(
+        goodsItemRecords = getTestRecords("GB123456789099", 10),
+        Pagination(25, 1, 3, Some(2), None)
       )
+    ))
 
     when(mockAction.apply(any[Request[AnyContent]]))
       .thenReturn(Future.successful(NoContent))
@@ -86,7 +85,7 @@ class FilterRecordsControllerSpec
 
       val pagination = Pagination(recordsSize, page, 3, Some(page + 1), None)
 
-      when(mockRecordsRepository.filterRecords(any(), any(), any(), any())) thenReturn Future.successful(records)
+      when(mockRecordsRepository.filterRecords(any(), any(), any(), any())).thenReturn(Future.successful(records))
 
       val application = applicationBuilder()
         .overrides(
@@ -124,7 +123,7 @@ class FilterRecordsControllerSpec
 
       val pagination = Pagination(recordsSize, page, 1, None, None)
 
-      when(mockRecordsRepository.filterRecords(any(), any(), any(), any())) thenReturn Future.successful(records)
+      when(mockRecordsRepository.filterRecords(any(), any(), any(), any())).thenReturn(Future.successful(records))
 
       val application = applicationBuilder()
         .overrides(
@@ -163,7 +162,7 @@ class FilterRecordsControllerSpec
 
       val pagination = Pagination(recordsSize, page, 1, None, None)
 
-      when(mockRecordsRepository.filterRecords(any(), any(), any(), any())) thenReturn Future.successful(records)
+      when(mockRecordsRepository.filterRecords(any(), any(), any(), any())).thenReturn(Future.successful(records))
 
       val application = applicationBuilder()
         .overrides(
@@ -199,7 +198,7 @@ class FilterRecordsControllerSpec
 
       val pagination = Pagination(recordsSize, page, 3, Some(page + 1), Some(page - 1))
 
-      when(mockRecordsRepository.filterRecords(any(), any(), any(), any())) thenReturn Future.successful(records)
+      when(mockRecordsRepository.filterRecords(any(), any(), any(), any())).thenReturn(Future.successful(records))
 
       val application = applicationBuilder()
         .overrides(
@@ -235,7 +234,7 @@ class FilterRecordsControllerSpec
 
       val records = getTestRecords(requestEori, 25)
 
-      when(mockRecordsRepository.filterRecords(any(), any(), any(), any())) thenReturn Future.successful(records)
+      when(mockRecordsRepository.filterRecords(any(), any(), any(), any())).thenReturn(Future.successful(records))
 
       val application = applicationBuilder()
         .overrides(
@@ -275,8 +274,8 @@ class FilterRecordsControllerSpec
 
       val pagination = Pagination(recordsSize, page, 3, Some(page + 1), None)
 
-      when(mockRecordsRepository.filterRecordsIteration(any(), any(), any(), any(), any(), any())) thenReturn Future
-        .successful(records)
+      when(mockRecordsRepository.filterRecordsIteration(any(), any(), any(), any(), any(), any())).thenReturn(Future
+        .successful(records))
 
       val application = applicationBuilder()
         .overrides(
@@ -321,8 +320,8 @@ class FilterRecordsControllerSpec
 
       val pagination = Pagination(recordsSize, page, 3, Some(page + 1), Some(page - 1))
 
-      when(mockRecordsRepository.filterRecordsIteration(any(), any(), any(), any(), any(), any())) thenReturn Future
-        .successful(records)
+      when(mockRecordsRepository.filterRecordsIteration(any(), any(), any(), any(), any(), any())).thenReturn(Future
+        .successful(records))
 
       val application = applicationBuilder()
         .overrides(
@@ -367,8 +366,8 @@ class FilterRecordsControllerSpec
 
       val pagination = Pagination(recordsSize, page, 1, None, None)
 
-      when(mockRecordsRepository.filterRecordsIteration(any(), any(), any(), any(), any(), any())) thenReturn Future
-        .successful(records)
+      when(mockRecordsRepository.filterRecordsIteration(any(), any(), any(), any(), any(), any())).thenReturn(Future
+        .successful(records))
 
       val application = applicationBuilder()
         .overrides(
@@ -405,7 +404,7 @@ class FilterRecordsControllerSpec
 
       val validFakeGetRequest = FakeRequest("GET", getUrl)
 
-      when(mockRecordsRepository.isTraderReferenceUnique(any(), any())) thenReturn Future.successful(true)
+      when(mockRecordsRepository.isTraderReferenceUnique(any(), any())).thenReturn(Future.successful(true))
 
       val application = applicationBuilder()
         .overrides(
@@ -429,7 +428,7 @@ class FilterRecordsControllerSpec
 
       val validFakeGetRequest = FakeRequest("GET", getUrl)
 
-      when(mockRecordsRepository.isTraderReferenceUnique(any(), any())) thenReturn Future.successful(false)
+      when(mockRecordsRepository.isTraderReferenceUnique(any(), any())).thenReturn(Future.successful(false))
 
       val application = applicationBuilder()
         .overrides(

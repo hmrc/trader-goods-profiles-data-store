@@ -50,7 +50,7 @@ class WithdrawAdviceControllerSpec extends SpecBase with MockitoSugar {
       val mockRouterConnector = mock[RouterConnector]
       when(
         mockRouterConnector.withdrawAdvice(any(), any(), any())(any())
-      ) thenReturn Future.successful(Done)
+      ).thenReturn(Future.successful(Done))
 
       val application = applicationBuilder()
         .overrides(

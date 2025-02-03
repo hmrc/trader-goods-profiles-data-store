@@ -21,7 +21,6 @@ import play.api.libs.json.Format.GenericFormat
 import play.api.libs.json.{JsPath, OWrites, Reads}
 
 import java.time.Instant
-import scala.Function.unlift
 
 case class CreateRecordRequest(
   eori: String,
@@ -46,7 +45,7 @@ object CreateRecordRequest {
       (JsPath \ "countryOfOrigin").read[String] and
       (JsPath \ "comcodeEffectiveFromDate").read[Instant] and
       (JsPath \ "comcodeEffectiveToDate").readNullable[Instant] and
-      (JsPath \ "category").readNullable[Int])(CreateRecordRequest.apply _)
+      (JsPath \ "category").readNullable[Int])(CreateRecordRequest.apply)
 
   implicit lazy val writes: OWrites[CreateRecordRequest] =
     ((JsPath \ "eori").write[String] and

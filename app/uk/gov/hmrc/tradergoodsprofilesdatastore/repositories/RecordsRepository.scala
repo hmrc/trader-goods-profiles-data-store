@@ -72,7 +72,7 @@ class RecordsRepository @Inject() (
     Filters.and(Filters.equal("eori", eori), Filters.equal("_id", recordId))
 
   private def byEoriAndRecordIds(eori: String, recordIds: Seq[String]): Bson =
-    Filters.and(Filters.equal("eori", eori), Filters.in("_id", recordIds: _*))
+    Filters.and(Filters.equal("eori", eori), Filters.in("_id", recordIds *))
 
   private def byLatest: Bson = Sorts.descending("updatedDateTime")
 
@@ -230,7 +230,7 @@ class RecordsRepository @Inject() (
     if (conditions.isEmpty) {
       Filters.exists("declarable")
     } else {
-      Filters.or(conditions: _*)
+      Filters.or(conditions *)
     }
   }
 

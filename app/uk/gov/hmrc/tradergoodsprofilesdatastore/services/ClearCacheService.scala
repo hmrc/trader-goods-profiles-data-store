@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.services
 
-import org.apache.pekko.Done
 import play.api.Logging
 import uk.gov.hmrc.mongo.lock.{LockService, MongoLockRepository}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{RecordsRepository, RecordsSummaryRepository}
@@ -58,5 +57,5 @@ class ClearCacheService @Inject() (
           Future.successful(None)
         }
       }
-      .map(_ => Done)
+      .map(_ => ())
 }

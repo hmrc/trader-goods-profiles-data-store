@@ -47,7 +47,7 @@ class ClearCacheWorkerIntegrationSpec
     with IntegrationPatience
     with Eventually {
 
-  implicit val ec: ExecutionContext                                = ExecutionContext.global
+  implicit val ec: ExecutionContext                           = ExecutionContext.global
   protected override val repository: RecordsSummaryRepository = new RecordsSummaryRepository(mongoComponent)
 
   "should start ClearCacheWorker" in {
@@ -71,7 +71,7 @@ class ClearCacheWorkerIntegrationSpec
 
   "should fail to clear the cache in case of error" in {
     val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
-    val mockRecordsRepository = mock[RecordsRepository]
+    val mockRecordsRepository        = mock[RecordsRepository]
 
     when(mockRecordsSummaryRepository.getByLastUpdatedBefore(any))
       .thenReturn(

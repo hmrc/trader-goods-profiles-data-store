@@ -72,9 +72,9 @@ class StoreRecordsServiceSpec
         val totalRecordsNum = 0
         val requestEori     = "GB123456789099"
 
-        when(mockRecordsSummaryRepository.set(any(), any(), any())) thenReturn Future.successful(Done)
-        when(mockRecordsRepository.updateRecords(any(), any())) thenReturn Future.successful(Done)
-        when(mockRecordsSummaryRepository.set(any(), any(), any())) thenReturn Future.successful(Done)
+        when(mockRecordsSummaryRepository.set(any(), any(), any())).thenReturn(Future.successful(Done))
+        when(mockRecordsRepository.updateRecords(any(), any())).thenReturn(Future.successful(Done))
+        when(mockRecordsSummaryRepository.set(any(), any(), any())).thenReturn(Future.successful(Done))
 
         when(
           mockRouterConnector.getRecords(
@@ -83,13 +83,12 @@ class StoreRecordsServiceSpec
             any(),
             any()
           )(any())
-        ) thenReturn
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq.empty,
-              Pagination(totalRecordsNum, 0, 0, None, None)
-            )
+        ).thenReturn(Future.successful(
+          GetRecordsResponse(
+            goodsItemRecords = Seq.empty,
+            Pagination(totalRecordsNum, 0, 0, None, None)
           )
+        ))
 
         val result = await(service.storeRecords(requestEori, None)(hc))
         result.value mustBe true
@@ -105,9 +104,9 @@ class StoreRecordsServiceSpec
         val totalRecordsNum = pageSize
         val requestEori     = "GB123456789099"
 
-        when(mockRecordsSummaryRepository.set(any(), any(), any())) thenReturn Future.successful(Done)
-        when(mockRecordsRepository.updateRecords(any(), any())) thenReturn Future.successful(Done)
-        when(mockRecordsSummaryRepository.update(any(), any(), any())) thenReturn Future.successful(Done)
+        when(mockRecordsSummaryRepository.set(any(), any(), any())).thenReturn(Future.successful(Done))
+        when(mockRecordsRepository.updateRecords(any(), any())).thenReturn(Future.successful(Done))
+        when(mockRecordsSummaryRepository.update(any(), any(), any())).thenReturn(Future.successful(Done))
 
         val firstRecord  = getGoodsItemRecord(requestEori)
           .copy(updatedDateTime = Instant.now().minus(2, ChronoUnit.DAYS))
@@ -121,13 +120,12 @@ class StoreRecordsServiceSpec
             any(),
             any()
           )(any())
-        ) thenReturn
-          Future.successful(
-            GetRecordsResponse(
-              goodsItemRecords = Seq(firstRecord, secondRecord),
-              Pagination(totalRecordsNum, 0, 1, None, None)
-            )
+        ).thenReturn(Future.successful(
+          GetRecordsResponse(
+            goodsItemRecords = Seq(firstRecord, secondRecord),
+            Pagination(totalRecordsNum, 0, 1, None, None)
           )
+        ))
 
         val result = await(service.storeRecords(requestEori, None)(hc))
         result mustBe true
@@ -144,9 +142,9 @@ class StoreRecordsServiceSpec
         val oldDate            = Instant.now()
         val latestRecordUpdate = oldDate.plus(1, ChronoUnit.DAYS)
 
-        when(mockRecordsSummaryRepository.set(any(), any(), any())) thenReturn Future.successful(Done)
-        when(mockRecordsRepository.updateRecords(any(), any())) thenReturn Future.successful(Done)
-        when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
+        when(mockRecordsSummaryRepository.set(any(), any(), any())).thenReturn(Future.successful(Done))
+        when(mockRecordsRepository.updateRecords(any(), any())).thenReturn(Future.successful(Done))
+        when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())).thenReturn(
           Future.successful(
             GetRecordsResponse(
               goodsItemRecords = getTestRecords(requestEori, pageSize).map(_.copy(updatedDateTime = oldDate)),
@@ -185,9 +183,9 @@ class StoreRecordsServiceSpec
         val requestEori     = "GB123456789099"
         val oldDate         = Instant.now()
 
-        when(mockRecordsSummaryRepository.set(any(), any(), any())) thenReturn Future.successful(Done)
-        when(mockRecordsRepository.updateRecords(any(), any())) thenReturn Future.successful(Done)
-        when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
+        when(mockRecordsSummaryRepository.set(any(), any(), any())).thenReturn(Future.successful(Done))
+        when(mockRecordsRepository.updateRecords(any(), any())).thenReturn(Future.successful(Done))
+        when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())).thenReturn(
           Future.successful(
             GetRecordsResponse(
               goodsItemRecords = getTestRecords(requestEori, pageSize).map(_.copy(updatedDateTime = oldDate)),
