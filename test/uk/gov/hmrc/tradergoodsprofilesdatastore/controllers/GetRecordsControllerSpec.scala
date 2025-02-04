@@ -378,9 +378,11 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
       val totalRecordsNum       = 35
       val mockRecordsRepository = mock[RecordsRepository]
       when(mockRecordsRepository.getCount(any())).thenReturn(Future.successful(totalRecordsNum.toLong))
-      when(mockRecordsRepository.getMany(any(), any(), any())).thenReturn(Future.failed(
-        new RuntimeException("Skip cannot be negative")
-      ))
+      when(mockRecordsRepository.getMany(any(), any(), any())).thenReturn(
+        Future.failed(
+          new RuntimeException("Skip cannot be negative")
+        )
+      )
 
       val application = applicationBuilder()
         .overrides(

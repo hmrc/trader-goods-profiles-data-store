@@ -48,9 +48,11 @@ class RecordsSummaryControllerSpec extends SpecBase with MockitoSugar with GetRe
       val recordsSummary           = RecordsSummary(requestEori, None, lastUpdated = Instant.now)
 
       val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
-      when(mockRecordsSummaryRepository.get(any())).thenReturn(Future.successful(
-        Some(recordsSummary)
-      ))
+      when(mockRecordsSummaryRepository.get(any())).thenReturn(
+        Future.successful(
+          Some(recordsSummary)
+        )
+      )
 
       val application = applicationBuilder()
         .overrides(

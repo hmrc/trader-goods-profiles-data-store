@@ -246,24 +246,26 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
 
         "and historic eori data does exist and older historic profiles not found" in {
           when(mockProfileRepository.get(eqTo(requestEori))).thenReturn(Future.successful(None))
-          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(Future.successful(
-            Some(
-              EoriHistoryResponse(
-                Seq(
-                  EoriHistoricItem(
-                    requestEori,
-                    LocalDate.parse("2024-04-20"),
-                    Some(LocalDate.parse("2024-10-20"))
-                  ),
-                  EoriHistoricItem(
-                    "previousEori",
-                    LocalDate.parse("2024-03-20"),
-                    Some(LocalDate.parse("2024-10-20"))
+          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(
+            Future.successful(
+              Some(
+                EoriHistoryResponse(
+                  Seq(
+                    EoriHistoricItem(
+                      requestEori,
+                      LocalDate.parse("2024-04-20"),
+                      Some(LocalDate.parse("2024-10-20"))
+                    ),
+                    EoriHistoricItem(
+                      "previousEori",
+                      LocalDate.parse("2024-03-20"),
+                      Some(LocalDate.parse("2024-10-20"))
+                    )
                   )
                 )
               )
             )
-          ))
+          )
 
           when(mockProfileRepository.updateEori(any(), any())).thenReturn(Future.successful(true))
           when(mockRecordsRepository.deleteRecordsByEori(any())).thenReturn(Future.successful(1L))
@@ -305,29 +307,31 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
 
         "and historic eori data does exist and should delete older historic profiles" in {
           when(mockProfileRepository.get(eqTo(requestEori))).thenReturn(Future.successful(None))
-          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(Future.successful(
-            Some(
-              EoriHistoryResponse(
-                Seq(
-                  EoriHistoricItem(
-                    requestEori,
-                    LocalDate.parse("2024-05-20"),
-                    Some(LocalDate.parse("2024-10-20"))
-                  ),
-                  EoriHistoricItem(
-                    "previousEori",
-                    LocalDate.parse("2024-04-20"),
-                    Some(LocalDate.parse("2024-10-20"))
-                  ),
-                  EoriHistoricItem(
-                    "eori2",
-                    LocalDate.parse("2024-03-20"),
-                    Some(LocalDate.parse("2024-09-20"))
+          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(
+            Future.successful(
+              Some(
+                EoriHistoryResponse(
+                  Seq(
+                    EoriHistoricItem(
+                      requestEori,
+                      LocalDate.parse("2024-05-20"),
+                      Some(LocalDate.parse("2024-10-20"))
+                    ),
+                    EoriHistoricItem(
+                      "previousEori",
+                      LocalDate.parse("2024-04-20"),
+                      Some(LocalDate.parse("2024-10-20"))
+                    ),
+                    EoriHistoricItem(
+                      "eori2",
+                      LocalDate.parse("2024-03-20"),
+                      Some(LocalDate.parse("2024-09-20"))
+                    )
                   )
                 )
               )
             )
-          ))
+          )
 
           val historicEoriProfile = ProfileResponse(
             eori = "previousEori",
@@ -381,29 +385,31 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
 
         "and historic eori data does exist and does not delete older historic profiles" in {
           when(mockProfileRepository.get(eqTo(requestEori))).thenReturn(Future.successful(None))
-          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(Future.successful(
-            Some(
-              EoriHistoryResponse(
-                Seq(
-                  EoriHistoricItem(
-                    requestEori,
-                    LocalDate.parse("2024-05-20"),
-                    Some(LocalDate.parse("2024-10-20"))
-                  ),
-                  EoriHistoricItem(
-                    "previousEori",
-                    LocalDate.parse("2024-04-20"),
-                    Some(LocalDate.parse("2024-10-20"))
-                  ),
-                  EoriHistoricItem(
-                    "eori2",
-                    LocalDate.parse("2024-03-20"),
-                    Some(LocalDate.parse("2024-09-20"))
+          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(
+            Future.successful(
+              Some(
+                EoriHistoryResponse(
+                  Seq(
+                    EoriHistoricItem(
+                      requestEori,
+                      LocalDate.parse("2024-05-20"),
+                      Some(LocalDate.parse("2024-10-20"))
+                    ),
+                    EoriHistoricItem(
+                      "previousEori",
+                      LocalDate.parse("2024-04-20"),
+                      Some(LocalDate.parse("2024-10-20"))
+                    ),
+                    EoriHistoricItem(
+                      "eori2",
+                      LocalDate.parse("2024-03-20"),
+                      Some(LocalDate.parse("2024-09-20"))
+                    )
                   )
                 )
               )
             )
-          ))
+          )
 
           when(mockProfileRepository.updateEori(any(), any())).thenReturn(Future.successful(true))
           when(mockRecordsRepository.deleteRecordsByEori(eqTo("previousEori"))).thenReturn(Future.successful(1L))
@@ -450,19 +456,21 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
 
         "and historic eori data does not exist" in {
           when(mockProfileRepository.get(any())).thenReturn(Future.successful(None))
-          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(Future.successful(
-            Some(
-              EoriHistoryResponse(
-                Seq(
-                  EoriHistoricItem(
-                    requestEori,
-                    LocalDate.parse("2024-04-20"),
-                    Some(LocalDate.parse("2024-10-20"))
+          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(
+            Future.successful(
+              Some(
+                EoriHistoryResponse(
+                  Seq(
+                    EoriHistoricItem(
+                      requestEori,
+                      LocalDate.parse("2024-04-20"),
+                      Some(LocalDate.parse("2024-10-20"))
+                    )
                   )
                 )
               )
             )
-          ))
+          )
 
           val application = applicationBuilder()
             .overrides(
@@ -502,24 +510,26 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
 
         "and eori history does exist, but latest historical eori profile does not exist" in {
           when(mockProfileRepository.get(eqTo(requestEori))).thenReturn(Future.successful(None))
-          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(Future.successful(
-            Some(
-              EoriHistoryResponse(
-                Seq(
-                  EoriHistoricItem(
-                    requestEori,
-                    LocalDate.parse("2024-04-20"),
-                    Some(LocalDate.parse("2024-10-20"))
-                  ),
-                  EoriHistoricItem(
-                    "previousEori",
-                    LocalDate.parse("2024-04-20"),
-                    Some(LocalDate.parse("2024-10-20"))
+          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(
+            Future.successful(
+              Some(
+                EoriHistoryResponse(
+                  Seq(
+                    EoriHistoricItem(
+                      requestEori,
+                      LocalDate.parse("2024-04-20"),
+                      Some(LocalDate.parse("2024-10-20"))
+                    ),
+                    EoriHistoricItem(
+                      "previousEori",
+                      LocalDate.parse("2024-04-20"),
+                      Some(LocalDate.parse("2024-10-20"))
+                    )
                   )
                 )
               )
             )
-          ))
+          )
 
           when(mockProfileRepository.get(eqTo("previousEori"))).thenReturn(Future.successful(None))
 
@@ -541,24 +551,26 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
 
         "and updating historic eori with the new eori fails" in {
           when(mockProfileRepository.get(eqTo(requestEori))).thenReturn(Future.successful(None))
-          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(Future.successful(
-            Some(
-              EoriHistoryResponse(
-                Seq(
-                  EoriHistoricItem(
-                    requestEori,
-                    LocalDate.parse("2024-04-20"),
-                    Some(LocalDate.parse("2024-10-20"))
-                  ),
-                  EoriHistoricItem(
-                    "previousEori",
-                    LocalDate.parse("2024-04-20"),
-                    Some(LocalDate.parse("2024-10-20"))
+          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(
+            Future.successful(
+              Some(
+                EoriHistoryResponse(
+                  Seq(
+                    EoriHistoricItem(
+                      requestEori,
+                      LocalDate.parse("2024-04-20"),
+                      Some(LocalDate.parse("2024-10-20"))
+                    ),
+                    EoriHistoricItem(
+                      "previousEori",
+                      LocalDate.parse("2024-04-20"),
+                      Some(LocalDate.parse("2024-10-20"))
+                    )
                   )
                 )
               )
             )
-          ))
+          )
 
           val historicEoriProfile = ProfileResponse(
             eori = "previousEori",

@@ -83,12 +83,14 @@ class StoreRecordsServiceSpec
             any(),
             any()
           )(any())
-        ).thenReturn(Future.successful(
-          GetRecordsResponse(
-            goodsItemRecords = Seq.empty,
-            Pagination(totalRecordsNum, 0, 0, None, None)
+        ).thenReturn(
+          Future.successful(
+            GetRecordsResponse(
+              goodsItemRecords = Seq.empty,
+              Pagination(totalRecordsNum, 0, 0, None, None)
+            )
           )
-        ))
+        )
 
         val result = await(service.storeRecords(requestEori, None)(hc))
         result.value mustBe true
@@ -120,12 +122,14 @@ class StoreRecordsServiceSpec
             any(),
             any()
           )(any())
-        ).thenReturn(Future.successful(
-          GetRecordsResponse(
-            goodsItemRecords = Seq(firstRecord, secondRecord),
-            Pagination(totalRecordsNum, 0, 1, None, None)
+        ).thenReturn(
+          Future.successful(
+            GetRecordsResponse(
+              goodsItemRecords = Seq(firstRecord, secondRecord),
+              Pagination(totalRecordsNum, 0, 1, None, None)
+            )
           )
-        ))
+        )
 
         val result = await(service.storeRecords(requestEori, None)(hc))
         result mustBe true

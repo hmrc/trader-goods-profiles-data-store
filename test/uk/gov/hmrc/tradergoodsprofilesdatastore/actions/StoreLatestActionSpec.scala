@@ -53,9 +53,8 @@ class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
       val requestEori = "GB123456789099"
 
       val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
-      when(mockRecordsSummaryRepository.get(any())).thenReturn (Future.successful(
-        Some(RecordsSummary(requestEori, None, Instant.now.minus(3, ChronoUnit.DAYS))))
-      )
+      when(mockRecordsSummaryRepository.get(any()))
+        .thenReturn(Future.successful(Some(RecordsSummary(requestEori, None, Instant.now.minus(3, ChronoUnit.DAYS)))))
       val mockStoreRecordsService      = mock[StoreRecordsService]
       when(mockStoreRecordsService.storeRecords(any(), any())(any())).thenReturn(Future.successful(true))
 
@@ -97,9 +96,11 @@ class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
       val requestEori = "GB123456789099"
 
       val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
-      when(mockRecordsSummaryRepository.get(any())).thenReturn(Future.successful(
-        Some(RecordsSummary(requestEori, None, Instant.now.minus(3, ChronoUnit.DAYS)))
-      ))
+      when(mockRecordsSummaryRepository.get(any())).thenReturn(
+        Future.successful(
+          Some(RecordsSummary(requestEori, None, Instant.now.minus(3, ChronoUnit.DAYS)))
+        )
+      )
       val mockStoreRecordsService      = mock[StoreRecordsService]
       when(mockStoreRecordsService.storeRecords(any(), any())(any())).thenReturn(Future.successful(false))
 

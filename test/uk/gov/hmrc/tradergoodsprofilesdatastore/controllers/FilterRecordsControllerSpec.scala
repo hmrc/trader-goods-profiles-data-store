@@ -55,12 +55,14 @@ class FilterRecordsControllerSpec
     mockRouterConnector = mock[RouterConnector]
     mockAction = mock[Action[AnyContent]]
 
-    when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())).thenReturn(Future.successful(
-      GetRecordsResponse(
-        goodsItemRecords = getTestRecords("GB123456789099", 10),
-        Pagination(25, 1, 3, Some(2), None)
+    when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())).thenReturn(
+      Future.successful(
+        GetRecordsResponse(
+          goodsItemRecords = getTestRecords("GB123456789099", 10),
+          Pagination(25, 1, 3, Some(2), None)
+        )
       )
-    ))
+    )
 
     when(mockAction.apply(any[Request[AnyContent]]))
       .thenReturn(Future.successful(NoContent))
@@ -274,8 +276,10 @@ class FilterRecordsControllerSpec
 
       val pagination = Pagination(recordsSize, page, 3, Some(page + 1), None)
 
-      when(mockRecordsRepository.filterRecordsIteration(any(), any(), any(), any(), any(), any())).thenReturn(Future
-        .successful(records))
+      when(mockRecordsRepository.filterRecordsIteration(any(), any(), any(), any(), any(), any())).thenReturn(
+        Future
+          .successful(records)
+      )
 
       val application = applicationBuilder()
         .overrides(
@@ -320,8 +324,10 @@ class FilterRecordsControllerSpec
 
       val pagination = Pagination(recordsSize, page, 3, Some(page + 1), Some(page - 1))
 
-      when(mockRecordsRepository.filterRecordsIteration(any(), any(), any(), any(), any(), any())).thenReturn(Future
-        .successful(records))
+      when(mockRecordsRepository.filterRecordsIteration(any(), any(), any(), any(), any(), any())).thenReturn(
+        Future
+          .successful(records)
+      )
 
       val application = applicationBuilder()
         .overrides(
@@ -366,8 +372,10 @@ class FilterRecordsControllerSpec
 
       val pagination = Pagination(recordsSize, page, 1, None, None)
 
-      when(mockRecordsRepository.filterRecordsIteration(any(), any(), any(), any(), any(), any())).thenReturn(Future
-        .successful(records))
+      when(mockRecordsRepository.filterRecordsIteration(any(), any(), any(), any(), any(), any())).thenReturn(
+        Future
+          .successful(records)
+      )
 
       val application = applicationBuilder()
         .overrides(

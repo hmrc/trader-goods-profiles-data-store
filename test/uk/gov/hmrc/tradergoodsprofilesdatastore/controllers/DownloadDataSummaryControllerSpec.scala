@@ -61,9 +61,11 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       val downloadDataSummary      = DownloadDataSummary(summaryId, testEori, FileInProgress, now, now, None)
 
       val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
-      when(mockDownloadDataSummaryRepository.get(any())).thenReturn(Future.successful(
-        Seq(downloadDataSummary)
-      ))
+      when(mockDownloadDataSummaryRepository.get(any())).thenReturn(
+        Future.successful(
+          Seq(downloadDataSummary)
+        )
+      )
 
       val application = applicationBuilder()
         .overrides(
@@ -327,9 +329,11 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
       when(mockDownloadDataSummaryRepository.get(any(), any())).thenReturn(Future.successful(Some(oldSummary)))
       when(mockDownloadDataSummaryRepository.set(any())).thenReturn(Future.successful(Done))
-      when(mockSdesService.enqueueSubmission(any())).thenReturn(Future.failed(
-        new RuntimeException("Work not queued!")
-      ))
+      when(mockSdesService.enqueueSubmission(any())).thenReturn(
+        Future.failed(
+          new RuntimeException("Work not queued!")
+        )
+      )
 
       val application = applicationBuilder()
         .overrides(
