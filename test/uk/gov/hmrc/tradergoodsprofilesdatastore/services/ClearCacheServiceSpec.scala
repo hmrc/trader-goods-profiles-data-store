@@ -16,14 +16,13 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.services
 
-import org.apache.pekko.Done
-import org.mockito.ArgumentMatchersSugar.{any, eqTo}
-import org.mockito.Mockito.{never, times}
-import org.mockito.MockitoSugar.{reset, verify, verifyZeroInteractions, when}
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.mockito.MockitoSugar.mock
 import org.scalatestplus.play.PlaySpec
-import play.api.test.Helpers.{await, defaultAwaitTimeout}
+import play.api.test.Helpers.*
 import uk.gov.hmrc.mongo.lock.{Lock, MongoLockRepository}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.TestConstants.testEori
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary
@@ -55,7 +54,7 @@ class ClearCacheServiceSpec extends PlaySpec with BeforeAndAfterEach {
 
     when(mongoLockRepository.takeLock(any, any, any))
       .thenReturn(Future.successful(Some(Lock("clear-cache-lock", "123", Instant.now, Instant.now))))
-    when(mongoLockRepository.releaseLock(any, any)).thenReturn(Future.successful(Done))
+    when(mongoLockRepository.releaseLock(any, any)).thenReturn(Future.successful(()))
   }
 
   "clearCache" should {
@@ -78,6 +77,7 @@ class ClearCacheServiceSpec extends PlaySpec with BeforeAndAfterEach {
     }
 
     "delete a cache" in {
+
       val sampleRecordsSummary: RecordsSummary = RecordsSummary(
         eori = testEori,
         currentUpdate = Some(Update(0, 0)),
@@ -85,8 +85,8 @@ class ClearCacheServiceSpec extends PlaySpec with BeforeAndAfterEach {
       )
       when(recordsSummaryRepository.getByLastUpdatedBefore(any))
         .thenReturn(Future.successful(Seq(sampleRecordsSummary)))
-      when(recordsRepository.deleteRecordsByEori(any)).thenReturn(Future.successful(1))
-      when(recordsSummaryRepository.deleteByEori(any)).thenReturn(Future.successful(1))
+      when(recordsRepository.deleteRecordsByEori(any)).thenReturn(Future.successful(1L))
+      when(recordsSummaryRepository.deleteByEori(any)).thenReturn(Future.successful(1L))
 
       val expiredBefore = Instant.now
       await(sut.clearCache(expiredBefore))
@@ -105,7 +105,7 @@ class ClearCacheServiceSpec extends PlaySpec with BeforeAndAfterEach {
 
       verify(recordsSummaryRepository, times(1)).getByLastUpdatedBefore(eqTo(expiredBefore))
       verify(recordsSummaryRepository, never()).deleteByEori(any)
-      verifyZeroInteractions(recordsRepository)
+      verifyNoInteractions(recordsRepository)
     }
 
     "should not delete cache if recordsRepository fails to delete records" in {

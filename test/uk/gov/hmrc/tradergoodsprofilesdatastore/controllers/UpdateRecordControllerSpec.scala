@@ -17,8 +17,8 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito.{times, verify, when}
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.mockito.Mockito._
+
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject
 import play.api.libs.json.Json
@@ -115,7 +115,7 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
       val mockRouterConnector = mock[RouterConnector]
       when(
         mockRouterConnector.patchRecord(any(), any(), any())(any())
-      ) thenReturn Future.successful(true)
+      ).thenReturn(Future.successful(true))
 
       val application = applicationBuilder()
         .overrides(
@@ -128,7 +128,7 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
           .withHeaders("Content-Type" -> "application/json")
           .withJsonBody(Json.toJson(samplePatchRecordRequest))
         val result  = route(application, request).value
-        status(result) shouldBe OK
+        status(result) mustBe OK
 
         withClue("must call the relevant services with the correct details") {
           verify(mockRouterConnector, times(1))
@@ -145,7 +145,7 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
       val mockRouterConnector = mock[RouterConnector]
       when(
         mockRouterConnector.putRecord(any(), any(), any())(any())
-      ) thenReturn Future.successful(true)
+      ).thenReturn(Future.successful(true))
 
       val application = applicationBuilder()
         .overrides(
@@ -158,7 +158,7 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
           .withHeaders("Content-Type" -> "application/json")
           .withJsonBody(Json.toJson(samplePutRecordRequest))
         val result  = route(application, request).value
-        status(result) shouldBe OK
+        status(result) mustBe OK
 
         withClue("must call the relevant services with the correct details") {
           verify(mockRouterConnector, times(1))

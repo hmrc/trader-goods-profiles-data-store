@@ -18,9 +18,10 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{atLeastOnce, verify, when}
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
+import play.api.inject
 import play.api.inject.bind
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
@@ -51,7 +52,7 @@ class EmailControllerSpec extends SpecBase with MockitoSugar with GetRecordsResp
 
       val mockCustomsDataStoreConnector = mock[CustomsDataStoreConnector]
 
-      when(mockCustomsDataStoreConnector.getEmail(any())(any())) thenReturn Future.successful(Some(email))
+      when(mockCustomsDataStoreConnector.getEmail(any())(any())).thenReturn(Future.successful(Some(email)))
 
       val application = applicationBuilder()
         .overrides(
@@ -61,7 +62,7 @@ class EmailControllerSpec extends SpecBase with MockitoSugar with GetRecordsResp
 
       running(application) {
         val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.OK
+        status(result) mustBe Status.OK
         contentAsString(result) mustBe Json.toJson(email).toString
       }
       verify(mockCustomsDataStoreConnector, atLeastOnce()).getEmail(any())(any())
@@ -76,7 +77,7 @@ class EmailControllerSpec extends SpecBase with MockitoSugar with GetRecordsResp
 
       when(
         mockCustomsDataStoreConnector.getEmail(any())(any())
-      ) thenReturn Future.successful(None)
+      ).thenReturn(Future.successful(None))
 
       val application = applicationBuilder()
         .overrides(
@@ -87,7 +88,7 @@ class EmailControllerSpec extends SpecBase with MockitoSugar with GetRecordsResp
 
       running(application) {
         val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe NOT_FOUND
+        status(result) mustBe NOT_FOUND
 
         verify(mockCustomsDataStoreConnector, atLeastOnce()).getEmail(any())(any())
       }

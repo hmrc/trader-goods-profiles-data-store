@@ -18,8 +18,8 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito.{times, verify, when}
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.mockito.Mockito._
+
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject
 import play.api.libs.json.Json
@@ -50,7 +50,7 @@ class WithdrawAdviceControllerSpec extends SpecBase with MockitoSugar {
       val mockRouterConnector = mock[RouterConnector]
       when(
         mockRouterConnector.withdrawAdvice(any(), any(), any())(any())
-      ) thenReturn Future.successful(Done)
+      ).thenReturn(Future.successful(Done))
 
       val application = applicationBuilder()
         .overrides(
@@ -66,7 +66,7 @@ class WithdrawAdviceControllerSpec extends SpecBase with MockitoSugar {
           .withJsonBody(Json.toJson(withdrawReason))
 
         val result = route(application, request).value
-        status(result) shouldBe NO_CONTENT
+        status(result) mustBe NO_CONTENT
 
         withClue("must call the relevant services with the correct details") {
           verify(mockRouterConnector, times(1))

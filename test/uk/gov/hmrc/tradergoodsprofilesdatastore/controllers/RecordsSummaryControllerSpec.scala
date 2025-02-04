@@ -17,10 +17,11 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{atLeastOnce, times, verify, when}
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.mockito.Mockito._
+
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
+import play.api.inject
 import play.api.inject.bind
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
@@ -47,8 +48,10 @@ class RecordsSummaryControllerSpec extends SpecBase with MockitoSugar with GetRe
       val recordsSummary           = RecordsSummary(requestEori, None, lastUpdated = Instant.now)
 
       val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
-      when(mockRecordsSummaryRepository.get(any())) thenReturn Future.successful(
-        Some(recordsSummary)
+      when(mockRecordsSummaryRepository.get(any())).thenReturn(
+        Future.successful(
+          Some(recordsSummary)
+        )
       )
 
       val application = applicationBuilder()
@@ -58,7 +61,7 @@ class RecordsSummaryControllerSpec extends SpecBase with MockitoSugar with GetRe
         .build()
       running(application) {
         val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.OK
+        status(result) mustBe Status.OK
         contentAsJson(result) mustEqual Json.toJson(recordsSummary)
       }
 
@@ -73,7 +76,7 @@ class RecordsSummaryControllerSpec extends SpecBase with MockitoSugar with GetRe
       lazy val validFakeGetRequest = FakeRequest("GET", recordsSummaryUrl)
 
       val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
-      when(mockRecordsSummaryRepository.get(any())) thenReturn Future.successful(None)
+      when(mockRecordsSummaryRepository.get(any())).thenReturn(Future.successful(None))
 
       val application = applicationBuilder()
         .overrides(
@@ -82,7 +85,7 @@ class RecordsSummaryControllerSpec extends SpecBase with MockitoSugar with GetRe
         .build()
       running(application) {
         val result = route(application, validFakeGetRequest).value
-        status(result) shouldBe Status.NOT_FOUND
+        status(result) mustBe Status.NOT_FOUND
       }
 
       verify(mockRecordsSummaryRepository, times(1)).get(requestEori)

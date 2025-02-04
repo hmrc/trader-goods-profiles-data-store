@@ -47,7 +47,7 @@ class SecureDataExchangeProxyConnector @Inject() (config: Configuration, httpCli
   )(implicit hc: HeaderCarrier): Future[Seq[DownloadData]] =
     httpClient
       .get(filesAvailableUrl)
-      .setHeader(headers(eori): _*)
+      .setHeader(headers(eori) *)
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {

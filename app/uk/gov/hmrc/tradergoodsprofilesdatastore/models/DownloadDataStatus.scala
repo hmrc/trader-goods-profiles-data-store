@@ -21,13 +21,13 @@ import play.api.libs.json._
 sealed abstract class DownloadDataStatus(val value: String)
 
 object DownloadDataStatus {
-  final case object FileInProgress extends DownloadDataStatus("FileInProgress")
+  case object FileInProgress extends DownloadDataStatus("FileInProgress")
 
-  final case object FileReadySeen extends DownloadDataStatus("FileReadySeen")
+  case object FileReadySeen extends DownloadDataStatus("FileReadySeen")
 
-  final case object FileReadyUnseen extends DownloadDataStatus("FileReadyUnseen")
+  case object FileReadyUnseen extends DownloadDataStatus("FileReadyUnseen")
 
-  lazy val downloadDataStatusTypes: Set[DownloadDataStatus] =
+  private lazy val downloadDataStatusTypes: Set[DownloadDataStatus] =
     Set(FileInProgress, FileReadySeen, FileReadyUnseen)
 
   private def enumFormat[A](values: Set[A])(getKey: A => String): Format[A] = new Format[A] {

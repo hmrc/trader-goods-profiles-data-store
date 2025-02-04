@@ -18,15 +18,16 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 
 import org.apache.pekko.Done
 import play.api.Configuration
-import play.api.http.Status._
+import play.api.http.Status.*
 import play.api.libs.json.Json
+import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 import sttp.model.Uri
 import sttp.model.Uri.UriContext
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps, UpstreamErrorResponse}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests._
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.*
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{CorrelationId, GetRecordsResponse, GoodsItemRecord}
 
 import javax.inject.Inject
@@ -74,7 +75,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
 
     httpClient
       .get(url)
-      .setHeader(clientIdAndAcceptHeaders: _*)
+      .setHeader(clientIdAndAcceptHeaders *)
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
@@ -91,7 +92,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
 
     httpClient
       .post(url)
-      .setHeader(clientIdAndAcceptHeaders: _*)
+      .setHeader(clientIdAndAcceptHeaders *)
       .withBody(Json.toJson(traderProfile))
       .execute[HttpResponse]
       .flatMap { response =>
@@ -105,7 +106,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   def updateTraderProfile(traderProfile: ProfileRequest, eori: String)(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
       .put(traderProfileUrl(eori))
-      .setHeader(clientIdAndAcceptHeaders: _*)
+      .setHeader(clientIdAndAcceptHeaders *)
       .withBody(Json.toJson(traderProfile))
       .execute[HttpResponse]
       .flatMap { response =>
@@ -121,7 +122,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   )(implicit hc: HeaderCarrier): Future[GoodsItemRecord] =
     httpClient
       .post(createGoodsRecordUrl(eori))
-      .setHeader(clientIdAndAcceptHeaders: _*)
+      .setHeader(clientIdAndAcceptHeaders *)
       .withBody(Json.toJson(createRecordRequest))
       .execute[HttpResponse]
       .flatMap { response =>
@@ -140,7 +141,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
     val uri = tgpRecordsUri(eori, lastUpdatedDate, page, size).toString()
     httpClient
       .get(url"$uri")
-      .setHeader(clientIdAndAcceptHeaders: _*)
+      .setHeader(clientIdAndAcceptHeaders *)
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
@@ -156,7 +157,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   )(implicit hc: HeaderCarrier): Future[Option[GoodsItemRecord]] =
     httpClient
       .get(tgpGetOrUpdateRecordUrl(eori, recordId))
-      .setHeader(clientIdAndAcceptHeaders: _*)
+      .setHeader(clientIdAndAcceptHeaders *)
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
@@ -172,7 +173,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   )(implicit hc: HeaderCarrier): Future[Boolean] =
     httpClient
       .delete(tgpDeleteRecordUrl(eori, recordId))
-      .setHeader(clientIdAndAcceptHeaders: _*)
+      .setHeader(clientIdAndAcceptHeaders *)
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
@@ -189,7 +190,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   )(implicit hc: HeaderCarrier): Future[Boolean] =
     httpClient
       .patch(tgpGetOrUpdateRecordUrl(eori, recordId))
-      .setHeader(clientIdAndAcceptHeaders: _*)
+      .setHeader(clientIdAndAcceptHeaders *)
       .withBody(Json.toJson(updateRecord))
       .execute[HttpResponse]
       .flatMap { response =>
@@ -207,7 +208,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   )(implicit hc: HeaderCarrier): Future[Boolean] =
     httpClient
       .put(tgpGetOrUpdateRecordUrl(eori, recordId))
-      .setHeader(clientIdAndAcceptHeaders: _*)
+      .setHeader(clientIdAndAcceptHeaders *)
       .withBody(Json.toJson(updateRecord))
       .execute[HttpResponse]
       .flatMap { response =>
@@ -221,7 +222,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   def requestAdvice(eori: String, recordId: String, advice: AdviceRequest)(implicit hc: HeaderCarrier): Future[Done] =
     httpClient
       .post(adviceUrl(eori, recordId))
-      .setHeader(clientIdAndAcceptHeaders: _*)
+      .setHeader(clientIdAndAcceptHeaders *)
       .withBody(Json.toJson(advice))
       .execute[HttpResponse]
       .flatMap { response =>
@@ -236,7 +237,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   ): Future[Done] =
     httpClient
       .put(adviceUrl(eori, recordId))
-      .setHeader(clientIdAndAcceptHeaders: _*)
+      .setHeader(clientIdAndAcceptHeaders *)
       .withBody(Json.toJson(withdrawReason))
       .execute[HttpResponse]
       .flatMap { response =>
@@ -251,7 +252,7 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
   )(implicit hc: HeaderCarrier): Future[CorrelationId] =
     httpClient
       .get(getRequestDownloadDataUrl(eori))
-      .setHeader(clientIdAndAcceptHeaders: _*)
+      .setHeader(clientIdAndAcceptHeaders *)
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {

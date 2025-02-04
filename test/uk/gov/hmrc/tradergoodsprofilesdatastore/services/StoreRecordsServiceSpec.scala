@@ -19,13 +19,13 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.services
 import org.apache.pekko.Done
 import org.apache.pekko.util.Helpers.Requiring
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito.{reset, times, verify, when}
+import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.Eventually.eventually
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.Logging
-import play.api.test.Helpers.{await, defaultAwaitTimeout}
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
@@ -72,9 +72,9 @@ class StoreRecordsServiceSpec
         val totalRecordsNum = 0
         val requestEori     = "GB123456789099"
 
-        when(mockRecordsSummaryRepository.set(any(), any(), any())) thenReturn Future.successful(Done)
-        when(mockRecordsRepository.updateRecords(any(), any())) thenReturn Future.successful(Done)
-        when(mockRecordsSummaryRepository.set(any(), any(), any())) thenReturn Future.successful(Done)
+        when(mockRecordsSummaryRepository.set(any(), any(), any())).thenReturn(Future.successful(Done))
+        when(mockRecordsRepository.updateRecords(any(), any())).thenReturn(Future.successful(Done))
+        when(mockRecordsSummaryRepository.set(any(), any(), any())).thenReturn(Future.successful(Done))
 
         when(
           mockRouterConnector.getRecords(
@@ -83,16 +83,17 @@ class StoreRecordsServiceSpec
             any(),
             any()
           )(any())
-        ) thenReturn
+        ).thenReturn(
           Future.successful(
             GetRecordsResponse(
               goodsItemRecords = Seq.empty,
               Pagination(totalRecordsNum, 0, 0, None, None)
             )
           )
+        )
 
         val result = await(service.storeRecords(requestEori, None)(hc))
-        result.value shouldBe true
+        result.value mustBe true
 
         verify(mockRouterConnector, times(1))
           .getRecords(eqTo(requestEori), eqTo(None), eqTo(Some(0)), eqTo(Some(pageSize)))(any())
@@ -105,9 +106,9 @@ class StoreRecordsServiceSpec
         val totalRecordsNum = pageSize
         val requestEori     = "GB123456789099"
 
-        when(mockRecordsSummaryRepository.set(any(), any(), any())) thenReturn Future.successful(Done)
-        when(mockRecordsRepository.updateRecords(any(), any())) thenReturn Future.successful(Done)
-        when(mockRecordsSummaryRepository.update(any(), any(), any())) thenReturn Future.successful(Done)
+        when(mockRecordsSummaryRepository.set(any(), any(), any())).thenReturn(Future.successful(Done))
+        when(mockRecordsRepository.updateRecords(any(), any())).thenReturn(Future.successful(Done))
+        when(mockRecordsSummaryRepository.update(any(), any(), any())).thenReturn(Future.successful(Done))
 
         val firstRecord  = getGoodsItemRecord(requestEori)
           .copy(updatedDateTime = Instant.now().minus(2, ChronoUnit.DAYS))
@@ -121,16 +122,17 @@ class StoreRecordsServiceSpec
             any(),
             any()
           )(any())
-        ) thenReturn
+        ).thenReturn(
           Future.successful(
             GetRecordsResponse(
               goodsItemRecords = Seq(firstRecord, secondRecord),
               Pagination(totalRecordsNum, 0, 1, None, None)
             )
           )
+        )
 
         val result = await(service.storeRecords(requestEori, None)(hc))
-        result shouldBe true
+        result mustBe true
 
         verify(mockRouterConnector, times(1))
           .getRecords(any(), any(), any(), any())(any())
@@ -144,9 +146,9 @@ class StoreRecordsServiceSpec
         val oldDate            = Instant.now()
         val latestRecordUpdate = oldDate.plus(1, ChronoUnit.DAYS)
 
-        when(mockRecordsSummaryRepository.set(any(), any(), any())) thenReturn Future.successful(Done)
-        when(mockRecordsRepository.updateRecords(any(), any())) thenReturn Future.successful(Done)
-        when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
+        when(mockRecordsSummaryRepository.set(any(), any(), any())).thenReturn(Future.successful(Done))
+        when(mockRecordsRepository.updateRecords(any(), any())).thenReturn(Future.successful(Done))
+        when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())).thenReturn(
           Future.successful(
             GetRecordsResponse(
               goodsItemRecords = getTestRecords(requestEori, pageSize).map(_.copy(updatedDateTime = oldDate)),
@@ -162,7 +164,7 @@ class StoreRecordsServiceSpec
         )
 
         val result = await(service.storeRecords(requestEori, None)(hc))
-        result shouldBe true
+        result mustBe true
 
         val done = Promise[Done]()
         eventually {
@@ -185,9 +187,9 @@ class StoreRecordsServiceSpec
         val requestEori     = "GB123456789099"
         val oldDate         = Instant.now()
 
-        when(mockRecordsSummaryRepository.set(any(), any(), any())) thenReturn Future.successful(Done)
-        when(mockRecordsRepository.updateRecords(any(), any())) thenReturn Future.successful(Done)
-        when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())) thenReturn (
+        when(mockRecordsSummaryRepository.set(any(), any(), any())).thenReturn(Future.successful(Done))
+        when(mockRecordsRepository.updateRecords(any(), any())).thenReturn(Future.successful(Done))
+        when(mockRouterConnector.getRecords(any(), any(), any(), any())(any())).thenReturn(
           Future.successful(
             GetRecordsResponse(
               goodsItemRecords = getTestRecords(requestEori, pageSize).map(_.copy(updatedDateTime = oldDate)),
@@ -198,7 +200,7 @@ class StoreRecordsServiceSpec
         )
 
         val result = await(service.storeRecords(requestEori, None)(hc))
-        result shouldBe false
+        result mustBe false
 
         val done = Promise[Done]()
         eventually {

@@ -53,11 +53,10 @@ class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
       val requestEori = "GB123456789099"
 
       val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
-      when(mockRecordsSummaryRepository.get(any())) thenReturn Future.successful(
-        Some(RecordsSummary(requestEori, None, Instant.now.minus(3, ChronoUnit.DAYS)))
-      )
+      when(mockRecordsSummaryRepository.get(any()))
+        .thenReturn(Future.successful(Some(RecordsSummary(requestEori, None, Instant.now.minus(3, ChronoUnit.DAYS)))))
       val mockStoreRecordsService      = mock[StoreRecordsService]
-      when(mockStoreRecordsService.storeRecords(any(), any())(any())) thenReturn Future.successful(true)
+      when(mockStoreRecordsService.storeRecords(any(), any())(any())).thenReturn(Future.successful(true))
 
       val action = new Harness(mockRecordsSummaryRepository, mockStoreRecordsService)
 
@@ -65,7 +64,7 @@ class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
         .callFilter(IdentifierRequest(FakeRequest(), "testUserId", requestEori, AffinityGroup.Individual))
         .futureValue
 
-      result mustEqual None
+      result mustBe None
 
       verify(mockRecordsSummaryRepository, times(1)).get(any())
       verify(mockStoreRecordsService, times(1)).storeRecords(any(), any())(any())
@@ -76,9 +75,9 @@ class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
       val requestEori = "GB123456789099"
 
       val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
-      when(mockRecordsSummaryRepository.get(any())) thenReturn Future.successful(None)
+      when(mockRecordsSummaryRepository.get(any())).thenReturn(Future.successful(None))
       val mockStoreRecordsService      = mock[StoreRecordsService]
-      when(mockStoreRecordsService.storeRecords(any(), any())(any())) thenReturn Future.successful(true)
+      when(mockStoreRecordsService.storeRecords(any(), any())(any())).thenReturn(Future.successful(true))
 
       val action = new Harness(mockRecordsSummaryRepository, mockStoreRecordsService)
 
@@ -86,7 +85,7 @@ class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
         .callFilter(IdentifierRequest(FakeRequest(), "testUserId", requestEori, AffinityGroup.Individual))
         .futureValue
 
-      result mustEqual None
+      result.mustEqual(None)
 
       verify(mockRecordsSummaryRepository, times(1)).get(any())
       verify(mockStoreRecordsService, times(1)).storeRecords(any(), any())(any())
@@ -97,11 +96,13 @@ class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
       val requestEori = "GB123456789099"
 
       val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
-      when(mockRecordsSummaryRepository.get(any())) thenReturn Future.successful(
-        Some(RecordsSummary(requestEori, None, Instant.now.minus(3, ChronoUnit.DAYS)))
+      when(mockRecordsSummaryRepository.get(any())).thenReturn(
+        Future.successful(
+          Some(RecordsSummary(requestEori, None, Instant.now.minus(3, ChronoUnit.DAYS)))
+        )
       )
       val mockStoreRecordsService      = mock[StoreRecordsService]
-      when(mockStoreRecordsService.storeRecords(any(), any())(any())) thenReturn Future.successful(false)
+      when(mockStoreRecordsService.storeRecords(any(), any())(any())).thenReturn(Future.successful(false))
 
       val action = new Harness(mockRecordsSummaryRepository, mockStoreRecordsService)
 
@@ -120,9 +121,9 @@ class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
       val requestEori = "GB123456789099"
 
       val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
-      when(mockRecordsSummaryRepository.get(any())) thenReturn Future.successful(None)
+      when(mockRecordsSummaryRepository.get(any())).thenReturn(Future.successful(None))
       val mockStoreRecordsService      = mock[StoreRecordsService]
-      when(mockStoreRecordsService.storeRecords(any(), any())(any())) thenReturn Future.successful(false)
+      when(mockStoreRecordsService.storeRecords(any(), any())(any())).thenReturn(Future.successful(false))
 
       val action = new Harness(mockRecordsSummaryRepository, mockStoreRecordsService)
 
