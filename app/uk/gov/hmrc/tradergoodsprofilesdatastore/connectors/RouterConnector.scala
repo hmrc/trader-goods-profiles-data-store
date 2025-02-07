@@ -19,7 +19,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 import org.apache.pekko.Done
 import play.api.Configuration
 import play.api.http.Status.*
-import play.api.libs.json.Json
+import play.api.libs.json._
 import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 import sttp.model.Uri
 import sttp.model.Uri.UriContext
@@ -195,11 +195,27 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
-          case OK        => Future.successful(true)
-          case NOT_FOUND => Future.successful(false)
-          case _         => Future.failed(UpstreamErrorResponse(response.body, response.status))
+          case OK          => Future.successful(true)
+          case NOT_FOUND   => Future.successful(false)
+          case BAD_REQUEST => handleBadRequest(response)
+          case _           => Future.failed(UpstreamErrorResponse(response.body, response.status))
         }
       }
+
+  private def handleBadRequest(response: HttpResponse): Future[Boolean] = {
+    val json = Json.parse(response.body)
+    (json \ "errors").asOpt[List[JsObject]] match {
+      case Some(errors) =>
+        val errorNumbers = errors.flatMap(err => (err \ "errorNumber").asOpt[Int])
+        if (errorNumbers.exists(num => num == 10 || num == 31)) {
+          Future.successful(false)
+        } else {
+          Future.failed(UpstreamErrorResponse(response.body, response.status))
+        }
+      case None         =>
+        Future.failed(UpstreamErrorResponse(response.body, response.status))
+    }
+  }
 
   def putRecord(
     updateRecord: PutRecordRequest,

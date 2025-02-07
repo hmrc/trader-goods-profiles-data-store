@@ -439,6 +439,20 @@ class RouterConnectorSpec
 
       connector.patchRecord(updateRecord, testEori, recordId).failed.futureValue
     }
+
+
+    "must return a failed future when the server returns a bad request" in {
+
+      val updateRecord = PatchRecordRequest(testEori, Some("updated-trader-ref"))
+      wireMockServer.stubFor(
+        patch(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId"))
+          .withHeader("X-Client-ID", equalTo("tgp-frontend"))
+          .withHeader("Accept", equalTo("application/vnd.hmrc.1.0+json"))
+          .willReturn(badRequest())
+      )
+
+      connector.patchRecord(updateRecord, testEori, recordId).failed.futureValue
+    }
   }
 
   ".putRecord" - {
@@ -456,7 +470,6 @@ class RouterConnectorSpec
     }
 
     "must return false when not found" in {
-
       wireMockServer.stubFor(
         put(urlEqualTo(s"/trader-goods-profiles-router/traders/$testEori/records/$recordId"))
           .withHeader("X-Client-ID", equalTo("tgp-frontend"))
