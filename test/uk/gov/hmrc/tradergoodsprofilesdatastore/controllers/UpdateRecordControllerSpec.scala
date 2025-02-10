@@ -136,6 +136,33 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
         }
       }
     }
+    "return 404 when record is not successfully updated" in {
+
+      val mockRouterConnector = mock[RouterConnector]
+      when(
+        mockRouterConnector.patchRecord(any(), any(), any())(any())
+      ).thenReturn(Future.successful(false))
+
+      val application = applicationBuilder()
+        .overrides(
+          inject.bind[IdentifierAction].to[FakeIdentifierAction],
+          inject.bind[RouterConnector].toInstance(mockRouterConnector)
+        )
+        .build()
+      running(application) {
+        val request = validFakeUpdateRequest
+          .withHeaders("Content-Type" -> "application/json")
+          .withJsonBody(Json.toJson(samplePatchRecordRequest))
+        val result  = route(application, request).value
+        status(result) mustBe NOT_FOUND
+
+        withClue("must call the relevant services with the correct details") {
+          verify(mockRouterConnector, times(1))
+            .patchRecord(eqTo(samplePatchRecordRequest), eqTo(testEori), eqTo(testRecordId))(any())
+        }
+      }
+    }
+
   }
 
   s"PUT $putRecordUrl" - {
@@ -159,6 +186,32 @@ class UpdateRecordControllerSpec extends SpecBase with MockitoSugar {
           .withJsonBody(Json.toJson(samplePutRecordRequest))
         val result  = route(application, request).value
         status(result) mustBe OK
+
+        withClue("must call the relevant services with the correct details") {
+          verify(mockRouterConnector, times(1))
+            .putRecord(eqTo(samplePutRecordRequest), eqTo(testEori), eqTo(testRecordId))(any())
+        }
+      }
+    }
+
+    "return 404 when record is not successfully updated" in {
+
+      val mockRouterConnector = mock[RouterConnector]
+      when(
+        mockRouterConnector.putRecord(any(), any(), any())(any())
+      ).thenReturn(Future.successful(false))
+      val application         = applicationBuilder()
+        .overrides(
+          inject.bind[IdentifierAction].to[FakeIdentifierAction],
+          inject.bind[RouterConnector].toInstance(mockRouterConnector)
+        )
+        .build()
+      running(application) {
+        val request = validFakePutRecordRequest
+          .withHeaders("Content-Type" -> "application/json")
+          .withJsonBody(Json.toJson(samplePutRecordRequest))
+        val result  = route(application, request).value
+        status(result) mustBe NOT_FOUND
 
         withClue("must call the relevant services with the correct details") {
           verify(mockRouterConnector, times(1))

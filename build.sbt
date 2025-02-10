@@ -17,9 +17,11 @@ lazy val microservice = Project("trader-goods-profiles-data-store", file("."))
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(CodeCoverageSettings.settings *)
 
+ScoverageKeys.coverageExcludedFiles := "<empty>;Reverse.*;.*Routes.*"
 ScoverageKeys.coverageMinimumStmtTotal := 90
 ScoverageKeys.coverageFailOnMinimum := true
 ScoverageKeys.coverageHighlighting := true
+
 
 Test / javaOptions += "-Dlogger.conf=logback-test.xml"
 
