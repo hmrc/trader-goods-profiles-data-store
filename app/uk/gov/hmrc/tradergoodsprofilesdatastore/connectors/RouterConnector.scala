@@ -207,7 +207,9 @@ class RouterConnector @Inject() (config: Configuration, httpClient: HttpClientV2
     (json \ "errors").asOpt[List[JsObject]] match {
       case Some(errors) =>
         val errorNumbers = errors.flatMap(err => (err \ "errorNumber").asOpt[Int])
-        if (errorNumbers.exists(num => num == 10 || num == 31)) {
+        val DuplicateProductRefError = 10
+        val RecordRemovedError = 31
+        if (errorNumbers.exists(num => num == DuplicateProductRefError || num == RecordRemovedError)) {
           Future.successful(false)
         } else {
           Future.failed(UpstreamErrorResponse(response.body, response.status))
