@@ -93,9 +93,6 @@ class FilterRecordsController @Inject() (
           if (filteredRecords.size <= 10 && pagination.currentPage != 1) filteredRecords
           else paginatedRecords
         Ok(Json.toJson(GetRecordsResponse(goodsItemRecords = responseRecords, pagination = pagination)))
-
-        //val getRecordsResponse = GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination = pagination)
-        //Ok(Json.toJson(getRecordsResponse))
       }
     }
 
