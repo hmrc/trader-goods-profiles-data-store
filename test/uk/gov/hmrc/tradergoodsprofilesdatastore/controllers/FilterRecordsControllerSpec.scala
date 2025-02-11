@@ -222,6 +222,45 @@ class FilterRecordsControllerSpec
       }
     }
 
+    "return 200 and the records from the data store with size 10 and page 2 and 10 records in db" in {
+      val recordsSize = 10
+      val page        = 2
+      val size        = 10
+      val field       = "traderRef"
+      val searchTerm  = "BAN001002"
+      val requestEori = "GB123456789099"
+      val getUrl      = routes.FilterRecordsController
+        .filterLocalRecords(requestEori, Some(searchTerm), Some(false), Some(field), Some(page), Some(size))
+        .url
+
+      val validFakeGetRequest = FakeRequest("GET", getUrl)
+      val records             = getTestRecords(requestEori, recordsSize)
+      val paginatedRecords    = records.slice(10, 20)
+
+      val pagination = Pagination(recordsSize, page, 1, None, None)
+
+      when(mockRecordsRepository.filterRecords(any(), any(), any(), any())).thenReturn(Future.successful(records))
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[RouterConnector].toInstance(mockRouterConnector),
+          bind[RecordsRepository].toInstance(mockRecordsRepository)
+        )
+        .build()
+
+      running(application) {
+        val result = route(application, validFakeGetRequest).value
+        status(result) mustBe Status.OK
+        contentAsString(result) mustBe Json
+          .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
+          .toString
+
+        verify(mockRecordsRepository, atLeastOnce())
+          .filterRecords(eqTo(requestEori), eqTo(Some(searchTerm)), eqTo(Some(field)), eqTo(false))
+
+      }
+    }
+
     "return 400 when the field is not as expected" in {
       val page        = 1
       val size        = 10
@@ -401,6 +440,7 @@ class FilterRecordsControllerSpec
           eqTo(None)
         )
     }
+
   }
 
   "isTraderReferenceUnique" - {
