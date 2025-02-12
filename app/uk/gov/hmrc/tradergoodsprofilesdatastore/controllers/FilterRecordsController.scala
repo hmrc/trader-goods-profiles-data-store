@@ -23,6 +23,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierA
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{buildPagination, localPageSize, localStartingPage}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.Constants.recordsSize
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -90,7 +91,7 @@ class FilterRecordsController @Inject() (
         val pagination       = buildPagination(Some(size), Some(page), filteredRecords.size.toLong)
 
         val responseRecords =
-          if (filteredRecords.size <= 10 && pagination.currentPage != 1) filteredRecords
+          if (filteredRecords.size <= recordsSize && pagination.currentPage != 1) filteredRecords
           else paginatedRecords
         Ok(Json.toJson(GetRecordsResponse(goodsItemRecords = responseRecords, pagination = pagination)))
       }
