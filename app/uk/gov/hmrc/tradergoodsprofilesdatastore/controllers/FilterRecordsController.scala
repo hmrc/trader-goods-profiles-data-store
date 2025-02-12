@@ -88,11 +88,7 @@ class FilterRecordsController @Inject() (
         val skip             = (page - 1) * size
         val paginatedRecords = filteredRecords.slice(skip, skip + size)
         val pagination       = buildPagination(Some(size), Some(page), filteredRecords.size.toLong)
-
-        val responseRecords =
-          if (filteredRecords.size <= localPageSize && pagination.currentPage != 1) filteredRecords
-          else paginatedRecords
-        Ok(Json.toJson(GetRecordsResponse(goodsItemRecords = responseRecords, pagination = pagination)))
+        Ok(Json.toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination = pagination)))
       }
     }
 
