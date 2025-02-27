@@ -34,14 +34,14 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class StoreLatestActionImpl @Inject() (
   recordsSummaryRepository: RecordsSummaryRepository,
-  storeRecordsService: StoreRecordsService
+  storeRecordsService: StoreRecordsService,
+  actorSystem: ActorSystem
 )(implicit val executionContext: ExecutionContext)
     extends StoreLatestAction
     with Logging {
 
   private def withTimeout[T](future: Future[T], timeout: FiniteDuration): Future[T] = {
-    implicit val system: ActorSystem = ActorSystem("TimeoutSystem")
-    val timeoutFuture                = after(timeout, system.scheduler)(Future.failed(TimeoutException))
+    val timeoutFuture = after(timeout, actorSystem.scheduler)(Future.failed(TimeoutException))
     Future.firstCompletedOf(Seq(future, timeoutFuture))
   }
 

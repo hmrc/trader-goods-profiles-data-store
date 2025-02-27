@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.actions
 
+import org.apache.pekko.actor.ActorSystem
 import play.api.http.Status.ACCEPTED
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{times, verify, when}
@@ -39,10 +40,12 @@ import scala.concurrent.Future
 
 class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
 
+  private val actorSystem = ActorSystem()
+
   class Harness(
     recordsSummaryRepository: RecordsSummaryRepository,
     storeRecordsService: StoreRecordsService
-  ) extends StoreLatestActionImpl(recordsSummaryRepository, storeRecordsService) {
+  ) extends StoreLatestActionImpl(recordsSummaryRepository, storeRecordsService, actorSystem) {
     def callFilter[A](request: IdentifierRequest[A]): Future[Option[Result]] = filter(request)
   }
 
