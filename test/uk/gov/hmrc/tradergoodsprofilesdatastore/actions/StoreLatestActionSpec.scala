@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.actions
 
+import org.apache.pekko.actor.ActorSystem
 import play.api.http.Status.ACCEPTED
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{times, verify, when}
@@ -23,10 +24,10 @@ import org.scalatestplus.mockito.MockitoSugar.mock
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{defaultAwaitTimeout, status}
-import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestActionImpl
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{RecordsSummary, TimeoutException}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.IdentifierRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsSummaryRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.services.StoreRecordsService
@@ -39,10 +40,12 @@ import scala.concurrent.Future
 
 class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
 
+  private val actorSystem = ActorSystem()
+
   class Harness(
     recordsSummaryRepository: RecordsSummaryRepository,
     storeRecordsService: StoreRecordsService
-  ) extends StoreLatestActionImpl(recordsSummaryRepository, storeRecordsService) {
+  ) extends StoreLatestActionImpl(recordsSummaryRepository, storeRecordsService, actorSystem) {
     def callFilter[A](request: IdentifierRequest[A]): Future[Option[Result]] = filter(request)
   }
 
@@ -136,5 +139,29 @@ class StoreLatestActionSpec extends SpecBase with GetRecordsResponseUtil {
       verify(mockRecordsSummaryRepository, times(1)).get(any())
       verify(mockStoreRecordsService, times(1)).storeRecords(any(), any())(any())
     }
+
+    "must recoverWith accepted when future fails with TimeoutException" in {
+
+      val requestEori = "GB123456789099"
+
+      val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
+      when(mockRecordsSummaryRepository.get(any()))
+        .thenReturn(Future.successful(Some(RecordsSummary(requestEori, None, Instant.now.minus(3, ChronoUnit.DAYS)))))
+      val mockStoreRecordsService      = mock[StoreRecordsService]
+      when(mockStoreRecordsService.storeRecords(any(), any())(any())).thenReturn(Future.failed(TimeoutException))
+
+      val action = new Harness(mockRecordsSummaryRepository, mockStoreRecordsService)
+
+      val result = action
+        .callFilter(IdentifierRequest(FakeRequest(), "testUserId", requestEori, AffinityGroup.Individual))
+        .futureValue
+        .value
+
+      status(Future.successful(result)) mustEqual ACCEPTED
+
+      verify(mockRecordsSummaryRepository, times(1)).get(any())
+      verify(mockStoreRecordsService, times(1)).storeRecords(any(), any())(any())
+    }
+
   }
 }

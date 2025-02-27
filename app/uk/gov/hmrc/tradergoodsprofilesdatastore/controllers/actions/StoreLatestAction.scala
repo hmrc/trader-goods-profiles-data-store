@@ -16,45 +16,61 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions
 
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.pattern.after
 import play.api.Logging
+import play.api.mvc.*
 import play.api.mvc.Results.Accepted
-
-import javax.inject.Inject
-import play.api.mvc.{ActionFilter, Result}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.TimeoutException
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.requests.IdentifierRequest
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsSummaryRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.services.StoreRecordsService
 
+import javax.inject.Inject
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
 
 class StoreLatestActionImpl @Inject() (
   recordsSummaryRepository: RecordsSummaryRepository,
-  storeRecordsService: StoreRecordsService
+  storeRecordsService: StoreRecordsService,
+  actorSystem: ActorSystem
 )(implicit val executionContext: ExecutionContext)
     extends StoreLatestAction
     with Logging {
+
+  private def withTimeout[T](future: Future[T], timeout: FiniteDuration): Future[T] = {
+    val timeoutFuture = after(timeout, actorSystem.scheduler)(Future.failed(TimeoutException))
+    Future.firstCompletedOf(Seq(future, timeoutFuture))
+  }
 
   override protected def filter[A](
     identifierRequest: IdentifierRequest[A]
   ): Future[Option[Result]] = {
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(identifierRequest)
 
-    recordsSummaryRepository.get(identifierRequest.eori).flatMap { recordsSummaryOpt =>
-      storeRecordsService
-        .storeRecords(
-          identifierRequest.eori,
-          recordsSummaryOpt.map(_.lastUpdated.toString)
-        )
-        .map { isDone =>
-          if (isDone) {
-            None
-          } else {
-            Some(Accepted)
+    val result = withTimeout(
+      recordsSummaryRepository.get(identifierRequest.eori).flatMap { recordsSummaryOpt =>
+        storeRecordsService
+          .storeRecords(
+            identifierRequest.eori,
+            recordsSummaryOpt.map(_.lastUpdated.toString)
+          )
+          .map { isDone =>
+            if (isDone) {
+              None
+            } else {
+              Some(Accepted)
+            }
           }
-        }
+      },
+      1.seconds
+    ).recoverWith { case TimeoutException =>
+      Future.successful(Some(Accepted))
     }
+
+    result
   }
 }
 
