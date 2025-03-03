@@ -65,7 +65,7 @@ class StoreLatestActionImpl @Inject() (
             }
           }
       },
-      1.seconds
+      2.seconds
     ).recoverWith { case TimeoutException =>
       Future.successful(Some(Accepted))
     }
