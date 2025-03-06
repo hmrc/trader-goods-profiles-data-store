@@ -21,3 +21,11 @@ sealed trait Error extends Throwable
 case object TimeoutException extends Error {
   override def getMessage: String = "Timeout error occurred"
 }
+
+case class DownloadRequestNotFound(eori: String) extends Error {
+  override def getMessage: String = s"Initial download request not found for EORI: $eori"
+}
+
+case class ConversationIdNotFound(eori: String) extends Error {
+  override def getMessage: String = s"Header x-conversation-id not present in notification for EORI: $eori"
+}

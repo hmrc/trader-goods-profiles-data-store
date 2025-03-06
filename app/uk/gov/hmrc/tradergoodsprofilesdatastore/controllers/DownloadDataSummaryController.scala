@@ -26,7 +26,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{RouterConnector, Sec
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.DownloadDataNotification
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataSummary, FileInfo}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{ConversationIdNotFound, DownloadDataSummary, DownloadRequestNotFound, FileInfo}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummaryRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.services.SdesService
 
@@ -71,16 +71,14 @@ class DownloadDataSummaryController @Inject() (
     headers.get("x-conversation-id") match {
       case Some(conversationId) => Future.successful(conversationId)
       case _                    =>
-        Future.failed(new RuntimeException(s"Header x-conversation-id not present in notification for EORI: $eori"))
+        Future.failed(ConversationIdNotFound(eori))
     }
 
   private def handleGetDownloadDataSummary(eori: String, summaryId: String): Future[DownloadDataSummary] =
     downloadDataSummaryRepository.get(eori, summaryId).flatMap {
       case Some(downloadDataSummary) => Future.successful(downloadDataSummary)
       case None                      =>
-        Future.failed(
-          new RuntimeException(s"Initial download request not found for EORI: $eori")
-        )
+        Future.failed(DownloadRequestNotFound(eori))
     }
 
   private def handleToInt(string: String): Future[Int] =
@@ -95,7 +93,7 @@ class DownloadDataSummaryController @Inject() (
   def submitNotification(): Action[DownloadDataNotification] =
     Action.async(parse.json[DownloadDataNotification]) { implicit request =>
       val notification = request.body
-      for {
+      (for {
         conversationId      <- handleConversationId(notification.eori, request.headers)
         retentionDays       <- buildRetentionDays(notification)
         retentionDaysAsInt  <- handleToInt(retentionDays)
@@ -110,7 +108,14 @@ class DownloadDataSummaryController @Inject() (
                                )
         _                   <- downloadDataSummaryRepository.set(newSummary)
         _                   <- handleEnqueueSubmission(newSummary)
-      } yield NoContent
+      } yield NoContent).recover {
+        case e: DownloadRequestNotFound =>
+          logger.warn(e.getMessage)
+          NotFound
+        case e: ConversationIdNotFound  =>
+          logger.warn(e.getMessage)
+          BadRequest
+      }
     }
 
   private def handleEnqueueSubmission(downloadDataSummary: DownloadDataSummary): Future[Done] =

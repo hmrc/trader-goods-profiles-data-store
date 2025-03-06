@@ -357,48 +357,6 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       }
     }
 
-    "return error if matching summary not found" in {
-
-      lazy val submitNotificationUrl = routes.DownloadDataSummaryController
-        .submitNotification()
-        .url
-
-      val fileName              = "fileName"
-      val fileSize              = 600
-      val retentionDays         = "hello"
-      val retentionDaysMetaData = Metadata("RETENTION_DAYS", retentionDays)
-
-      val notification =
-        DownloadDataNotification(testEori, fileName, fileSize, Seq(retentionDaysMetaData))
-
-      lazy val validFakePostRequest         = FakeRequest("POST", submitNotificationUrl)
-        .withJsonBody(Json.toJson(notification))
-        .withHeaders("x-conversation-id" -> summaryId)
-
-      val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
-      val mockSdesService                   = mock[SdesService]
-
-      val application = applicationBuilder()
-        .overrides(
-          bind[DownloadDataSummaryRepository].toInstance(mockDownloadDataSummaryRepository),
-          bind[SdesService].toInstance(mockSdesService),
-          bind[Clock].toInstance(clock)
-        )
-        .build()
-
-      running(application) {
-        intercept[RuntimeException] {
-          await(route(application, validFakePostRequest).value)
-        }
-      }
-
-      withClue("must call the relevant services with the correct details") {
-        verify(mockDownloadDataSummaryRepository, never).get(any(), any())
-        verify(mockDownloadDataSummaryRepository, never).set(any())
-        verify(mockSdesService, never).enqueueSubmission(any())
-      }
-    }
-
     "return error if retention days not a number" in {
 
       lazy val submitNotificationUrl = routes.DownloadDataSummaryController
@@ -407,7 +365,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
 
       val fileName              = "fileName"
       val fileSize              = 600
-      val retentionDays         = "30"
+      val retentionDays         = "number"
       val retentionDaysMetaData = Metadata("RETENTION_DAYS", retentionDays)
 
       val notification =
@@ -437,7 +395,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       }
 
       withClue("must call the relevant services with the correct details") {
-        verify(mockDownloadDataSummaryRepository).get(eqTo(testEori), eqTo(summaryId))
+        verify(mockDownloadDataSummaryRepository, never).get(any())
         verify(mockDownloadDataSummaryRepository, never).set(any())
         verify(mockSdesService, never).enqueueSubmission(any())
       }
@@ -483,7 +441,7 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
       }
     }
 
-    "return error if x-conversation-id not found in the header" in {
+    "return BAD_REQUEST if x-conversation-id not found in the header" in {
 
       lazy val submitNotificationUrl = routes.DownloadDataSummaryController
         .submitNotification()
@@ -512,13 +470,55 @@ class DownloadDataSummaryControllerSpec extends SpecBase with MockitoSugar {
         .build()
 
       running(application) {
-        intercept[RuntimeException] {
-          await(route(application, validFakePostRequest).value)
-        }
+        val result = route(application, validFakePostRequest).value
+        status(result) mustBe Status.BAD_REQUEST
       }
 
       withClue("must call the relevant services with the correct details") {
         verify(mockDownloadDataSummaryRepository, never).get(any(), any())
+        verify(mockDownloadDataSummaryRepository, never).set(any())
+        verify(mockSdesService, never).enqueueSubmission(any())
+      }
+    }
+
+    "return NOT_FOUND if matching summary not found" in {
+
+      lazy val submitNotificationUrl = routes.DownloadDataSummaryController
+        .submitNotification()
+        .url
+
+      val fileName              = "fileName"
+      val fileSize              = 600
+      val retentionDays         = "30"
+      val retentionDaysMetaData = Metadata("RETENTION_DAYS", retentionDays)
+
+      val notification =
+        DownloadDataNotification(testEori, fileName, fileSize, Seq(retentionDaysMetaData))
+
+      lazy val validFakePostRequest         = FakeRequest("POST", submitNotificationUrl)
+        .withJsonBody(Json.toJson(notification))
+        .withHeaders("x-conversation-id" -> summaryId)
+
+      val mockDownloadDataSummaryRepository = mock[DownloadDataSummaryRepository]
+      val mockSdesService                   = mock[SdesService]
+
+      when(mockDownloadDataSummaryRepository.get(eqTo(testEori), eqTo(summaryId))).thenReturn(Future.successful(None))
+
+      val application = applicationBuilder()
+        .overrides(
+          bind[DownloadDataSummaryRepository].toInstance(mockDownloadDataSummaryRepository),
+          bind[SdesService].toInstance(mockSdesService),
+          bind[Clock].toInstance(clock)
+        )
+        .build()
+
+      running(application) {
+        val result = route(application, validFakePostRequest).value
+        status(result) mustBe Status.NOT_FOUND
+      }
+
+      withClue("must call the relevant services with the correct details") {
+        verify(mockDownloadDataSummaryRepository).get(eqTo(testEori), eqTo(summaryId))
         verify(mockDownloadDataSummaryRepository, never).set(any())
         verify(mockSdesService, never).enqueueSubmission(any())
       }
