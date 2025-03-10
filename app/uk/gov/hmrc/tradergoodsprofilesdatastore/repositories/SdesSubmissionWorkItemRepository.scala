@@ -16,14 +16,16 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
+import org.mongodb.scala.model.Indexes.ascending
+import org.mongodb.scala.model.{IndexModel, IndexOptions}
 import play.api.Configuration
-import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.workitem.{WorkItemFields, WorkItemRepository}
+import uk.gov.hmrc.mongo.{MongoComponent, MongoUtils}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
 
 import java.time.{Duration, Instant}
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class SdesSubmissionWorkItemRepository @Inject() (
@@ -42,4 +44,11 @@ class SdesSubmissionWorkItemRepository @Inject() (
 
   override val inProgressRetryAfter: Duration =
     configuration.get[Duration]("sdes.submission.retry-after")
+
+  override def ensureIndexes(): Future[Seq[String]] = {
+    val workItemIndexes: Seq[IndexModel] =
+      indexes ++ List(IndexModel(ascending("item.summaryId"), IndexOptions().name("summaryIdIdx").unique(true)))
+    MongoUtils.ensureIndexes(collection, workItemIndexes, replaceIndexes = true)
+  }
+
 }
