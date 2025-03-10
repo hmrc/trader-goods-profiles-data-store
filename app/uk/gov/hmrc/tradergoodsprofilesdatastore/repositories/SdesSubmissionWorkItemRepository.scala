@@ -28,16 +28,16 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class SdesSubmissionWorkItemRepository @Inject()(
-                                                  configuration: Configuration,
-                                                  mongoComponent: MongoComponent
-                                                )(implicit ec: ExecutionContext)
-  extends WorkItemRepository[DownloadDataSummary](
-    collectionName = "sdesSubmissions",
-    mongoComponent = mongoComponent,
-    itemFormat = DownloadDataSummary.mongoFormat,
-    workItemFields = WorkItemFields.default
-  ) {
+class SdesSubmissionWorkItemRepository @Inject() (
+  configuration: Configuration,
+  mongoComponent: MongoComponent
+)(implicit ec: ExecutionContext)
+    extends WorkItemRepository[DownloadDataSummary](
+      collectionName = "sdesSubmissions",
+      mongoComponent = mongoComponent,
+      itemFormat = DownloadDataSummary.mongoFormat,
+      workItemFields = WorkItemFields.default
+    ) {
 
   override def now(): Instant =
     Instant.now()
