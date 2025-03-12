@@ -938,6 +938,13 @@ class RecordsRepositorySpec
       result mustEqual true
     }
 
+    "must return false when trader reference with different case exists" in {
+      insert(sampleGoodsItemRecord.copy(traderRef = "product")).futureValue
+
+      val result = repository.isTraderReferenceUnique(sampleGoodsItemRecord.eori, "Product").futureValue
+      result mustEqual false
+    }
+
     "when the trader reference is not unique" in {
       insert(sampleGoodsItemRecord.copy(traderRef = "duplicateRef")).futureValue
       insert(sampleGoodsItemRecord.copy(recordId = "2", traderRef = "duplicateRef")).futureValue

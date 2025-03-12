@@ -18,7 +18,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
 import org.apache.pekko.Done
 import org.mongodb.scala.bson.conversions.Bson
-import org.mongodb.scala.model._
+import org.mongodb.scala.model.*
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.transaction.{TransactionConfiguration, Transactions}
@@ -28,9 +28,12 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{loca
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.RepositoryHelpers.caseInsensitiveCollation
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.StringHelper.escapeRegexSpecialChars
 import org.mongodb.scala.SingleObservableFuture
+
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 import org.mongodb.scala.ObservableFuture
+
+import scala.util.matching.Regex
 
 @Singleton
 class RecordsRepository @Inject() (
@@ -256,11 +259,13 @@ class RecordsRepository @Inject() (
   }
 
   def isTraderReferenceUnique(eori: String, traderReference: String): Future[Boolean] = Mdc.preservingMdc {
+    val caseInsensitiveFilter: Bson = Filters.regex("traderRef", s"^${Regex.quote(traderReference)}$$", "i")
+
     collection
       .countDocuments(
         Filters.and(
           byEori(eori),
-          Filters.equal("traderRef", traderReference)
+          caseInsensitiveFilter
         )
       )
       .toFuture()
