@@ -24,6 +24,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsRespon
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{buildPagination, localPageSize, localStartingPage}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 
+import java.net.URLDecoder
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -94,7 +95,8 @@ class FilterRecordsController @Inject() (
 
   def isTraderReferenceUnique(traderReference: String): Action[AnyContent] =
     (identify andThen storeLatest).async { implicit request =>
-      recordsRepository.isTraderReferenceUnique(request.eori, traderReference).map {
+      val decodedTraderReference = URLDecoder.decode(traderReference, "UTF-8")
+      recordsRepository.isTraderReferenceUnique(request.eori, decodedTraderReference).map {
         case true  => Ok(Json.obj("isUnique" -> true))
         case false => Ok(Json.obj("isUnique" -> false))
       }

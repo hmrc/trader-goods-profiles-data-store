@@ -17,6 +17,7 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
 import org.apache.pekko.Done
+import org.mongodb.scala.{ObservableFuture, SingleObservableFuture}
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.*
 import uk.gov.hmrc.mongo.MongoComponent
@@ -27,12 +28,9 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GoodsItemRecord
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{localPageSize, localStartingPage}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.RepositoryHelpers.caseInsensitiveCollation
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.StringHelper.escapeRegexSpecialChars
-import org.mongodb.scala.SingleObservableFuture
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
-import org.mongodb.scala.ObservableFuture
-
 import scala.util.matching.Regex
 
 @Singleton
