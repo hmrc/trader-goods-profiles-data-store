@@ -60,7 +60,7 @@ class CustomsDataStoreConnectorSpec
 
   private val testEori = "1122334455"
 
-  ".postEmail" - {
+  ".getEmailViaPost" - {
 
     "must get email" in {
 
@@ -74,7 +74,7 @@ class CustomsDataStoreConnectorSpec
           .willReturn(ok().withBody(Json.toJson(email).toString()))
       )
 
-      connectorWithMigration.postEmail(testEori).futureValue mustBe Some(email)
+      connectorWithMigration.getEmailViaPost(testEori).futureValue mustBe Some(email)
     }
 
     "must return None if not found" in {
@@ -84,7 +84,7 @@ class CustomsDataStoreConnectorSpec
           .willReturn(notFound())
       )
 
-      connectorWithMigration.postEmail(testEori).futureValue mustBe None
+      connectorWithMigration.getEmailViaPost(testEori).futureValue mustBe None
     }
 
     "must return a failed future when the server returns an error" in {
@@ -94,7 +94,7 @@ class CustomsDataStoreConnectorSpec
           .willReturn(serverError())
       )
 
-      connectorWithMigration.postEmail(testEori).failed.futureValue
+      connectorWithMigration.getEmailViaPost(testEori).failed.futureValue
     }
   }
 

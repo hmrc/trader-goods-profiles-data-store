@@ -50,7 +50,7 @@ class CustomsDataStoreConnector @Inject() (config: Configuration, httpClient: Ht
   private def eoriHistoryUrl(eori: String) =
     url"$baseUrlCustomsDataStore/customs-data-store/eori/$eori/eori-history"
 
-  def postEmail(
+  def getEmailViaPost(
     eori: String
   )(implicit hc: HeaderCarrier): Future[Option[Email]] = {
 
@@ -75,7 +75,7 @@ class CustomsDataStoreConnector @Inject() (config: Configuration, httpClient: Ht
     eori: String
   )(implicit hc: HeaderCarrier): Future[Option[Email]] =
     if (isCDSMigrationEnabled) {
-      postEmail(eori)
+      getEmailViaPost(eori)
     } else {
       httpClient
         .get(emailUrl(eori))
