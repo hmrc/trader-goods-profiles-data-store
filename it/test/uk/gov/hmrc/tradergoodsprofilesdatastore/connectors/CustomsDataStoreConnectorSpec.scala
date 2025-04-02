@@ -16,11 +16,14 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
+import org.mockito.Mockito.when
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import play.api.Application
+import org.scalatestplus.mockito.MockitoSugar.mock
+import play.api.{Application, Configuration}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
@@ -37,22 +40,64 @@ class CustomsDataStoreConnectorSpec
     with Matchers
     with WireMockSupport
     with ScalaFutures
-    with IntegrationPatience {
+    with IntegrationPatience
+    with BeforeAndAfterEach {
 
-  private lazy val app: Application =
+  private def app(cdsMigration: Boolean = false): Application =
     new GuiceApplicationBuilder()
       .configure("microservice.services.customs-data-store.port" -> wireMockPort)
       .configure("features.stub-verified-email" -> false)
+      .configure("features.cds-migration" -> cdsMigration)
       .overrides(
         bind[StoreLatestAction].to[FakeStoreLatestAction]
       )
       .build()
 
-  private lazy val connector = app.injector.instanceOf[CustomsDataStoreConnector]
+  private lazy val connector = app(cdsMigration = false).injector.instanceOf[CustomsDataStoreConnector]
+  private lazy val connectorWithMigration = app(cdsMigration = true).injector.instanceOf[CustomsDataStoreConnector]
 
   implicit private lazy val hc: HeaderCarrier = HeaderCarrier()
 
   private val testEori = "1122334455"
+
+  ".getEmailViaPost" - {
+
+    "must get email" in {
+
+      val address = "email@address.co.uk"
+      val timestamp = Instant.now
+
+      val email = Email(address, timestamp)
+
+      wireMockServer.stubFor(
+        post(urlEqualTo(s"/customs-data-store/eori/verified-email-third-party"))
+          .willReturn(ok().withBody(Json.toJson(email).toString()))
+      )
+
+      connectorWithMigration.getEmailViaPost(testEori).futureValue mustBe Some(email)
+    }
+
+    "must return None if not found" in {
+
+      wireMockServer.stubFor(
+        post(urlEqualTo(s"/customs-data-store/eori/verified-email-third-party"))
+          .willReturn(notFound())
+      )
+
+      connectorWithMigration.getEmailViaPost(testEori).futureValue mustBe None
+    }
+
+    "must return a failed future when the server returns an error" in {
+
+      wireMockServer.stubFor(
+        post(urlEqualTo(s"/customs-data-store/eori/verified-email-third-party"))
+          .willReturn(serverError())
+      )
+
+      connectorWithMigration.getEmailViaPost(testEori).failed.futureValue
+    }
+  }
+
 
   ".getEmail" - {
 
@@ -68,7 +113,7 @@ class CustomsDataStoreConnectorSpec
           .willReturn(ok().withBody(Json.toJson(email).toString()))
       )
 
-      connector.getEmail(testEori).futureValue mustEqual Some(email)
+      connector.getEmail(testEori).futureValue mustBe Some(email)
     }
 
     "must return None if not found" in {
@@ -78,7 +123,7 @@ class CustomsDataStoreConnectorSpec
           .willReturn(notFound())
       )
 
-      connector.getEmail(testEori).futureValue mustEqual None
+      connector.getEmail(testEori).futureValue mustBe None
     }
 
     "must return a failed future when the server returns an error" in {
@@ -116,7 +161,7 @@ class CustomsDataStoreConnectorSpec
         )
       )
 
-      connector.getEoriHistory(testEori).futureValue mustEqual Some(expectedResponse)
+      connector.getEoriHistory(testEori).futureValue mustBe Some(expectedResponse)
     }
 
     "must return None if not found" in {
@@ -126,7 +171,7 @@ class CustomsDataStoreConnectorSpec
           .willReturn(notFound())
       )
 
-      connector.getEmail(testEori).futureValue mustEqual None
+      connector.getEmail(testEori).futureValue mustBe None
     }
 
     "must return a failed future when the server returns an error" in {
