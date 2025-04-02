@@ -18,12 +18,13 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 
 import play.api.Configuration
 import play.api.http.Status.{NOT_FOUND, OK}
+import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps, UpstreamErrorResponse}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Email, EoriHistoryResponse}
-
+import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,21 +35,32 @@ class CustomsDataStoreConnector @Inject() (config: Configuration, httpClient: Ht
   private val baseUrlCustomsDataStore: Service = config.get[Service]("microservice.services.customs-data-store")
   private val stubbedCustomsDataStore: Service = config.get[Service]("microservice.services.stubbed-customs-data-store")
   private val stubVerifiedEmail: Boolean       = config.get[Boolean]("features.stub-verified-email")
+  private val isCDSMigrationEnabled: Boolean   = config.get[Boolean]("features.cds-migration")
 
-  private def emailUrl(eori: String) = if (stubVerifiedEmail) {
-    url"$stubbedCustomsDataStore/customs-data-store/eori/$eori/verified-email"
-  } else {
-    url"$baseUrlCustomsDataStore/customs-data-store/eori/$eori/verified-email"
-  }
+  private def customsDataStoreBaseUrl: String =
+    if (stubVerifiedEmail) stubbedCustomsDataStore else baseUrlCustomsDataStore
+
+  private def emailUrl(eori: String) =
+    if (isCDSMigrationEnabled) {
+      url"$customsDataStoreBaseUrl/customs-data-store/eori/verified-email-third-party"
+    } else {
+      url"$customsDataStoreBaseUrl/customs-data-store/eori/$eori/verified-email"
+    }
 
   private def eoriHistoryUrl(eori: String) =
     url"$baseUrlCustomsDataStore/customs-data-store/eori/$eori/eori-history"
 
-  def getEmail(
+  def postEmail(
     eori: String
-  )(implicit hc: HeaderCarrier): Future[Option[Email]] =
+  )(implicit hc: HeaderCarrier): Future[Option[Email]] = {
+
+    val json: JsValue = Json.obj(
+      "eori" -> eori
+    )
+
     httpClient
-      .get(emailUrl(eori))
+      .post(emailUrl(eori))
+      .withBody(json)
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
@@ -57,6 +69,25 @@ class CustomsDataStoreConnector @Inject() (config: Configuration, httpClient: Ht
           case _         => Future.failed(UpstreamErrorResponse(response.body, response.status))
         }
       }
+  }
+
+  def getEmail(
+    eori: String
+  )(implicit hc: HeaderCarrier): Future[Option[Email]] =
+    if (isCDSMigrationEnabled) {
+      postEmail(eori)
+    } else {
+      httpClient
+        .get(emailUrl(eori))
+        .execute[HttpResponse]
+        .flatMap { response =>
+          response.status match {
+            case OK        => Future.successful(Some(response.json.as[Email]))
+            case NOT_FOUND => Future.successful(None)
+            case _         => Future.failed(UpstreamErrorResponse(response.body, response.status))
+          }
+        }
+    }
 
   def getEoriHistory(
     eori: String
