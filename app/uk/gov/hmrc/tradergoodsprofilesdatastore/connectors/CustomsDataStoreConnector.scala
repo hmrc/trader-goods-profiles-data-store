@@ -98,8 +98,6 @@ class CustomsDataStoreConnector @Inject() (config: Configuration, httpClient: Ht
     authorisationToken: Option[Authorization]
   )(implicit hc: HeaderCarrier): Future[Option[EoriHistoryResponse]] = {
 
-//    println(s"\n\n ${authorisationToken.get} \n\n")
-
     val http: RequestBuilder = authorisationToken match {
       case Some(token) if isCDSMigrationEnabled =>
         httpClient.get(eoriHistoryUrl(eori)).setHeader(("Authorization", s"Bearer ${token.value}"))
