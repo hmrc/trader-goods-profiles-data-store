@@ -71,7 +71,7 @@ class ProfileController @Inject() (
       .flatMap {
         case Some(_) => Future.successful(Ok)
         case None    =>
-          customsDataStoreConnector.getEoriHistory(request.eori).flatMap {
+          customsDataStoreConnector.getEoriHistory(request.eori, hc.authorization).flatMap {
             case Some(eoriHistoryResponse) =>
               val filteredEoriHistory = eoriHistoryResponse.eoriHistory.filterNot(_.eori == request.eori)
               if (filteredEoriHistory.isEmpty) {
