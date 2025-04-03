@@ -29,14 +29,14 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Email, EoriHist
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class CustomsDataStoreConnector @Inject()(config: Configuration, httpClient: HttpClientV2)(implicit
-                                                                                           ec: ExecutionContext
+class CustomsDataStoreConnector @Inject() (config: Configuration, httpClient: HttpClientV2)(implicit
+  ec: ExecutionContext
 ) {
 
   private val baseUrlCustomsDataStore: Service = config.get[Service]("microservice.services.customs-data-store")
   private val stubbedCustomsDataStore: Service = config.get[Service]("microservice.services.stubbed-customs-data-store")
-  private val stubVerifiedEmail: Boolean = config.get[Boolean]("features.stub-verified-email")
-  private val isCDSMigrationEnabled: Boolean = config.get[Boolean]("features.cds-migration")
+  private val stubVerifiedEmail: Boolean       = config.get[Boolean]("features.stub-verified-email")
+  private val isCDSMigrationEnabled: Boolean   = config.get[Boolean]("features.cds-migration")
 
   private def customsDataStoreBaseUrl: String =
     if (stubVerifiedEmail) stubbedCustomsDataStore else baseUrlCustomsDataStore
@@ -55,8 +55,8 @@ class CustomsDataStoreConnector @Inject()(config: Configuration, httpClient: Htt
   }
 
   def getEmailViaPost(
-                       eori: String
-                     )(implicit hc: HeaderCarrier): Future[Option[Email]] = {
+    eori: String
+  )(implicit hc: HeaderCarrier): Future[Option[Email]] = {
 
     val json: JsValue = Json.obj(
       "eori" -> eori
@@ -68,16 +68,16 @@ class CustomsDataStoreConnector @Inject()(config: Configuration, httpClient: Htt
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
-          case OK => Future.successful(Some(response.json.as[Email]))
+          case OK        => Future.successful(Some(response.json.as[Email]))
           case NOT_FOUND => Future.successful(None)
-          case _ => Future.failed(UpstreamErrorResponse(response.body, response.status))
+          case _         => Future.failed(UpstreamErrorResponse(response.body, response.status))
         }
       }
   }
 
   def getEmail(
-                eori: String
-              )(implicit hc: HeaderCarrier): Future[Option[Email]] =
+    eori: String
+  )(implicit hc: HeaderCarrier): Future[Option[Email]] =
     if (isCDSMigrationEnabled) {
       getEmailViaPost(eori)
     } else {
@@ -86,28 +86,29 @@ class CustomsDataStoreConnector @Inject()(config: Configuration, httpClient: Htt
         .execute[HttpResponse]
         .flatMap { response =>
           response.status match {
-            case OK => Future.successful(Some(response.json.as[Email]))
+            case OK        => Future.successful(Some(response.json.as[Email]))
             case NOT_FOUND => Future.successful(None)
-            case _ => Future.failed(UpstreamErrorResponse(response.body, response.status))
+            case _         => Future.failed(UpstreamErrorResponse(response.body, response.status))
           }
         }
     }
 
   def getEoriHistory(
-                      eori: String,
-                      authorisationToken: Option[Authorization] = None
-                    )(implicit hc: HeaderCarrier): Future[Option[EoriHistoryResponse]] = {
+    eori: String,
+    authorisationToken: Option[Authorization] = None
+  )(implicit hc: HeaderCarrier): Future[Option[EoriHistoryResponse]] = {
 
     val http: RequestBuilder = authorisationToken match {
-      case Some(token) if isCDSMigrationEnabled => httpClient.get(eoriHistoryUrl(eori)).setHeader(("Authorization", s"Bearer ${token.value}"))
-      case _ => httpClient.get(eoriHistoryUrl(eori))
+      case Some(token) if isCDSMigrationEnabled =>
+        httpClient.get(eoriHistoryUrl(eori)).setHeader(("Authorization", s"Bearer ${token.value}"))
+      case _                                    => httpClient.get(eoriHistoryUrl(eori))
     }
 
     http.execute[HttpResponse].flatMap { response =>
       response.status match {
-        case OK => Future.successful(Some(response.json.as[EoriHistoryResponse]))
+        case OK        => Future.successful(Some(response.json.as[EoriHistoryResponse]))
         case NOT_FOUND => Future.successful(None)
-        case _ => Future.failed(UpstreamErrorResponse(response.body, response.status))
+        case _         => Future.failed(UpstreamErrorResponse(response.body, response.status))
       }
     }
   }
