@@ -100,7 +100,7 @@ class CustomsDataStoreConnector @Inject() (config: Configuration, httpClient: Ht
 
     val http: RequestBuilder = authorisationToken match {
       case Some(token) if isCDSMigrationEnabled =>
-        httpClient.get(eoriHistoryUrl(eori)).setHeader(("Authorization", s"Bearer ${token.value}"))
+        httpClient.get(eoriHistoryUrl(eori)).setHeader(("Authorization", s"${token.value}"))
       case _                                    => httpClient.get(eoriHistoryUrl(eori))
     }
 

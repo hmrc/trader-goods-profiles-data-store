@@ -137,7 +137,7 @@ class CustomsDataStoreConnectorSpec
 
   ".getEoriHistory" - {
 
-    val authToken = Authorization("some-token")
+    val authToken = Authorization("Bearer some-token")
 
     "when authorisation token is Some()" - {
 
@@ -170,7 +170,7 @@ class CustomsDataStoreConnectorSpec
         wireMockServer.verify(
           1,
           getRequestedFor(urlEqualTo(s"/customs-data-store/eori/eori-history"))
-            .withHeader("Authorization", equalTo(s"Bearer ${authToken.value}"))
+            .withHeader("Authorization", equalTo(s"${authToken.value}"))
         )
       }
 
@@ -186,7 +186,7 @@ class CustomsDataStoreConnectorSpec
         wireMockServer.verify(
           1,
           getRequestedFor(urlEqualTo(s"/customs-data-store/eori/eori-history"))
-            .withHeader("Authorization", equalTo(s"Bearer ${authToken.value}"))
+            .withHeader("Authorization", equalTo(s"${authToken.value}"))
         )
       }
 
@@ -201,7 +201,7 @@ class CustomsDataStoreConnectorSpec
         wireMockServer.verify(
           1,
           getRequestedFor(urlEqualTo(s"/customs-data-store/eori/eori-history"))
-            .withHeader("Authorization", equalTo(s"Bearer ${authToken.value}"))
+            .withHeader("Authorization", equalTo(s"${authToken.value}"))
         )
       }
     }
