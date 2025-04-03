@@ -137,9 +137,10 @@ class CustomsDataStoreConnectorSpec
 
   ".getEoriHistory" - {
 
+    val authToken = Authorization("some-token")
+
     "when authorisation token is Some()" - {
 
-      val authToken = Authorization("some-token")
 
       "must return eori history" in {
 
@@ -229,7 +230,13 @@ class CustomsDataStoreConnectorSpec
           )
         )
 
-        connector.getEoriHistory(testEori).futureValue mustBe Some(expectedResponse)
+        connector.getEoriHistory(testEori, None).futureValue mustBe Some(expectedResponse)
+
+        wireMockServer.verify(
+          1,
+          getRequestedFor(urlEqualTo(s"/customs-data-store/eori/$testEori/eori-history"))
+            .withoutHeader("Authorization")
+        )
       }
 
       "must return None if not found" in {
@@ -239,7 +246,13 @@ class CustomsDataStoreConnectorSpec
             .willReturn(notFound())
         )
 
-        connector.getEoriHistory(testEori).futureValue mustBe None
+        connector.getEoriHistory(testEori, None).futureValue mustBe None
+
+        wireMockServer.verify(
+          1,
+          getRequestedFor(urlEqualTo(s"/customs-data-store/eori/$testEori/eori-history"))
+            .withoutHeader("Authorization")
+        )
       }
 
       "must return a failed future when the server returns an error" in {
@@ -248,7 +261,13 @@ class CustomsDataStoreConnectorSpec
             .willReturn(serverError())
         )
 
-        connector.getEoriHistory(testEori).failed.futureValue
+        connector.getEoriHistory(testEori, None).failed.futureValue
+
+        wireMockServer.verify(
+          1,
+          getRequestedFor(urlEqualTo(s"/customs-data-store/eori/$testEori/eori-history"))
+            .withoutHeader("Authorization")
+        )
       }
     }
   }
