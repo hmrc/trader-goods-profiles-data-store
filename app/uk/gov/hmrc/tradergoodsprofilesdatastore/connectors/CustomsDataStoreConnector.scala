@@ -19,12 +19,13 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 import play.api.Configuration
 import play.api.http.Status.{NOT_FOUND, OK}
 import play.api.libs.json.{JsValue, Json}
+import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
-import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps, UpstreamErrorResponse}
+import uk.gov.hmrc.http.client.{HttpClientV2, RequestBuilder}
+import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpResponse, StringContextOps, UpstreamErrorResponse}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Email, EoriHistoryResponse}
-import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
+
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -47,8 +48,11 @@ class CustomsDataStoreConnector @Inject() (config: Configuration, httpClient: Ht
       url"$customsDataStoreBaseUrl/customs-data-store/eori/$eori/verified-email"
     }
 
-  private def eoriHistoryUrl(eori: String) =
+  private def eoriHistoryUrl(eori: String) = if (isCDSMigrationEnabled) {
+    url"$baseUrlCustomsDataStore/customs-data-store/eori/eori-history"
+  } else {
     url"$baseUrlCustomsDataStore/customs-data-store/eori/$eori/eori-history"
+  }
 
   def getEmailViaPost(
     eori: String
@@ -90,16 +94,26 @@ class CustomsDataStoreConnector @Inject() (config: Configuration, httpClient: Ht
     }
 
   def getEoriHistory(
-    eori: String
-  )(implicit hc: HeaderCarrier): Future[Option[EoriHistoryResponse]] =
-    httpClient
-      .get(eoriHistoryUrl(eori))
-      .execute[HttpResponse]
-      .flatMap { response =>
-        response.status match {
-          case OK        => Future.successful(Some(response.json.as[EoriHistoryResponse]))
-          case NOT_FOUND => Future.successful(None)
-          case _         => Future.failed(UpstreamErrorResponse(response.body, response.status))
-        }
+    eori: String,
+    authorisationToken: Option[Authorization]
+  )(implicit hc: HeaderCarrier): Future[Option[EoriHistoryResponse]] = {
+
+    val bearerToken: Option[String] = authorisationToken.flatMap { token =>
+      token.value.split(",").find(_.startsWith("Bearer")).map(_.trim)
+    }
+
+    val http: RequestBuilder = bearerToken match {
+      case Some(token) if isCDSMigrationEnabled =>
+        httpClient.get(eoriHistoryUrl(eori)).setHeader(("Authorization", s"$token"))
+      case _                                    => httpClient.get(eoriHistoryUrl(eori))
+    }
+
+    http.execute[HttpResponse].flatMap { response =>
+      response.status match {
+        case OK        => Future.successful(Some(response.json.as[EoriHistoryResponse]))
+        case NOT_FOUND => Future.successful(None)
+        case _         => Future.failed(UpstreamErrorResponse(response.body, response.status))
       }
+    }
+  }
 }

@@ -17,13 +17,11 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock.*
-import org.mockito.Mockito.when
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatestplus.mockito.MockitoSugar.mock
-import play.api.{Application, Configuration}
+import play.api.Application
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
@@ -32,7 +30,7 @@ import uk.gov.hmrc.http.test.WireMockSupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeStoreLatestAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Email, EoriHistoricItem, EoriHistoryResponse}
-
+import uk.gov.hmrc.http.Authorization
 import java.time.{Instant, LocalDate}
 
 class CustomsDataStoreConnectorSpec
@@ -139,48 +137,138 @@ class CustomsDataStoreConnectorSpec
 
   ".getEoriHistory" - {
 
-    "must return eori history" in {
+    val authToken = Authorization("Bearer some-token")
 
-      val mockEoriHistoryResponse = EoriHistoryResponse(
-        Seq(
-          EoriHistoricItem("eori1", LocalDate.parse("2024-02-20"), Some(LocalDate.parse("2024-01-20"))),
-          EoriHistoricItem("eori1", LocalDate.parse("2024-03-20"), Some(LocalDate.parse("2024-01-20"))),
-          EoriHistoricItem("eori1", LocalDate.parse("2024-01-20"), Some(LocalDate.parse("2024-01-20")))
+    "when authorisation token is Some()" - {
+
+
+      "must return eori history" in {
+
+        val mockEoriHistoryResponse = EoriHistoryResponse(
+          Seq(
+            EoriHistoricItem("eori1", LocalDate.parse("2024-02-20"), Some(LocalDate.parse("2024-01-20"))),
+            EoriHistoricItem("eori1", LocalDate.parse("2024-03-20"), Some(LocalDate.parse("2024-01-20"))),
+            EoriHistoricItem("eori1", LocalDate.parse("2024-01-20"), Some(LocalDate.parse("2024-01-20")))
+          )
         )
-      )
-      wireMockServer.stubFor(
-        get(urlEqualTo(s"/customs-data-store/eori/$testEori/eori-history"))
-          .willReturn(ok().withBody(Json.toJson(mockEoriHistoryResponse).toString()))
-      )
 
-      val expectedResponse = EoriHistoryResponse(
-        Seq(
-          EoriHistoricItem("eori1", LocalDate.parse("2024-03-20"), Some(LocalDate.parse("2024-01-20"))),
-          EoriHistoricItem("eori1", LocalDate.parse("2024-02-20"), Some(LocalDate.parse("2024-01-20"))),
-          EoriHistoricItem("eori1", LocalDate.parse("2024-01-20"), Some(LocalDate.parse("2024-01-20")))
+        wireMockServer.stubFor(
+          get(urlEqualTo(s"/customs-data-store/eori/eori-history"))
+            .willReturn(ok().withBody(Json.toJson(mockEoriHistoryResponse).toString()))
         )
-      )
 
-      connector.getEoriHistory(testEori).futureValue mustBe Some(expectedResponse)
+        val expectedResponse = EoriHistoryResponse(
+          Seq(
+            EoriHistoricItem("eori1", LocalDate.parse("2024-03-20"), Some(LocalDate.parse("2024-01-20"))),
+            EoriHistoricItem("eori1", LocalDate.parse("2024-02-20"), Some(LocalDate.parse("2024-01-20"))),
+            EoriHistoricItem("eori1", LocalDate.parse("2024-01-20"), Some(LocalDate.parse("2024-01-20")))
+          )
+        )
+
+        connectorWithMigration.getEoriHistory(testEori, Some(authToken)).futureValue mustBe Some(expectedResponse)
+
+        wireMockServer.verify(
+          1,
+          getRequestedFor(urlEqualTo(s"/customs-data-store/eori/eori-history"))
+            .withHeader("Authorization", equalTo(s"${authToken.value}"))
+        )
+      }
+
+      "must return None if not found" in {
+
+        wireMockServer.stubFor(
+          get(urlEqualTo(s"/customs-data-store/eori/eori-history"))
+            .willReturn(notFound())
+        )
+
+        connectorWithMigration.getEoriHistory(testEori, Some(authToken)).futureValue mustBe None
+
+        wireMockServer.verify(
+          1,
+          getRequestedFor(urlEqualTo(s"/customs-data-store/eori/eori-history"))
+            .withHeader("Authorization", equalTo(s"${authToken.value}"))
+        )
+      }
+
+      "must return a failed future when the server returns an error" in {
+        wireMockServer.stubFor(
+          get(urlEqualTo(s"/customs-data-store/eori/eori-history"))
+            .willReturn(serverError())
+        )
+
+        connectorWithMigration.getEoriHistory(testEori, Some(authToken)).failed.futureValue
+
+        wireMockServer.verify(
+          1,
+          getRequestedFor(urlEqualTo(s"/customs-data-store/eori/eori-history"))
+            .withHeader("Authorization", equalTo(s"${authToken.value}"))
+        )
+      }
     }
 
-    "must return None if not found" in {
+    "when authorisation token is None" - {
 
-      wireMockServer.stubFor(
-        get(urlEqualTo(s"/customs-data-store/eori/$testEori/eori-history"))
-          .willReturn(notFound())
-      )
+      "must return eori history" in {
 
-      connector.getEmail(testEori).futureValue mustBe None
-    }
+        val mockEoriHistoryResponse = EoriHistoryResponse(
+          Seq(
+            EoriHistoricItem("eori1", LocalDate.parse("2024-02-20"), Some(LocalDate.parse("2024-01-20"))),
+            EoriHistoricItem("eori1", LocalDate.parse("2024-03-20"), Some(LocalDate.parse("2024-01-20"))),
+            EoriHistoricItem("eori1", LocalDate.parse("2024-01-20"), Some(LocalDate.parse("2024-01-20")))
+          )
+        )
+        wireMockServer.stubFor(
+          get(urlEqualTo(s"/customs-data-store/eori/$testEori/eori-history"))
+            .willReturn(ok().withBody(Json.toJson(mockEoriHistoryResponse).toString()))
+        )
 
-    "must return a failed future when the server returns an error" in {
-      wireMockServer.stubFor(
-        get(urlEqualTo(s"/customs-data-store/eori/$testEori/eori-history"))
-          .willReturn(serverError())
-      )
+        val expectedResponse = EoriHistoryResponse(
+          Seq(
+            EoriHistoricItem("eori1", LocalDate.parse("2024-03-20"), Some(LocalDate.parse("2024-01-20"))),
+            EoriHistoricItem("eori1", LocalDate.parse("2024-02-20"), Some(LocalDate.parse("2024-01-20"))),
+            EoriHistoricItem("eori1", LocalDate.parse("2024-01-20"), Some(LocalDate.parse("2024-01-20")))
+          )
+        )
 
-      connector.getEoriHistory(testEori).failed.futureValue
+        connector.getEoriHistory(testEori, None).futureValue mustBe Some(expectedResponse)
+
+        wireMockServer.verify(
+          1,
+          getRequestedFor(urlEqualTo(s"/customs-data-store/eori/$testEori/eori-history"))
+            .withoutHeader("Authorization")
+        )
+      }
+
+      "must return None if not found" in {
+
+        wireMockServer.stubFor(
+          get(urlEqualTo(s"/customs-data-store/eori/$testEori/eori-history"))
+            .willReturn(notFound())
+        )
+
+        connector.getEoriHistory(testEori, None).futureValue mustBe None
+
+        wireMockServer.verify(
+          1,
+          getRequestedFor(urlEqualTo(s"/customs-data-store/eori/$testEori/eori-history"))
+            .withoutHeader("Authorization")
+        )
+      }
+
+      "must return a failed future when the server returns an error" in {
+        wireMockServer.stubFor(
+          get(urlEqualTo(s"/customs-data-store/eori/$testEori/eori-history"))
+            .willReturn(serverError())
+        )
+
+        connector.getEoriHistory(testEori, None).failed.futureValue
+
+        wireMockServer.verify(
+          1,
+          getRequestedFor(urlEqualTo(s"/customs-data-store/eori/$testEori/eori-history"))
+            .withoutHeader("Authorization")
+        )
+      }
     }
   }
 }

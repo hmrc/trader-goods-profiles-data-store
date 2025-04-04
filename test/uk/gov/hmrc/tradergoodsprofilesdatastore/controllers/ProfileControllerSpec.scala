@@ -246,7 +246,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
 
         "and historic eori data does exist and older historic profiles not found" in {
           when(mockProfileRepository.get(eqTo(requestEori))).thenReturn(Future.successful(None))
-          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(
+          when(mockCustomDataStoreConnector.getEoriHistory(any(), any())(any())).thenReturn(
             Future.successful(
               Some(
                 EoriHistoryResponse(
@@ -297,7 +297,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
 
             withClue("must call update eori and delete records") {
               verify(mockProfileRepository, atLeastOnce()).get(eqTo(requestEori))
-              verify(mockCustomDataStoreConnector, atLeastOnce()).getEoriHistory(any())(any())
+              verify(mockCustomDataStoreConnector, atLeastOnce()).getEoriHistory(any(), any())(any())
               verify(mockProfileRepository, atLeastOnce()).updateEori(any, any)
               verify(mockRecordsRepository, atLeastOnce()).deleteRecordsByEori(any)
               verify(mockRecordsSummaryRepository, atLeastOnce()).deleteByEori(any)
@@ -307,7 +307,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
 
         "and historic eori data does exist and should delete older historic profiles" in {
           when(mockProfileRepository.get(eqTo(requestEori))).thenReturn(Future.successful(None))
-          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(
+          when(mockCustomDataStoreConnector.getEoriHistory(any(), any())(any())).thenReturn(
             Future.successful(
               Some(
                 EoriHistoryResponse(
@@ -385,7 +385,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
 
         "and historic eori data does exist and does not delete older historic profiles" in {
           when(mockProfileRepository.get(eqTo(requestEori))).thenReturn(Future.successful(None))
-          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(
+          when(mockCustomDataStoreConnector.getEoriHistory(any(), any())(any())).thenReturn(
             Future.successful(
               Some(
                 EoriHistoryResponse(
@@ -456,7 +456,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
 
         "and historic eori data does not exist" in {
           when(mockProfileRepository.get(any())).thenReturn(Future.successful(None))
-          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(
+          when(mockCustomDataStoreConnector.getEoriHistory(any(), any())(any())).thenReturn(
             Future.successful(
               Some(
                 EoriHistoryResponse(
@@ -484,13 +484,13 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
             status(result) mustBe Status.NOT_FOUND
 
             verify(mockProfileRepository, atLeastOnce()).get(any())
-            verify(mockCustomDataStoreConnector, atLeastOnce()).getEoriHistory(any())(any())
+            verify(mockCustomDataStoreConnector, atLeastOnce()).getEoriHistory(any(), any())(any())
           }
         }
 
         "and historic eori data not found" in {
           when(mockProfileRepository.get(any())).thenReturn(Future.successful(None))
-          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(Future.successful(None))
+          when(mockCustomDataStoreConnector.getEoriHistory(any(), any())(any())).thenReturn(Future.successful(None))
 
           val application = applicationBuilder()
             .overrides(
@@ -504,13 +504,13 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
             status(result) mustBe Status.NOT_FOUND
 
             verify(mockProfileRepository, atLeastOnce()).get(any())
-            verify(mockCustomDataStoreConnector, atLeastOnce()).getEoriHistory(any())(any())
+            verify(mockCustomDataStoreConnector, atLeastOnce()).getEoriHistory(any(), any())(any())
           }
         }
 
         "and eori history does exist, but latest historical eori profile does not exist" in {
           when(mockProfileRepository.get(eqTo(requestEori))).thenReturn(Future.successful(None))
-          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(
+          when(mockCustomDataStoreConnector.getEoriHistory(any(), any())(any())).thenReturn(
             Future.successful(
               Some(
                 EoriHistoryResponse(
@@ -545,13 +545,13 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
             status(result) mustBe Status.NOT_FOUND
 
             verify(mockProfileRepository, times(2)).get(any())
-            verify(mockCustomDataStoreConnector, atLeastOnce()).getEoriHistory(any())(any())
+            verify(mockCustomDataStoreConnector, atLeastOnce()).getEoriHistory(any(), any())(any())
           }
         }
 
         "and updating historic eori with the new eori fails" in {
           when(mockProfileRepository.get(eqTo(requestEori))).thenReturn(Future.successful(None))
-          when(mockCustomDataStoreConnector.getEoriHistory(any())(any())).thenReturn(
+          when(mockCustomDataStoreConnector.getEoriHistory(any(), any())(any())).thenReturn(
             Future.successful(
               Some(
                 EoriHistoryResponse(
@@ -600,7 +600,7 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
             verify(mockProfileRepository, times(2)).get(any())
             verify(mockProfileRepository, atLeastOnce()).updateEori(any(), any())
             verify(mockRecordsRepository, atLeastOnce()).deleteRecordsByEori(any())
-            verify(mockCustomDataStoreConnector, atLeastOnce()).getEoriHistory(any())(any())
+            verify(mockCustomDataStoreConnector, atLeastOnce()).getEoriHistory(any(), any())(any())
           }
         }
       }
