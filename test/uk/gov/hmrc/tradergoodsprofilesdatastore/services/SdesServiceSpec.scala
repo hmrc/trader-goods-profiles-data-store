@@ -18,7 +18,7 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.services
 
 import org.apache.pekko.Done
 import org.bson.types.ObjectId
-import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.*
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
