@@ -18,8 +18,8 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.services
 
 import org.apache.pekko.Done
 import org.bson.types.ObjectId
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito._
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.*
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -29,7 +29,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import uk.gov.hmrc.mongo.workitem.ProcessingStatus.ToDo
+import uk.gov.hmrc.mongo.workitem.ProcessingStatus.{InProgress, ToDo}
 import uk.gov.hmrc.mongo.workitem.{ProcessingStatus, WorkItem}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConnector, EmailConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.FileReadyUnseen
@@ -132,7 +132,7 @@ class SdesServiceSpec
           receivedAt = now.minus(1, ChronoUnit.HOURS),
           updatedAt = now.minus(1, ChronoUnit.HOURS),
           availableAt = now.minus(1, ChronoUnit.HOURS),
-          status = ToDo,
+          status = InProgress,
           failureCount = 0,
           item = summary
         )
@@ -163,7 +163,7 @@ class SdesServiceSpec
             receivedAt = now.minus(1, ChronoUnit.HOURS),
             updatedAt = now.minus(1, ChronoUnit.HOURS),
             availableAt = now.minus(1, ChronoUnit.HOURS),
-            status = ToDo,
+            status = InProgress,
             failureCount = 0,
             item = summary
           )
@@ -193,7 +193,7 @@ class SdesServiceSpec
             receivedAt = now.minus(1, ChronoUnit.HOURS),
             updatedAt = now.minus(1, ChronoUnit.HOURS),
             availableAt = now.minus(1, ChronoUnit.HOURS),
-            status = ToDo,
+            status = InProgress,
             failureCount = 0,
             item = summary
           )
@@ -220,7 +220,7 @@ class SdesServiceSpec
             receivedAt = now.minus(1, ChronoUnit.HOURS),
             updatedAt = now.minus(1, ChronoUnit.HOURS),
             availableAt = now.minus(1, ChronoUnit.HOURS),
-            status = ToDo,
+            status = InProgress,
             failureCount = 0,
             item = summary
           )
@@ -264,7 +264,7 @@ class SdesServiceSpec
       receivedAt = now.minus(1, ChronoUnit.HOURS),
       updatedAt = now.minus(1, ChronoUnit.HOURS),
       availableAt = now.minus(1, ChronoUnit.HOURS),
-      status = ToDo,
+      status = InProgress,
       failureCount = 0,
       item = summary
     )
