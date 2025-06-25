@@ -37,9 +37,9 @@ object Pagination {
     injector.instanceOf[Configuration]
   }
 
-  val pageSize: Int = config.getOptional[Int]("pagination-config.recursive-page-size").getOrElse(500)
-  val startingPage: Int = config.getOptional[Int]("pagination-config.recursive-starting-page").getOrElse(0)
-  val localPageSize: Int = config.getOptional[Int]("pagination-config.local-page-size").getOrElse(10)
+  val pageSize: Int          = config.getOptional[Int]("pagination-config.recursive-page-size").getOrElse(500)
+  val startingPage: Int      = config.getOptional[Int]("pagination-config.recursive-starting-page").getOrElse(0)
+  val localPageSize: Int     = config.getOptional[Int]("pagination-config.local-page-size").getOrElse(10)
   val localStartingPage: Int = config.getOptional[Int]("pagination-config.local-starting-page").getOrElse(1)
 
   def buildPagination(sizeOpt: Option[Int], pageOpt: Option[Int], totalRecords: Long): Pagination = {
