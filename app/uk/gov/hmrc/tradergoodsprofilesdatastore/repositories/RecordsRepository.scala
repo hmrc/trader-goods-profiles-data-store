@@ -61,7 +61,6 @@ class RecordsRepository @Inject() (
     )
     with Transactions {
 
-
   override lazy val requiresTtlIndex: Boolean = false
 
   private implicit val tc: TransactionConfiguration =
@@ -94,7 +93,7 @@ class RecordsRepository @Inject() (
         Filters.equal("comcode", value)
       )
     } else {
-      val safePattern = Pattern.quote(value)
+      val safePattern  = Pattern.quote(value)
       val regexPattern = s".*$safePattern.*" // match as substring, safely
       Filters.or(
         Filters.regex("traderRef", regexPattern, "i"),
