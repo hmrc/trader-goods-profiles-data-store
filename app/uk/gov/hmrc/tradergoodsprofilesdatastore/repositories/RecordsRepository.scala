@@ -17,9 +17,9 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
 import org.apache.pekko.Done
+import org.mongodb.scala.{ObservableFuture, SingleObservableFuture}
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.*
-import org.mongodb.scala.{ObservableFuture, SingleObservableFuture}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.transaction.{TransactionConfiguration, Transactions}
@@ -29,7 +29,6 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{loca
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.RepositoryHelpers.caseInsensitiveCollation
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.StringHelper.escapeRegexSpecialChars
 
-import java.util.regex.Pattern
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.matching.Regex
@@ -61,7 +60,8 @@ class RecordsRepository @Inject() (
     )
     with Transactions {
 
-
+  // We will be handling the timing out of this data with a worker
+  // rather than a TTL as this will need to be coordinated
   override lazy val requiresTtlIndex: Boolean = false
 
   private implicit val tc: TransactionConfiguration =
@@ -81,10 +81,9 @@ class RecordsRepository @Inject() (
     if (exactMatch) {
       Filters.equal(field, searchTerm)
     } else {
-      Filters.regex(field, Pattern.quote(searchTerm), "i")
+      // TODO we must not allow people to give us regexes to execute
+      Filters.regex(field, searchTerm, "i")
     }
-
-  import java.util.regex.Pattern
 
   private def byComCodeOrGoodsDescriptionOrTraderRef(value: String, exactMatch: Boolean): Bson =
     if (exactMatch) {
@@ -94,12 +93,13 @@ class RecordsRepository @Inject() (
         Filters.equal("comcode", value)
       )
     } else {
-      val safePattern = Pattern.quote(value)
-      val regexPattern = s".*$safePattern.*" // match as substring, safely
+      val escapedSearchString = escapeRegexSpecialChars(value)
+      val searchPattern       = s".*$escapedSearchString.*"
+      // TODO we must not allow people to give us regexes to execute
       Filters.or(
-        Filters.regex("traderRef", regexPattern, "i"),
-        Filters.regex("goodsDescription", regexPattern, "i"),
-        Filters.regex("comcode", regexPattern, "i")
+        Filters.regex("traderRef", searchPattern, "i"),
+        Filters.regex("goodsDescription", searchPattern, "i"),
+        Filters.regex("comcode", searchPattern, "i")
       )
     }
 
