@@ -147,7 +147,6 @@ class RecordsRepository @Inject() (
       .map(_.getDeletedCount)
   }
 
-  // TODO need to add an appropriate index for this to search
   def filterRecords(
     eori: String,
     searchTerm: Option[String],
