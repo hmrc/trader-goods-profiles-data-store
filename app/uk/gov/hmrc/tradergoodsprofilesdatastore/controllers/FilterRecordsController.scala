@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,29 +21,30 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, StoreLatestAction}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{buildPagination, localPageSize, localStartingPage}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.PaginationHelper // Adjust package as needed
 
 import java.net.URLDecoder
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class FilterRecordsController @Inject() (
-  recordsRepository: RecordsRepository,
-  cc: ControllerComponents,
-  identify: IdentifierAction,
-  storeLatest: StoreLatestAction
-)(implicit ec: ExecutionContext)
-    extends BackendController(cc) {
+                                          recordsRepository: RecordsRepository,
+                                          cc: ControllerComponents,
+                                          identify: IdentifierAction,
+                                          storeLatest: StoreLatestAction,
+                                          paginationHelper: PaginationHelper
+                                        )(implicit ec: ExecutionContext)
+  extends BackendController(cc) {
 
   def filterLocalRecords(
-    eori: String,
-    searchTerm: Option[String],
-    exactMatch: Option[Boolean],
-    field: Option[String],
-    pageOpt: Option[Int],
-    sizeOpt: Option[Int]
-  ): Action[AnyContent] =
+                          eori: String,
+                          searchTerm: Option[String],
+                          exactMatch: Option[Boolean],
+                          field: Option[String],
+                          pageOpt: Option[Int],
+                          sizeOpt: Option[Int]
+                        ): Action[AnyContent] =
     (identify andThen storeLatest).async {
       val validFields  = Set("traderRef", "goodsDescription", "comcode")
       val isExactMatch = exactMatch.getOrElse(true)
@@ -51,16 +52,15 @@ class FilterRecordsController @Inject() (
       field match {
         case Some(value) if !validFields.contains(value) =>
           Future.successful(BadRequest("Invalid field parameter"))
-        case _                                           =>
+        case _ =>
           for {
             filteredRecords <- recordsRepository.filterRecords(eori, searchTerm, field, isExactMatch)
           } yield {
-            val size             = sizeOpt.getOrElse(localPageSize)
-            val page             = pageOpt.getOrElse(localStartingPage)
-            val skip             = (page - 1) * size
-            val paginatedRecords = filteredRecords.slice(skip, skip + size)
-
-            val pagination         = buildPagination(Some(size), Some(page), filteredRecords.size.toLong)
+            val pagination         = paginationHelper.buildPagination(sizeOpt, pageOpt, filteredRecords.size.toLong)
+            val size               = sizeOpt.getOrElse(paginationHelper.localPageSize)
+            val page               = pageOpt.getOrElse(paginationHelper.localStartingPage)
+            val skip               = (page - 1) * size
+            val paginatedRecords   = filteredRecords.slice(skip, skip + size)
             val getRecordsResponse = GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination = pagination)
             Ok(Json.toJson(getRecordsResponse))
           }
@@ -68,14 +68,14 @@ class FilterRecordsController @Inject() (
     }
 
   def filterIteration( // TODO: Rename this to filterLocalRecords when frontend changes are implemented and delete the old logic relating to old filtering (TGP-3003)
-    searchTerm: Option[String],
-    countryOfOrigin: Option[String],
-    IMMIReady: Option[Boolean],
-    notReadyForIMMI: Option[Boolean],
-    actionNeeded: Option[Boolean],
-    pageOpt: Option[Int],
-    sizeOpt: Option[Int]
-  ): Action[AnyContent] =
+                       searchTerm: Option[String],
+                       countryOfOrigin: Option[String],
+                       IMMIReady: Option[Boolean],
+                       notReadyForIMMI: Option[Boolean],
+                       actionNeeded: Option[Boolean],
+                       pageOpt: Option[Int],
+                       sizeOpt: Option[Int]
+                     ): Action[AnyContent] =
     (identify andThen storeLatest).async { request =>
       val eori = request.eori
 
@@ -84,12 +84,13 @@ class FilterRecordsController @Inject() (
           recordsRepository
             .filterRecordsIteration(eori, searchTerm, countryOfOrigin, IMMIReady, notReadyForIMMI, actionNeeded)
       } yield {
-        val size             = sizeOpt.getOrElse(localPageSize)
-        val page             = pageOpt.getOrElse(localStartingPage)
-        val skip             = (page - 1) * size
-        val paginatedRecords = filteredRecords.slice(skip, skip + size)
-        val pagination       = buildPagination(Some(size), Some(page), filteredRecords.size.toLong)
-        Ok(Json.toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination = pagination)))
+        val pagination         = paginationHelper.buildPagination(sizeOpt, pageOpt, filteredRecords.size.toLong)
+        val size               = sizeOpt.getOrElse(paginationHelper.localPageSize)
+        val page               = pageOpt.getOrElse(paginationHelper.localStartingPage)
+        val skip               = (page - 1) * size
+        val paginatedRecords   = filteredRecords.slice(skip, skip + size)
+        val getRecordsResponse = GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination = pagination)
+        Ok(Json.toJson(getRecordsResponse))
       }
     }
 

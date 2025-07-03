@@ -22,29 +22,34 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, StoreLatestAction}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.buildPagination
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.PaginationHelper
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class GetRecordsController @Inject() (
-  routerConnector: RouterConnector,
-  recordsRepository: RecordsRepository,
-  cc: ControllerComponents,
-  identify: IdentifierAction,
-  storeLatest: StoreLatestAction
-)(implicit ec: ExecutionContext)
-    extends BackendController(cc) {
+                                       routerConnector: RouterConnector,
+                                       recordsRepository: RecordsRepository,
+                                       cc: ControllerComponents,
+                                       identify: IdentifierAction,
+                                       storeLatest: StoreLatestAction,
+                                       paginationHelper: PaginationHelper
+                                     )(implicit ec: ExecutionContext)
+  extends BackendController(cc) {
 
   def getLocalRecords(
-    pageOpt: Option[Int],
-    sizeOpt: Option[Int]
-  ): Action[AnyContent] = (identify andThen storeLatest).async { implicit request =>
+                       pageOpt: Option[Int],
+                       sizeOpt: Option[Int]
+                     ): Action[AnyContent] = (identify andThen storeLatest).async { implicit request =>
     recordsRepository.getCount(request.eori).flatMap { totalRecords =>
-      recordsRepository.getMany(request.eori, pageOpt, sizeOpt).map { records =>
-        val getRecordsResponse =
-          GetRecordsResponse(goodsItemRecords = records, buildPagination(sizeOpt, pageOpt, totalRecords))
+      val pagination = paginationHelper.buildPagination(sizeOpt, pageOpt, totalRecords)
+      val size       = sizeOpt.getOrElse(paginationHelper.localPageSize)
+      val page       = pageOpt.getOrElse(paginationHelper.localStartingPage)
+      val skip       = (page - 1) * size
+
+      recordsRepository.getMany(request.eori, skip, size).map { records =>
+        val getRecordsResponse = GetRecordsResponse(goodsItemRecords = records, pagination = pagination)
         Ok(Json.toJson(getRecordsResponse))
       }
     }
@@ -58,5 +63,4 @@ class GetRecordsController @Inject() (
         case _                             => NotFound
       }
   }
-
 }

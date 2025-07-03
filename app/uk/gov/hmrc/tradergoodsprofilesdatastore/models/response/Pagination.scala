@@ -16,41 +16,18 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 
-import com.typesafe.config.ConfigFactory
 import play.api.libs.json.{Json, OFormat}
 
 case class Pagination(
-  totalRecords: Int,
-  currentPage: Int,
-  totalPages: Int,
-  nextPage: Option[Int],
-  prevPage: Option[Int]
-)
+                       totalRecords: Int,
+                       currentPage: Int,
+                       totalPages: Int,
+                       nextPage: Option[Int],
+                       prevPage: Option[Int]
+                     )
 
 object Pagination {
-
   implicit val format: OFormat[Pagination] = Json.format[Pagination]
-
-  // TODO load these from application config, this bypasses bootstrap's application loader
-  val pageSize: Int          = ConfigFactory.load().getInt("pagination-config.recursive-page-size")
-  val startingPage: Int      = ConfigFactory.load().getInt("pagination-config.recursive-starting-page")
-  val localPageSize: Int     = ConfigFactory.load().getInt("pagination-config.local-page-size")
-  val localStartingPage: Int = ConfigFactory.load().getInt("pagination-config.local-starting-page")
-
-  def buildPagination(sizeOpt: Option[Int], pageOpt: Option[Int], totalRecords: Long): Pagination = {
-    val size                 = sizeOpt.getOrElse(localPageSize)
-    val page                 = pageOpt.getOrElse(localStartingPage)
-    val mod                  = totalRecords % size
-    val totalRecordsMinusMod = totalRecords - mod
-    val totalPages           = {
-      if (mod == 0 && totalRecords != 0) {
-        totalRecordsMinusMod / size
-      } else {
-        (totalRecordsMinusMod / size) + 1
-      }
-    }.toInt
-    val nextPage             = if (page >= totalPages || page < 1) None else Some(page + 1)
-    val prevPage             = if (page <= 1 || page > totalPages) None else Some(page - 1)
-    Pagination(totalRecords.toInt, page, totalPages, nextPage, prevPage)
-  }
+  val localPageSize: Int = 10
+  val localStartingPage: Int = 1
 }

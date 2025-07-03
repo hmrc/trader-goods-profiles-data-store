@@ -25,7 +25,6 @@ import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.transaction.{TransactionConfiguration, Transactions}
 import uk.gov.hmrc.play.http.logging.Mdc
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GoodsItemRecord
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{localPageSize, localStartingPage}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.RepositoryHelpers.caseInsensitiveCollation
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.StringHelper.escapeRegexSpecialChars
 
@@ -122,18 +121,15 @@ class RecordsRepository @Inject() (
     }
   }
 
-  def getMany(eori: String, pageOpt: Option[Int], sizeOpt: Option[Int]): Future[Seq[GoodsItemRecord]] =
-    Mdc.preservingMdc {
-      val size = sizeOpt.getOrElse(localPageSize)
-      val page = pageOpt.getOrElse(localStartingPage)
-      val skip = (page - 1) * size
-      collection
-        .find[GoodsItemRecord](byEori(eori))
-        .sort(byLatest)
-        .limit(size)
-        .skip(skip)
-        .toFuture()
-    }
+  def getMany(eori: String, skip: Int, size: Int): Future[Seq[GoodsItemRecord]] = Mdc.preservingMdc {
+    collection
+      .find[GoodsItemRecord](byEori(eori))
+      .sort(byLatest)
+      .limit(size)
+      .skip(skip)
+      .toFuture()
+  }
+
 
   def getCount(eori: String): Future[Long] = Mdc.preservingMdc {
     collection
