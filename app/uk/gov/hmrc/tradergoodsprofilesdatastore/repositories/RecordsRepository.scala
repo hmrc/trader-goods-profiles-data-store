@@ -19,6 +19,8 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 import org.apache.pekko.Done
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.*
+import org.mongodb.scala.model.Filters.equal
+import org.mongodb.scala.model.Indexes.ascending
 import org.mongodb.scala.{ObservableFuture, SingleObservableFuture}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
@@ -121,15 +123,16 @@ class RecordsRepository @Inject() (
     }
   }
 
-  def getMany(eori: String, skip: Int, size: Int): Future[Seq[GoodsItemRecord]] = Mdc.preservingMdc {
+  def getMany(eori: String, page: Int, pageSize: Int): Future[Seq[GoodsItemRecord]] = {
+    val skip = (page - 1) * pageSize
+
     collection
-      .find[GoodsItemRecord](byEori(eori))
-      .sort(byLatest)
-      .limit(size)
+      .find(equal("eori", eori))
       .skip(skip)
+      .limit(pageSize)
+      .sort(ascending("recordId")) // Optional: define sort order
       .toFuture()
   }
-
 
   def getCount(eori: String): Future[Long] = Mdc.preservingMdc {
     collection

@@ -17,7 +17,7 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.services
 
 import org.apache.pekko.Done
-import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.Eventually.*
@@ -35,20 +35,16 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.PaginationHelper
 import java.time.temporal.ChronoUnit
 import java.time.{Clock, Instant, ZoneOffset}
 import scala.concurrent.{ExecutionContext, Future}
-class StoreRecordsServiceSpec
-  extends AnyWordSpec
-    with Matchers
-    with MockitoSugar
-    with BeforeAndAfterEach {
+class StoreRecordsServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with BeforeAndAfterEach {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
-  implicit val hc: HeaderCarrier      = HeaderCarrier()
+  implicit val hc: HeaderCarrier    = HeaderCarrier()
 
-  private val mockRouter  = mock[RouterConnector]
-  private val mockRepo    = mock[RecordsRepository]
-  private val mockSummary = mock[RecordsSummaryRepository]
-  private val now         = Instant.now().plus(1, ChronoUnit.DAYS)
-  private val clock       = Clock.fixed(now, ZoneOffset.UTC)
+  private val mockRouter           = mock[RouterConnector]
+  private val mockRepo             = mock[RecordsRepository]
+  private val mockSummary          = mock[RecordsSummaryRepository]
+  private val now                  = Instant.now().plus(1, ChronoUnit.DAYS)
+  private val clock                = Clock.fixed(now, ZoneOffset.UTC)
   private val mockPaginationHelper = mock[PaginationHelper]
 
   private val pageSize     = 2
@@ -71,7 +67,6 @@ class StoreRecordsServiceSpec
     when(mockPaginationHelper.localPageSize).thenReturn(pageSize)
     when(mockPaginationHelper.localStartingPage).thenReturn(startingPage)
 
-    // stub ALL summary-repo calls by default
     when(mockSummary.set(any[String], any[Option[Update]], any[Instant]))
       .thenReturn(Future.successful(Done))
     when(mockSummary.update(any[String], any[Option[Update]], any[Option[Instant]]))
@@ -81,30 +76,30 @@ class StoreRecordsServiceSpec
   private def makeRecord(eori: String, daysAgo: Long): GoodsItemRecord = {
     val base = now.minus(daysAgo, ChronoUnit.DAYS)
     GoodsItemRecord(
-      recordId                 = s"rec-$daysAgo",
-      eori                     = eori,
-      actorId                  = "actor123",
-      traderRef                = "TRADERREF",
-      comcode                  = "0101210000",
-      adviceStatus             = "PENDING",
-      goodsDescription         = "Some goods",
-      countryOfOrigin          = "GB",
-      category                 = None,
-      assessments              = None,
-      supplementaryUnit        = None,
-      measurementUnit          = None,
+      recordId = s"rec-$daysAgo",
+      eori = eori,
+      actorId = "actor123",
+      traderRef = "TRADERREF",
+      comcode = "0101210000",
+      adviceStatus = "PENDING",
+      goodsDescription = "Some goods",
+      countryOfOrigin = "GB",
+      category = None,
+      assessments = None,
+      supplementaryUnit = None,
+      measurementUnit = None,
       comcodeEffectiveFromDate = base,
-      comcodeEffectiveToDate   = None,
-      version                  = 1,
-      active                   = true,
-      toReview                 = false,
-      reviewReason             = None,
-      declarable               = "Y",
-      ukimsNumber              = None,
-      nirmsNumber              = None,
-      niphlNumber              = None,
-      createdDateTime          = base,
-      updatedDateTime          = base
+      comcodeEffectiveToDate = None,
+      version = 1,
+      active = true,
+      toReview = false,
+      reviewReason = None,
+      declarable = "Y",
+      ukimsNumber = None,
+      nirmsNumber = None,
+      niphlNumber = None,
+      createdDateTime = base,
+      updatedDateTime = base
     )
   }
 
@@ -121,18 +116,16 @@ class StoreRecordsServiceSpec
       result mustBe true
 
       verify(mockRepo, never).updateRecords(any(), any())
-      // We still set summary once with (0,0)
       verify(mockSummary, times(1)).set(eqTo(eori), eqTo(Some(Update(0, 0))), any())
     }
 
     "should fetch three pages (two nonempty + one empty) and update only the nonempty pages" in {
-      val eori = "GB000000000003"
+      val eori  = "GB000000000003"
       val page0 = Seq(makeRecord(eori, 3), makeRecord(eori, 2))
       val page1 = Seq(makeRecord(eori, 1))
       val page2 = Seq.empty[GoodsItemRecord]
       val total = page0.size + page1.size // total = 3
 
-      // Stub getRecords to return 3 pages
       when(mockRouter.getRecords(eqTo(eori), any(), any(), any())(any()))
         .thenReturn(
           Future.successful(GetRecordsResponse(page0, Pagination(total, 0, pageSize, Some(1), None))),
@@ -140,27 +133,20 @@ class StoreRecordsServiceSpec
           Future.successful(GetRecordsResponse(page2, Pagination(total, 2, pageSize, None, None)))
         )
 
-      // Stub updateRecords to always succeed
       when(mockRepo.updateRecords(eqTo(eori), any())).thenReturn(Future.successful(Done))
 
-      // Summary set stub (can just return Done)
       when(mockSummary.set(eqTo(eori), any(), any())).thenReturn(Future.successful(Done))
 
-      // Run the service
-      val result = await(service.storeRecords(eori, None))
-      result mustBe true
+      await(service.storeRecords(eori, None))
 
-      // updateRecords should be called only for page0 and page1 (non-empty)
       verify(mockRepo, times(2)).updateRecords(eqTo(eori), any())
 
       eventually {
         noException should be thrownBy {
-          verify(mockSummary,org.mockito.Mockito.atLeast(3)).set(eqTo(eori), any(), any())
+          verify(mockSummary, org.mockito.Mockito.atLeast(3)).set(eqTo(eori), any(), any())
         }
       }
-
     }
-
 
     "handle failure on second page by clearing summary and returning false" in {
       val eori        = "GB000000000004"

@@ -71,7 +71,7 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
         contentAsString(result) mustBe Json.toJson(GetRecordsResponse(goodsItemRecords = records, pagination)).toString
 
         verify(mockRecordsRepository, times(1)).getCount(eqTo(requestEori))
-        verify(mockRecordsRepository, times(1)).getMany(eqTo(requestEori), eqTo(page-1), eqTo(recordsSize))
+        verify(mockRecordsRepository, times(1)).getMany(eqTo(requestEori), eqTo(page - 1), eqTo(recordsSize))
 
       }
     }
@@ -106,8 +106,7 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
         contentAsString(result) mustBe Json.toJson(GetRecordsResponse(goodsItemRecords = records, pagination)).toString
 
         verify(mockRecordsRepository, atLeastOnce()).getCount(eqTo(requestEori))
-        verify(mockRecordsRepository, times(1)).getMany(eqTo(requestEori), eqTo(page-1), eqTo(recordsSize))
-
+        verify(mockRecordsRepository, times(1)).getMany(eqTo(requestEori), eqTo(page - 1), eqTo(recordsSize))
 
       }
     }
@@ -142,8 +141,7 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
         contentAsString(result) mustBe Json.toJson(GetRecordsResponse(goodsItemRecords = records, pagination)).toString
 
         verify(mockRecordsRepository, atLeastOnce()).getCount(eqTo(requestEori))
-        verify(mockRecordsRepository, times(1)).getMany(eqTo(requestEori), eqTo(page-1), eqTo(recordsSize))
-
+        verify(mockRecordsRepository, times(1)).getMany(eqTo(requestEori), eqTo(page - 1), eqTo(recordsSize))
 
       }
     }
@@ -178,8 +176,7 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
         contentAsString(result) mustBe Json.toJson(GetRecordsResponse(goodsItemRecords = records, pagination)).toString
 
         verify(mockRecordsRepository, atLeastOnce()).getCount(eqTo(requestEori))
-        verify(mockRecordsRepository, times(1)).getMany(eqTo(requestEori), eqTo(page-1), eqTo(recordsSize))
-
+        verify(mockRecordsRepository, times(1)).getMany(eqTo(requestEori), eqTo(page - 1), eqTo(recordsSize))
 
       }
     }
@@ -214,8 +211,7 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
         contentAsString(result) mustBe Json.toJson(GetRecordsResponse(goodsItemRecords = records, pagination)).toString
 
         verify(mockRecordsRepository, atLeastOnce()).getCount(eqTo(requestEori))
-        verify(mockRecordsRepository, times(1)).getMany(eqTo(requestEori), eqTo(page-1), eqTo(recordsSize))
-
+        verify(mockRecordsRepository, times(1)).getMany(eqTo(requestEori), eqTo(page - 1), eqTo(recordsSize))
 
       }
     }
@@ -250,8 +246,8 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
         contentAsString(result) mustBe Json.toJson(GetRecordsResponse(goodsItemRecords = records, pagination)).toString
 
         verify(mockRecordsRepository, atLeastOnce()).getCount(eqTo(requestEori))
-        verify(mockRecordsRepository, times(1)).getMany(eqTo(requestEori), eqTo((page - 1) * recordsSize), eqTo(recordsSize))
-
+        verify(mockRecordsRepository, times(1))
+          .getMany(eqTo(requestEori), eqTo((page - 1) * recordsSize), eqTo(recordsSize))
 
       }
     }
@@ -286,8 +282,8 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
         contentAsString(result) mustBe Json.toJson(GetRecordsResponse(goodsItemRecords = records, pagination)).toString
 
         verify(mockRecordsRepository, atLeastOnce()).getCount(eqTo(requestEori))
-        verify(mockRecordsRepository, times(1)).getMany(eqTo(requestEori), eqTo((page - 1) * recordsSize), eqTo(recordsSize))
-
+        verify(mockRecordsRepository, times(1))
+          .getMany(eqTo(requestEori), eqTo((page - 1) * recordsSize), eqTo(recordsSize))
 
       }
     }
@@ -322,8 +318,7 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
         contentAsString(result) mustBe Json.toJson(GetRecordsResponse(goodsItemRecords = records, pagination)).toString
 
         verify(mockRecordsRepository, atLeastOnce()).getCount(eqTo(requestEori))
-        verify(mockRecordsRepository, times(1)).getMany(eqTo(requestEori), eqTo(page-1), eqTo(recordsSize))
-
+        verify(mockRecordsRepository, times(1)).getMany(eqTo(requestEori), eqTo(page - 1), eqTo(recordsSize))
 
       }
     }
@@ -358,8 +353,8 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
         contentAsString(result) mustBe Json.toJson(GetRecordsResponse(goodsItemRecords = records, pagination)).toString
 
         verify(mockRecordsRepository, atLeastOnce()).getCount(eqTo(requestEori))
-        verify(mockRecordsRepository, times(1)).getMany(eqTo(requestEori), eqTo((page - 1) * recordsSize), eqTo(recordsSize))
-
+        verify(mockRecordsRepository, times(1))
+          .getMany(eqTo(requestEori), eqTo((page - 1) * recordsSize), eqTo(recordsSize))
 
       }
     }
@@ -394,7 +389,7 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
           await(route(application, validFakeGetRequest).value)
 
           verify(mockRecordsRepository, times(1)).getCount(eqTo(requestEori))
-          verify(mockRecordsRepository, times(1)).getMany(eqTo(requestEori), eqTo(page-1), eqTo(recordsSize))
+          verify(mockRecordsRepository, times(1)).getMany(eqTo(requestEori), eqTo(page - 1), eqTo(recordsSize))
 
         }
       }

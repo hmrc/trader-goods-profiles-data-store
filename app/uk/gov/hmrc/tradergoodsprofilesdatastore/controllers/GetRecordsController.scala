@@ -29,19 +29,19 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class GetRecordsController @Inject() (
-                                       routerConnector: RouterConnector,
-                                       recordsRepository: RecordsRepository,
-                                       cc: ControllerComponents,
-                                       identify: IdentifierAction,
-                                       storeLatest: StoreLatestAction,
-                                       paginationHelper: PaginationHelper
-                                     )(implicit ec: ExecutionContext)
-  extends BackendController(cc) {
+  routerConnector: RouterConnector,
+  recordsRepository: RecordsRepository,
+  cc: ControllerComponents,
+  identify: IdentifierAction,
+  storeLatest: StoreLatestAction,
+  paginationHelper: PaginationHelper
+)(implicit ec: ExecutionContext)
+    extends BackendController(cc) {
 
   def getLocalRecords(
-                       pageOpt: Option[Int],
-                       sizeOpt: Option[Int]
-                     ): Action[AnyContent] = (identify andThen storeLatest).async { implicit request =>
+    pageOpt: Option[Int],
+    sizeOpt: Option[Int]
+  ): Action[AnyContent] = (identify andThen storeLatest).async { implicit request =>
     recordsRepository.getCount(request.eori).flatMap { totalRecords =>
       val pagination = paginationHelper.buildPagination(sizeOpt, pageOpt, totalRecords)
       val size       = sizeOpt.getOrElse(paginationHelper.localPageSize)

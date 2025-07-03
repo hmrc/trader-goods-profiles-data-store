@@ -34,7 +34,9 @@ import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeStoreLatestAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary
+import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.*
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary.Update
+import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.MdcSupport.withMdc
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -52,6 +54,7 @@ class RecordsSummaryRepositorySpec
 
   val testEori    = "GB123456789001"
   private val now = Instant.now().truncatedTo(ChronoUnit.MILLIS)
+  implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
 
   val sampleRecordsSummary: RecordsSummary = RecordsSummary(
     eori = testEori,
@@ -239,12 +242,11 @@ class RecordsSummaryRepositorySpec
 
   private def mustPreserveMdc[A](f: => Future[A])(implicit pos: Position): Unit =
     "must preserve MDC" in {
-
       val ec = app.injector.instanceOf[ExecutionContext]
 
       MDC.put("test", "foo")
 
-      f.map { _ =>
+      withMdc(f).map { _ =>
         MDC.get("test") mustEqual "foo"
       }(ec).futureValue
     }

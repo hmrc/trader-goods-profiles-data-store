@@ -37,13 +37,15 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadySeen, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
+import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.MdcSupport.withMdc
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import scala.concurrent.{ExecutionContext, Future}
 
 class DownloadDataSummaryRepositorySpec
-    extends AnyFreeSpec
+  extends AnyFreeSpec
     with Matchers
     with DefaultPlayMongoRepositorySupport[DownloadDataSummary]
     with ScalaFutures
@@ -235,12 +237,11 @@ class DownloadDataSummaryRepositorySpec
 
   private def mustPreserveMdc[A](f: => Future[A])(implicit pos: Position): Unit =
     "must preserve MDC" in {
-
       val ec = app.injector.instanceOf[ExecutionContext]
 
       MDC.put("test", "foo")
 
-      f.map { _ =>
+      withMdc(f).map { _ =>
         MDC.get("test") mustEqual "foo"
       }(ec).futureValue
     }

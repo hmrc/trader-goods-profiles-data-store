@@ -29,22 +29,22 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class FilterRecordsController @Inject() (
-                                          recordsRepository: RecordsRepository,
-                                          cc: ControllerComponents,
-                                          identify: IdentifierAction,
-                                          storeLatest: StoreLatestAction,
-                                          paginationHelper: PaginationHelper
-                                        )(implicit ec: ExecutionContext)
-  extends BackendController(cc) {
+  recordsRepository: RecordsRepository,
+  cc: ControllerComponents,
+  identify: IdentifierAction,
+  storeLatest: StoreLatestAction,
+  paginationHelper: PaginationHelper
+)(implicit ec: ExecutionContext)
+    extends BackendController(cc) {
 
   def filterLocalRecords(
-                          eori: String,
-                          searchTerm: Option[String],
-                          exactMatch: Option[Boolean],
-                          field: Option[String],
-                          pageOpt: Option[Int],
-                          sizeOpt: Option[Int]
-                        ): Action[AnyContent] =
+    eori: String,
+    searchTerm: Option[String],
+    exactMatch: Option[Boolean],
+    field: Option[String],
+    pageOpt: Option[Int],
+    sizeOpt: Option[Int]
+  ): Action[AnyContent] =
     (identify andThen storeLatest).async {
       val validFields  = Set("traderRef", "goodsDescription", "comcode")
       val isExactMatch = exactMatch.getOrElse(true)
@@ -52,7 +52,7 @@ class FilterRecordsController @Inject() (
       field match {
         case Some(value) if !validFields.contains(value) =>
           Future.successful(BadRequest("Invalid field parameter"))
-        case _ =>
+        case _                                           =>
           for {
             filteredRecords <- recordsRepository.filterRecords(eori, searchTerm, field, isExactMatch)
           } yield {
@@ -68,14 +68,14 @@ class FilterRecordsController @Inject() (
     }
 
   def filterIteration( // TODO: Rename this to filterLocalRecords when frontend changes are implemented and delete the old logic relating to old filtering (TGP-3003)
-                       searchTerm: Option[String],
-                       countryOfOrigin: Option[String],
-                       IMMIReady: Option[Boolean],
-                       notReadyForIMMI: Option[Boolean],
-                       actionNeeded: Option[Boolean],
-                       pageOpt: Option[Int],
-                       sizeOpt: Option[Int]
-                     ): Action[AnyContent] =
+    searchTerm: Option[String],
+    countryOfOrigin: Option[String],
+    IMMIReady: Option[Boolean],
+    notReadyForIMMI: Option[Boolean],
+    actionNeeded: Option[Boolean],
+    pageOpt: Option[Int],
+    sizeOpt: Option[Int]
+  ): Action[AnyContent] =
     (identify andThen storeLatest).async { request =>
       val eori = request.eori
 

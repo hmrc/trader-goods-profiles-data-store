@@ -19,15 +19,15 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 import play.api.libs.json.{Json, OFormat}
 
 case class Pagination(
-                       totalRecords: Int,
-                       currentPage: Int,
-                       totalPages: Int,
-                       nextPage: Option[Int],
-                       prevPage: Option[Int]
-                     )
+  totalRecords: Int,
+  currentPage: Int,
+  totalPages: Int,
+  nextPage: Option[Int],
+  prevPage: Option[Int]
+)
 
 object Pagination {
   implicit val format: OFormat[Pagination] = Json.format[Pagination]
-  val localPageSize: Int = 10
-  val localStartingPage: Int = 1
+  val localPageSize: Int                   = 10
+  val localStartingPage: Int               = 1
 }

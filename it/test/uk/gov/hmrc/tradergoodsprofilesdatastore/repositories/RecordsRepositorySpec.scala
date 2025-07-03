@@ -257,7 +257,7 @@ class RecordsRepositorySpec
       insert(sampleGoodsItemRecord.copy(recordId = "7")).futureValue
       insert(sampleGoodsItemRecord.copy(recordId = "8")).futureValue
 
-      val result = repository.getMany(sampleGoodsItemRecord.eori, Some(1), Some(5)).futureValue
+      val result = repository.getMany(sampleGoodsItemRecord.eori, 1, 5).futureValue
       result.size mustEqual 5
     }
 
@@ -271,7 +271,7 @@ class RecordsRepositorySpec
       insert(sampleGoodsItemRecord.copy(recordId = "7")).futureValue
       insert(sampleGoodsItemRecord.copy(recordId = "8")).futureValue
 
-      val result = repository.getMany(sampleGoodsItemRecord.eori, Some(2), Some(5)).futureValue
+      val result = repository.getMany(sampleGoodsItemRecord.eori, 2, 5).futureValue
       result.size mustEqual 3
     }
 
@@ -285,16 +285,19 @@ class RecordsRepositorySpec
       insert(sampleGoodsItemRecord.copy(recordId = "7")).futureValue
       insert(sampleGoodsItemRecord.copy(recordId = "8")).futureValue
 
-      val result = repository.getMany(sampleGoodsItemRecord.eori, Some(3), Some(5)).futureValue
+      val result = repository.getMany(sampleGoodsItemRecord.eori, 3, 5).futureValue
       result.size mustEqual 0
     }
 
     "when there are no records for this eori it must return empty Array" in {
-      val result = repository.getMany(sampleGoodsItemRecord.eori, None, None).futureValue
+      val result = repository.getMany(sampleGoodsItemRecord.eori, 0, 0).futureValue
       result.size mustEqual 0
     }
+    MDC.put("myKey", "foo")
+    whenReady(repository.getMany(sampleGoodsItemRecord.eori, 0, 0)) { _ =>
+      MDC.get("myKey") mustBe "foo"
+    }
 
-    mustPreserveMdc(repository.getMany(sampleGoodsItemRecord.eori, None, None))
   }
 
   ".filterRecords" - {
