@@ -17,47 +17,47 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.utils
 
 import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.must.Matchers
-import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.DateTimeFormats.{convertToDateString, dateTimeFormat}
+import org.scalatest.matchers.should.Matchers
+import play.api.i18n.Lang
 
-import java.time.{Instant, LocalDate}
+import java.time.{Instant, ZoneId}
 
 class DateTimeFormatsSpec extends AnyFreeSpec with Matchers {
 
-  ".dateTimeFormat" - {
-
-    "must format dates in English" in {
-      val formatter = dateTimeFormat("en")
-      val result    = LocalDate.of(2023, 1, 1).format(formatter)
-      result mustEqual "1 January 2023"
-    }
-
-    "must format dates in Welsh" in {
-      val formatter = dateTimeFormat("cy")
-      val result    = LocalDate.of(2023, 1, 1).format(formatter)
-      result mustEqual "1 Ionawr 2023"
-    }
-
-    "must default to English format" in {
-      val formatter = dateTimeFormat("de")
-      val result    = LocalDate.of(2023, 1, 1).format(formatter)
-      result mustEqual "1 January 2023"
+  "DateTimeFormats.convertToDateString" - {
+    "should format an Instant as 'dd MMMM yyyy' in Europe/London timezone" in {
+      val instant = Instant.parse("2024-07-08T10:15:30Z")
+      val formatted = DateTimeFormats.convertToDateString(instant)
+      formatted shouldBe "08 July 2024"
     }
   }
 
-  ".convertToDateString" - {
+  "DateTimeFormats.dateTimeFormat" - {
+    "should format with English locale by default" in {
+      given Lang = Lang("en")
+      val formatter = DateTimeFormats.dateTimeFormat()
+      val instant   = Instant.parse("2024-12-01T09:00:00Z")
+      val londonZoned = instant.atZone(ZoneId.of("Europe/London"))
 
-    val instant = Instant.parse("2024-10-12T16:12:34Z")
-
-    "must format dates in English" in {
-      val result = convertToDateString(instant, isWelsh = false)
-      result mustEqual "12 October 2024"
+      formatter.format(londonZoned).toLowerCase shouldBe "1 december 2024 9:00am"
     }
 
-    "must format dates in Welsh" in {
-      val result = convertToDateString(instant, isWelsh = true)
-      result mustEqual "12 Hydref 2024"
+    "should format with Welsh locale if Lang is 'cy'" in {
+      given Lang = Lang("cy")
+      val formatter = DateTimeFormats.dateTimeFormat()
+      val instant   = Instant.parse("2024-12-01T09:00:00Z")
+      val londonZoned = instant.atZone(ZoneId.of("Europe/London"))
+
+      formatter.format(londonZoned).toLowerCase shouldBe "1 rhagfyr 2024 9:00yb"
+    }
+
+    "should fallback gracefully for unsupported locales" in {
+      given Lang = Lang("fr")
+      val formatter = DateTimeFormats.dateTimeFormat()
+      val instant   = Instant.parse("2024-12-01T09:00:00Z")
+      val londonZoned = instant.atZone(ZoneId.of("Europe/London"))
+
+      formatter.format(londonZoned).toLowerCase shouldBe "1 décembre 2024 9:00am"
     }
   }
-
 }

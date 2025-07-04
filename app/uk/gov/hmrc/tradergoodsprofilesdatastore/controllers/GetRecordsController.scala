@@ -21,9 +21,9 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, StoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.buildPagination
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
+import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
@@ -33,7 +33,8 @@ class GetRecordsController @Inject() (
   recordsRepository: RecordsRepository,
   cc: ControllerComponents,
   identify: IdentifierAction,
-  storeLatest: StoreLatestAction
+  storeLatest: StoreLatestAction,
+  config: DataStoreAppConfig // Inject config here
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
@@ -44,7 +45,10 @@ class GetRecordsController @Inject() (
     recordsRepository.getCount(request.eori).flatMap { totalRecords =>
       recordsRepository.getMany(request.eori, pageOpt, sizeOpt).map { records =>
         val getRecordsResponse =
-          GetRecordsResponse(goodsItemRecords = records, buildPagination(sizeOpt, pageOpt, totalRecords))
+          GetRecordsResponse(
+            goodsItemRecords = records,
+            Pagination.buildPagination(sizeOpt, pageOpt, totalRecords, config)
+          )
         Ok(Json.toJson(getRecordsResponse))
       }
     }

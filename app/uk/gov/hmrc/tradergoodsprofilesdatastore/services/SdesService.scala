@@ -61,15 +61,13 @@ class SdesService @Inject() (
 
   private def sendEmailNotification(eori: String, expiresAt: Instant): Future[Done] = {
     implicit val hc: HeaderCarrier = HeaderCarrier()
-    //TODO determine when to send email in english or welsh (default is english) TGP-2654
-    val isWelsh                    = false
     customsDataStoreConnector.getEmail(eori).flatMap {
       case Some(email) =>
         emailConnector
           .sendDownloadRecordEmail(
             email.address,
             DownloadRecordEmailParameters(
-              convertToDateString(expiresAt, isWelsh)
+              convertToDateString(expiresAt)
             )
           )
       case None        => Future.failed(new RuntimeException(s"Unable to find the email for EORI: $eori"))

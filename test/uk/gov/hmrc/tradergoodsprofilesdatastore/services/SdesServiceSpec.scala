@@ -29,7 +29,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import uk.gov.hmrc.mongo.workitem.ProcessingStatus.{InProgress, ToDo}
+import uk.gov.hmrc.mongo.workitem.ProcessingStatus.InProgress
 import uk.gov.hmrc.mongo.workitem.{ProcessingStatus, WorkItem}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConnector, EmailConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.FileReadyUnseen
@@ -71,7 +71,7 @@ class SdesServiceSpec
   private val address                       = "email@test.co.uk"
   private val email                         = Email(address, timestamp)
   private val downloadRecordEmailParameters = DownloadRecordEmailParameters(
-    convertToDateString(now.plus(retentionDays.toInt, ChronoUnit.DAYS), isWelsh = false)
+    convertToDateString(now.plus(retentionDays.toInt, ChronoUnit.DAYS))
   )
 
   private val mockSdesSubmissionWorkItemRepository: SdesSubmissionWorkItemRepository =
