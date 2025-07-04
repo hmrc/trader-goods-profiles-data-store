@@ -19,10 +19,10 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.services
 import com.google.inject.Inject
 import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary.Update
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GoodsItemRecord
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{pageSize, startingPage}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{RecordsRepository, RecordsSummaryRepository}
 
 import java.time.{Clock, Instant}
@@ -33,7 +33,8 @@ class StoreRecordsService @Inject() (
   routerConnector: RouterConnector,
   recordsRepository: RecordsRepository,
   recordsSummaryRepository: RecordsSummaryRepository,
-  clock: Clock
+  clock: Clock,
+  config:DataStoreAppConfig
 )(implicit
   ec: ExecutionContext
 ) extends Logging {
@@ -46,7 +47,7 @@ class StoreRecordsService @Inject() (
     val timeBeforeInitialCall = clock.instant()
 
     for {
-      recordsResponse <- routerConnector.getRecords(eori, lastUpdatedDate, Some(startingPage), Some(pageSize))
+      recordsResponse <- routerConnector.getRecords(eori, lastUpdatedDate, Some(config.startingPage), Some(config.pageSize))
       goodsRecords     = recordsResponse.goodsItemRecords
       totalRecords     = recordsResponse.pagination.totalRecords
 
@@ -59,8 +60,8 @@ class StoreRecordsService @Inject() (
     lastUpdatedDate: Option[String],
     initialTimestamp: Instant
   )(implicit hc: HeaderCarrier): Future[Boolean] =
-    if (totalRecords > pageSize) {
-      storeRecordsRecursively(eori, startingPage + 1, lastUpdatedDate, pageSize)
+    if (totalRecords > config.pageSize) {
+      storeRecordsRecursively(eori, config.startingPage + 1, lastUpdatedDate, config.pageSize)
         .flatMap(timeBeforeLastCall => recordsSummaryRepository.set(eori, None, timeBeforeLastCall).map(_ => true))
         .recover { case NonFatal(_) =>
           recordsSummaryRepository.update(eori, None, None)
@@ -84,7 +85,7 @@ class StoreRecordsService @Inject() (
         _           <- recordsRepository.updateRecords(eori, goodsRecords)
         _           <- recordsSummaryRepository.set(
                          eori,
-                         update = Some(Update(pageSize, totalRecords)),
+                         update = Some(Update(config.pageSize, totalRecords)),
                          lastUpdated = getLastUpdated(goodsRecords)
                        )
         finalResult <- handlePaginationAndSummaryUpdate(eori, totalRecords, lastUpdatedDate, timeBeforeInitialCall)
@@ -99,7 +100,7 @@ class StoreRecordsService @Inject() (
   )(implicit hc: HeaderCarrier): Future[Instant] = {
     val timeBeforeInitialCall = clock.instant()
     for {
-      recordsResponse    <- routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(pageSize))
+      recordsResponse    <- routerConnector.getRecords(eori, lastUpdatedDate, Some(page), Some(config.pageSize))
       _                  <- recordsRepository.updateRecords(eori, recordsResponse.goodsItemRecords)
       newRecordsStored    = recordsStored + recordsResponse.goodsItemRecords.size
       _                  <- recordsSummaryRepository.set(

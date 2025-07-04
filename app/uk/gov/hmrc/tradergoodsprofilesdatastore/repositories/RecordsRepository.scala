@@ -24,8 +24,8 @@ import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.transaction.{TransactionConfiguration, Transactions}
 import uk.gov.hmrc.play.http.logging.Mdc
+import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GoodsItemRecord
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.{localPageSize, localStartingPage}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.RepositoryHelpers.caseInsensitiveCollation
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.StringHelper.escapeRegexSpecialChars
 
@@ -37,7 +37,7 @@ import scala.util.matching.Regex
 @Singleton
 class RecordsRepository @Inject() (
   override val mongoComponent: MongoComponent
-)(implicit ec: ExecutionContext)
+)(implicit ec: ExecutionContext, config: DataStoreAppConfig)
     extends PlayMongoRepository[GoodsItemRecord](
       collectionName = "goodsItemRecords",
       mongoComponent = mongoComponent,
@@ -124,8 +124,8 @@ class RecordsRepository @Inject() (
 
   def getMany(eori: String, pageOpt: Option[Int], sizeOpt: Option[Int]): Future[Seq[GoodsItemRecord]] =
     Mdc.preservingMdc {
-      val size = sizeOpt.getOrElse(localPageSize)
-      val page = pageOpt.getOrElse(localStartingPage)
+      val size = sizeOpt.getOrElse(config.localPageSize)
+      val page = pageOpt.getOrElse(config.localStartingPage)
       val skip = (page - 1) * size
       collection
         .find[GoodsItemRecord](byEori(eori))

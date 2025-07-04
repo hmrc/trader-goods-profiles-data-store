@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.models.response
 
-import com.typesafe.config.ConfigFactory
 import play.api.libs.json.{Json, OFormat}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 
 case class Pagination(
   totalRecords: Int,
@@ -31,15 +31,11 @@ object Pagination {
 
   implicit val format: OFormat[Pagination] = Json.format[Pagination]
 
-  // TODO load these from application config, this bypasses bootstrap's application loader
-  val pageSize: Int          = ConfigFactory.load().getInt("pagination-config.recursive-page-size")
-  val startingPage: Int      = ConfigFactory.load().getInt("pagination-config.recursive-starting-page")
-  val localPageSize: Int     = ConfigFactory.load().getInt("pagination-config.local-page-size")
-  val localStartingPage: Int = ConfigFactory.load().getInt("pagination-config.local-starting-page")
 
-  def buildPagination(sizeOpt: Option[Int], pageOpt: Option[Int], totalRecords: Long): Pagination = {
-    val size                 = sizeOpt.getOrElse(localPageSize)
-    val page                 = pageOpt.getOrElse(localStartingPage)
+
+  def buildPagination(sizeOpt: Option[Int], pageOpt: Option[Int], totalRecords: Long, config: DataStoreAppConfig): Pagination = {
+    val size                 = config.localPageSize
+    val page                 = config.localStartingPage
     val mod                  = totalRecords % size
     val totalRecordsMinusMod = totalRecords - mod
     val totalPages           = {
