@@ -18,16 +18,16 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.{atLeastOnce, times, verify, when}
-
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
 import play.api.inject
 import play.api.inject.bind
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeIdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
+import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
@@ -39,7 +39,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecordsResponseUtil {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
-
+  val mockConfig                    = mock[DataStoreAppConfig]
   "getLocalRecords" - {
     "return 200 and the records from the data store with size 10 and page 1 and 35 records in db" in {
 
@@ -232,9 +232,8 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
       val validFakeGetRequest = FakeRequest("GET", getUrl)
 
       val totalRecordsNum       = 20
-      val totalPagesNum         = 2
       val records               = getTestRecords(requestEori, recordsSize)
-      val pagination            = Pagination(totalRecordsNum, page, totalPagesNum, None, Some(1))
+      val pagination            = Pagination.buildPagination(Some(recordsSize), Some(page), totalRecordsNum, mockConfig)
       val mockRecordsRepository = mock[RecordsRepository]
       when(mockRecordsRepository.getCount(any())).thenReturn(Future.successful(totalRecordsNum.toLong))
       when(mockRecordsRepository.getMany(any(), any(), any())).thenReturn(Future.successful(records))
@@ -268,9 +267,8 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
       val validFakeGetRequest = FakeRequest("GET", getUrl)
 
       val totalRecordsNum       = 21
-      val totalPagesNum         = 3
       val records               = getTestRecords(requestEori, recordsSize)
-      val pagination            = Pagination(totalRecordsNum, page, totalPagesNum, None, Some(2))
+      val pagination            = Pagination.buildPagination(Some(recordsSize), Some(page), totalRecordsNum, mockConfig)
       val mockRecordsRepository = mock[RecordsRepository]
       when(mockRecordsRepository.getCount(any())).thenReturn(Future.successful(totalRecordsNum.toLong))
       when(mockRecordsRepository.getMany(any(), any(), any())).thenReturn(Future.successful(records))
@@ -340,9 +338,9 @@ class GetRecordsControllerSpec extends SpecBase with MockitoSugar with GetRecord
       val validFakeGetRequest = FakeRequest("GET", getUrl)
 
       val totalRecordsNum       = 35
-      val totalPagesNum         = 4
       val records               = Seq.empty
-      val pagination            = Pagination(totalRecordsNum, page, totalPagesNum, None, None)
+      when(mockConfig.pageSize).thenReturn(10)
+      val pagination            = Pagination.buildPagination(Some(recordsSize), Some(page), totalRecordsNum, mockConfig)
       val mockRecordsRepository = mock[RecordsRepository]
       when(mockRecordsRepository.getCount(any())).thenReturn(Future.successful(totalRecordsNum.toLong))
       when(mockRecordsRepository.getMany(any(), any(), any())).thenReturn(Future.successful(records))
