@@ -29,19 +29,19 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class GetRecordsController @Inject() (
-                                       routerConnector: RouterConnector,
-                                       recordsRepository: RecordsRepository,
-                                       cc: ControllerComponents,
-                                       identify: IdentifierAction,
-                                       storeLatest: StoreLatestAction,
-                                       config: DataStoreAppConfig  // Inject config here
-                                     )(implicit ec: ExecutionContext)
-  extends BackendController(cc) {
+  routerConnector: RouterConnector,
+  recordsRepository: RecordsRepository,
+  cc: ControllerComponents,
+  identify: IdentifierAction,
+  storeLatest: StoreLatestAction,
+  config: DataStoreAppConfig // Inject config here
+)(implicit ec: ExecutionContext)
+    extends BackendController(cc) {
 
   def getLocalRecords(
-                       pageOpt: Option[Int],
-                       sizeOpt: Option[Int]
-                     ): Action[AnyContent] = (identify andThen storeLatest).async { implicit request =>
+    pageOpt: Option[Int],
+    sizeOpt: Option[Int]
+  ): Action[AnyContent] = (identify andThen storeLatest).async { implicit request =>
     recordsRepository.getCount(request.eori).flatMap { totalRecords =>
       recordsRepository.getMany(request.eori, pageOpt, sizeOpt).map { records =>
         val getRecordsResponse =

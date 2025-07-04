@@ -31,11 +31,16 @@ object Pagination {
 
   implicit val format: OFormat[Pagination] = Json.format[Pagination]
 
+  def buildPagination(
+    sizeOpt: Option[Int],
+    pageOpt: Option[Int],
+    totalRecords: Long,
+    config: DataStoreAppConfig
+  ): Pagination = {
 
+    val size          = sizeOpt.getOrElse(config.localPageSize)
+    val requestedPage = pageOpt.getOrElse(config.localStartingPage)
 
-  def buildPagination(sizeOpt: Option[Int], pageOpt: Option[Int], totalRecords: Long, config: DataStoreAppConfig): Pagination = {
-    val size                 = config.localPageSize
-    val page                 = config.localStartingPage
     val mod                  = totalRecords % size
     val totalRecordsMinusMod = totalRecords - mod
     val totalPages           = {
@@ -45,8 +50,17 @@ object Pagination {
         (totalRecordsMinusMod / size) + 1
       }
     }.toInt
-    val nextPage             = if (page >= totalPages || page < 1) None else Some(page + 1)
-    val prevPage             = if (page <= 1 || page > totalPages) None else Some(page - 1)
+
+    // Clamp page to valid range: min 1, max totalPages (if totalPages > 0)
+    val page =
+      if (totalPages == 0) 1
+      else if (requestedPage < 1) 1
+      else if (requestedPage > totalPages) totalPages
+      else requestedPage
+
+    val nextPage = if (page >= totalPages) None else Some(page + 1)
+    val prevPage = if (page <= 1) None else Some(page - 1)
+
     Pagination(totalRecords.toInt, page, totalPages, nextPage, prevPage)
   }
 }

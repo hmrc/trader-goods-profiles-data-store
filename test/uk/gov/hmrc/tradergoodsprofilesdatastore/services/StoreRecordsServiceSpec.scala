@@ -30,10 +30,10 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.tradergoodsprofilesdatastore.base.SpecBase
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.RouterConnector
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary.Update
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.Pagination.pageSize
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.{RecordsRepository, RecordsSummaryRepository}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.utils.GetRecordsResponseUtil
+import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 
 import java.time.temporal.ChronoUnit
 import java.time.{Clock, Instant, ZoneOffset}
@@ -49,13 +49,17 @@ class StoreRecordsServiceSpec
   implicit val ec: ExecutionContext = ExecutionContext.global
   implicit val hc: HeaderCarrier    = HeaderCarrier()
 
+  val mockConfig                           = mock[DataStoreAppConfig]
+  when(mockConfig.pageSize).thenReturn(10)
+  when(mockConfig.startingPage).thenReturn(0)
   private val mockRouterConnector          = mock[RouterConnector]
   private val mockRecordsRepository        = mock[RecordsRepository]
   private val mockRecordsSummaryRepository = mock[RecordsSummaryRepository]
   private val now                          = Instant.now().plus(1, ChronoUnit.DAYS)
   private val clock                        = Clock.fixed(now, ZoneOffset.UTC)
-
-  val service = new StoreRecordsService(mockRouterConnector, mockRecordsRepository, mockRecordsSummaryRepository, clock)
+  val pageSize: Int                        = mockConfig.pageSize
+  val service                              =
+    new StoreRecordsService(mockRouterConnector, mockRecordsRepository, mockRecordsSummaryRepository, clock, mockConfig)
 
   override def beforeEach(): Unit = {
     super.beforeEach()

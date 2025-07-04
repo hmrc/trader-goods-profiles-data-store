@@ -38,8 +38,8 @@ class DataStoreAppConfig @Inject() (configuration: Configuration) {
   val useXConversationIdHeader: Boolean            = configuration.get[Boolean]("features.use-x-conversation-id-header")
   val downloadDataSummaryReplaceIndexes: Boolean   = configuration.get[Boolean]("download-data-summary.replace-indexes")
 
-  val pageSize: Int = configuration.get[Int]("pagination-config.recursive-page-size")
-  val startingPage: Int =  configuration.get[Int]("pagination-config.recursive-starting-page")
-  val localPageSize: Int =  configuration.get[Int]("pagination-config.local-page-size")
-  val localStartingPage: Int =  configuration.get[Int]("pagination-config.local-starting-page")
+  val pageSize: Int          = configuration.get[Int]("pagination-config.recursive-page-size")
+  val startingPage: Int      = configuration.get[Int]("pagination-config.recursive-starting-page")
+  val localPageSize: Int     = configuration.get[Int]("pagination-config.local-page-size")
+  val localStartingPage: Int = configuration.get[Int]("pagination-config.local-starting-page")
 }

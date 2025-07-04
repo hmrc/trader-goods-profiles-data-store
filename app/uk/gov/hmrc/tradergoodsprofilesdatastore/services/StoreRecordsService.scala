@@ -34,7 +34,7 @@ class StoreRecordsService @Inject() (
   recordsRepository: RecordsRepository,
   recordsSummaryRepository: RecordsSummaryRepository,
   clock: Clock,
-  config:DataStoreAppConfig
+  config: DataStoreAppConfig
 )(implicit
   ec: ExecutionContext
 ) extends Logging {
@@ -47,7 +47,8 @@ class StoreRecordsService @Inject() (
     val timeBeforeInitialCall = clock.instant()
 
     for {
-      recordsResponse <- routerConnector.getRecords(eori, lastUpdatedDate, Some(config.startingPage), Some(config.pageSize))
+      recordsResponse <-
+        routerConnector.getRecords(eori, lastUpdatedDate, Some(config.startingPage), Some(config.pageSize))
       goodsRecords     = recordsResponse.goodsItemRecords
       totalRecords     = recordsResponse.pagination.totalRecords
 

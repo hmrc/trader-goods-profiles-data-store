@@ -21,7 +21,6 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.{IdentifierAction, StoreLatestAction}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GetRecordsResponse
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsResponse, Pagination}
 
@@ -62,7 +61,7 @@ class FilterRecordsController @Inject() (
             val skip             = (page - 1) * size
             val paginatedRecords = filteredRecords.slice(skip, skip + size)
 
-            val pagination = Pagination.buildPagination(Some(size), Some(page), filteredRecords.size.toLong, config)
+            val pagination         = Pagination.buildPagination(Some(size), Some(page), filteredRecords.size.toLong, config)
             val getRecordsResponse = GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination = pagination)
             Ok(Json.toJson(getRecordsResponse))
           }
@@ -90,7 +89,7 @@ class FilterRecordsController @Inject() (
         val page             = pageOpt.getOrElse(config.localStartingPage)
         val skip             = (page - 1) * size
         val paginatedRecords = filteredRecords.slice(skip, skip + size)
-        val pagination = Pagination.buildPagination(Some(size), Some(page), filteredRecords.size.toLong, config)
+        val pagination       = Pagination.buildPagination(Some(size), Some(page), filteredRecords.size.toLong, config)
         Ok(Json.toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination = pagination)))
       }
     }
