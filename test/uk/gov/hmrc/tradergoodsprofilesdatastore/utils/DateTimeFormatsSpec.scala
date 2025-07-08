@@ -26,7 +26,7 @@ class DateTimeFormatsSpec extends AnyFreeSpec with Matchers {
 
   "DateTimeFormats.convertToDateString" - {
     "should format an Instant as 'dd MMMM yyyy' in Europe/London timezone" in {
-      val instant = Instant.parse("2024-07-08T10:15:30Z")
+      val instant   = Instant.parse("2024-07-08T10:15:30Z")
       val formatted = DateTimeFormats.convertToDateString(instant)
       formatted shouldBe "08 July 2024"
     }
@@ -35,8 +35,8 @@ class DateTimeFormatsSpec extends AnyFreeSpec with Matchers {
   "DateTimeFormats.dateTimeFormat" - {
     "should format with English locale by default" in {
       given Lang = Lang("en")
-      val formatter = DateTimeFormats.dateTimeFormat()
-      val instant   = Instant.parse("2024-12-01T09:00:00Z")
+      val formatter   = DateTimeFormats.dateTimeFormat()
+      val instant     = Instant.parse("2024-12-01T09:00:00Z")
       val londonZoned = instant.atZone(ZoneId.of("Europe/London"))
 
       formatter.format(londonZoned).toLowerCase shouldBe "1 december 2024 9:00am"
@@ -44,8 +44,8 @@ class DateTimeFormatsSpec extends AnyFreeSpec with Matchers {
 
     "should format with Welsh locale if Lang is 'cy'" in {
       given Lang = Lang("cy")
-      val formatter = DateTimeFormats.dateTimeFormat()
-      val instant   = Instant.parse("2024-12-01T09:00:00Z")
+      val formatter   = DateTimeFormats.dateTimeFormat()
+      val instant     = Instant.parse("2024-12-01T09:00:00Z")
       val londonZoned = instant.atZone(ZoneId.of("Europe/London"))
 
       formatter.format(londonZoned).toLowerCase shouldBe "1 rhagfyr 2024 9:00yb"
@@ -53,8 +53,8 @@ class DateTimeFormatsSpec extends AnyFreeSpec with Matchers {
 
     "should fallback gracefully for unsupported locales" in {
       given Lang = Lang("fr")
-      val formatter = DateTimeFormats.dateTimeFormat()
-      val instant   = Instant.parse("2024-12-01T09:00:00Z")
+      val formatter   = DateTimeFormats.dateTimeFormat()
+      val instant     = Instant.parse("2024-12-01T09:00:00Z")
       val londonZoned = instant.atZone(ZoneId.of("Europe/London"))
 
       formatter.format(londonZoned).toLowerCase shouldBe "1 décembre 2024 9:00am"
