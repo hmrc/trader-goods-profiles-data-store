@@ -16,32 +16,28 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.utils
 
-import java.time.{Instant, ZoneOffset}
+import play.api.i18n.Lang
+
 import java.time.format.DateTimeFormatter
+import java.time.{Instant, ZoneId}
 import java.util.Locale
 
 object DateTimeFormats {
 
-  private val dateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy")
+  private val baseDateTimeFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("d MMMM yyyy h:mma")
 
-  private val localisedDateTimeFormatters = Map(
-    "en" -> dateTimeFormatter,
-    "cy" -> dateTimeFormatter.withLocale(new Locale("cy"))
-  )
+  private def localisedFormatter(lang: Lang): DateTimeFormatter = {
+    val locale = Locale.forLanguageTag(lang.code)
+    baseDateTimeFormatter.withLocale(locale)
+  }
 
-  def dateTimeFormat(langCode: String): DateTimeFormatter =
-    localisedDateTimeFormatters.getOrElse(langCode, dateTimeFormatter)
+  def dateTimeFormat()(implicit lang: Lang): DateTimeFormatter =
+    localisedFormatter(lang)
 
-  val dateTimeHintFormat: DateTimeFormatter =
-    DateTimeFormatter.ofPattern("d M yyyy")
-
-  def convertToDateString(instant: Instant, isWelsh: Boolean): String =
-    instant
-      .atZone(ZoneOffset.UTC)
-      .toLocalDate
-      .format(dateTimeFormat(if (isWelsh) {
-        "cy"
-      } else {
-        "en"
-      }))
+  def convertToDateString(date: Instant): String =
+    DateTimeFormatter
+      .ofPattern("dd MMMM yyyy")
+      .withZone(ZoneId.of("Europe/London"))
+      .format(date)
 }

@@ -71,7 +71,7 @@ class SdesServiceSpec
   private val address                       = "email@test.co.uk"
   private val email                         = Email(address, timestamp)
   private val downloadRecordEmailParameters = DownloadRecordEmailParameters(
-    convertToDateString(now.plus(retentionDays.toInt, ChronoUnit.DAYS), isWelsh = false)
+    convertToDateString(now.plus(retentionDays.toInt, ChronoUnit.DAYS))
   )
 
   private val mockSdesSubmissionWorkItemRepository: SdesSubmissionWorkItemRepository =
