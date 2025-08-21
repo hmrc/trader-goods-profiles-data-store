@@ -18,18 +18,22 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
 import org.apache.pekko.Done
 import org.mongodb.scala.bson.conversions.Bson
-import org.mongodb.scala.model._
+import org.mongodb.scala.model.*
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.play.http.logging.Mdc
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadySeen, FileReadyUnseen}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileFailedSeen, FileFailedUnseen, FileInProgress, FileReadySeen, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
+
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 import org.mongodb.scala.SingleObservableFuture
 import org.mongodb.scala.ObservableFuture
+
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 @Singleton
 class DownloadDataSummaryRepository @Inject() (
@@ -69,6 +73,16 @@ class DownloadDataSummaryRepository @Inject() (
   private def byEoriAndFileReadyUnseen(eori: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.equal("status", FileReadyUnseen.toString))
 
+  private def byEoriAndFileFailedUnseen(eori: String): Bson =
+    Filters.and(Filters.equal("eori", eori), Filters.equal("status", FileFailedUnseen.toString))
+
+  private def byEoriAndSlaExpired(eori: String, slaThreshold: Instant): Bson =
+    Filters.and(
+      Filters.equal("eori", eori),
+      Filters.equal("status", FileInProgress.toString),
+      Filters.lt("createdAt", slaThreshold)
+    )
+
   def get(eori: String): Future[Seq[DownloadDataSummary]] = Mdc.preservingMdc {
     collection
       .find[DownloadDataSummary](byEori(eori))
@@ -89,13 +103,28 @@ class DownloadDataSummaryRepository @Inject() (
   }
 
   def updateSeen(eori: String): Future[Long] = Mdc.preservingMdc {
-    collection
-      .updateMany(
-        filter = byEoriAndFileReadyUnseen(eori),
-        update = Updates.set("status", FileReadySeen.toString)
-      )
-      .head()
-      .map(_.getMatchedCount)
+    for {
+      readyCount  <- collection
+                       .updateMany(
+                         filter = byEoriAndFileReadyUnseen(eori),
+                         update = Updates.combine(
+                           Updates.set("status", FileReadySeen.toString),
+                           Updates.set("updatedAt", Instant.now())
+                         )
+                       )
+                       .head()
+                       .map(_.getMatchedCount)
+      failedCount <- collection
+                       .updateMany(
+                         filter = byEoriAndFileFailedUnseen(eori),
+                         update = Updates.combine(
+                           Updates.set("status", FileFailedSeen.toString),
+                           Updates.set("updatedAt", Instant.now())
+                         )
+                       )
+                       .head()
+                       .map(_.getMatchedCount)
+    } yield readyCount + failedCount
   }
 
   def set(downloadDataSummary: DownloadDataSummary): Future[Done] = Mdc.preservingMdc {
@@ -107,5 +136,49 @@ class DownloadDataSummaryRepository @Inject() (
       )
       .toFuture()
       .map(_ => Done)
+  }
+
+  def markAsFailed(eori: String): Future[Long] = Mdc.preservingMdc {
+    val slaThreshold = Instant.now().minus(24, ChronoUnit.HOURS)
+    collection
+      .find(
+        Filters.and(
+          Filters.eq("eori", eori),
+          Filters.eq("status", FileInProgress.toString),
+          Filters.lt("createdAt", slaThreshold)
+        )
+      )
+      .toFuture()
+      .flatMap { matchingSummaries =>
+        if (matchingSummaries.isEmpty) {
+          collection
+            .find(Filters.eq("eori", eori))
+            .toFuture()
+            .map { allSummaries =>
+              0L
+            }
+        } else {
+          collection
+            .updateMany(
+              filter = Filters.and(
+                Filters.eq("eori", eori),
+                Filters.eq("status", FileInProgress.toString),
+                Filters.lt("createdAt", slaThreshold)
+              ),
+              update = Updates.combine(
+                Updates.set("status", FileFailedUnseen.toString),
+                Updates.set("updatedAt", Instant.now())
+              )
+            )
+            .toFuture()
+            .map { result =>
+              val modifiedCount = result.getModifiedCount
+              modifiedCount
+            }
+        }
+      }
+      .recover { case e: Exception =>
+        throw e
+      }
   }
 }

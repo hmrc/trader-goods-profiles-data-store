@@ -27,8 +27,12 @@ object DownloadDataStatus {
 
   case object FileReadyUnseen extends DownloadDataStatus("FileReadyUnseen")
 
+  case object FileFailedSeen extends DownloadDataStatus("FileFailedSeen")
+
+  case object FileFailedUnseen extends DownloadDataStatus("FileFailedUnseen")
+
   private lazy val downloadDataStatusTypes: Set[DownloadDataStatus] =
-    Set(FileInProgress, FileReadySeen, FileReadyUnseen)
+    Set(FileInProgress, FileReadySeen, FileReadyUnseen, FileFailedSeen, FileFailedUnseen)
 
   private def enumFormat[A](values: Set[A])(getKey: A => String): Format[A] = new Format[A] {
 
