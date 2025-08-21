@@ -76,13 +76,6 @@ class DownloadDataSummaryRepository @Inject() (
   private def byEoriAndFileFailedUnseen(eori: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.equal("status", FileFailedUnseen.toString))
 
-  private def byEoriAndSlaExpired(eori: String, slaThreshold: Instant): Bson =
-    Filters.and(
-      Filters.equal("eori", eori),
-      Filters.equal("status", FileInProgress.toString),
-      Filters.lt("createdAt", slaThreshold)
-    )
-
   def get(eori: String): Future[Seq[DownloadDataSummary]] = Mdc.preservingMdc {
     collection
       .find[DownloadDataSummary](byEori(eori))

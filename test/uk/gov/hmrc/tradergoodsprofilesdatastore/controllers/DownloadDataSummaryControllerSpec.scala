@@ -35,7 +35,6 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{RouterConnector, Sec
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{CorrelationId, DownloadData, DownloadDataNotification, Metadata}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataSummary, FileInfo}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummaryRepository
 import uk.gov.hmrc.tradergoodsprofilesdatastore.services.SdesService
 
 import java.time.temporal.ChronoUnit
