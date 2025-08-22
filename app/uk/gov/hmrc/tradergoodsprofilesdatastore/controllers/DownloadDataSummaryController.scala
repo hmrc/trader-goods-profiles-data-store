@@ -99,9 +99,6 @@ class DownloadDataSummaryController @Inject() (
   def submitNotification(): Action[DownloadDataNotification] =
     Action.async(parse.json[DownloadDataNotification]) { implicit request =>
       val notification = request.body
-      logger.info(
-        s"Processing notification for EORI: ${notification.eori}, conversationId: ${request.headers.get("x-conversation-id")}"
-      )
       (for {
         conversationId      <- handleConversationId(notification.eori, request.headers)
         retentionDays       <- buildRetentionDays(notification)

@@ -230,6 +230,40 @@ class DownloadDataSummaryRepositorySpec
       notUpdatedRecord.status mustEqual FileInProgress
     }
 
+    "must only update status from FileFailedUnseen to FileFailedSeen" in {
+
+      val downloadDataSummaryFileFailedUnseen: DownloadDataSummary = DownloadDataSummary(
+        summaryId = java.util.UUID.randomUUID().toString,
+        eori = testEori,
+        status = FileFailedUnseen,
+        createdAt = now,
+        expiresAt = now,
+        fileInfo = None
+      )
+
+      val downloadDataSummaryFileInProgress: DownloadDataSummary = DownloadDataSummary(
+        summaryId = java.util.UUID.randomUUID().toString,
+        eori = testEori,
+        status = FileInProgress,
+        createdAt = now,
+        expiresAt = now,
+        fileInfo = None
+      )
+
+      repository.set(downloadDataSummaryFileFailedUnseen).futureValue
+      repository.set(downloadDataSummaryFileInProgress).futureValue
+
+      repository.updateSeen(testEori).futureValue mustEqual 1
+
+      val records = find(byEori(testEori)).futureValue
+
+      val updatedRecord = records.find(_.summaryId == downloadDataSummaryFileFailedUnseen.summaryId).value
+      val notUpdatedRecord = records.find(_.summaryId == downloadDataSummaryFileInProgress.summaryId).value
+
+      updatedRecord.status mustEqual FileFailedSeen
+      notUpdatedRecord.status mustEqual FileInProgress
+    }
+
     mustPreserveMdc(repository.updateSeen("eori"))
   }
 
