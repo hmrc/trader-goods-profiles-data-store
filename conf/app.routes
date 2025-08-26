@@ -34,3 +34,4 @@ POST          /traders/download-data                                            
 
 GET           /traders/download-data-summary                                      uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DownloadDataSummaryController.getDownloadDataSummaries
 PATCH         /traders/download-data-summary                                      uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DownloadDataSummaryController.touchDownloadDataSummaries
+PATCH         /traders/mark-expired-summaries                                     uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DownloadDataSummaryController.markExpiredSummaries

@@ -60,6 +60,12 @@ class DownloadDataSummaryController @Inject() (
       .map(_ => NoContent)
   }
 
+  def markExpiredSummaries: Action[AnyContent] = identify.async { implicit request =>
+    downloadDataSummaryRepository
+      .markAsFailed(request.eori)
+      .map(_ => NoContent)
+  }
+
   private def buildRetentionDays(notification: DownloadDataNotification): Future[String] =
     notification.metadata.find(x => x.metadata == "RETENTION_DAYS") match {
       case Some(metadata) => Future.successful(metadata.value)
@@ -131,12 +137,12 @@ class DownloadDataSummaryController @Inject() (
       downloadDataSummaryRepository
         .set(
           DownloadDataSummary(
-            correlationId.correlationId,
-            request.eori,
-            FileInProgress,
-            createdAt,
-            createdAt.plus(30, ChronoUnit.DAYS),
-            None
+            summaryId = correlationId.correlationId,
+            eori = request.eori,
+            status = FileInProgress,
+            createdAt = createdAt,
+            expiresAt = createdAt.plus(30, ChronoUnit.DAYS),
+            fileInfo = None
           )
         )
         .map(_ => Accepted)
@@ -144,8 +150,8 @@ class DownloadDataSummaryController @Inject() (
   }
 
   def getDownloadData: Action[AnyContent] = identify.async { implicit request =>
-    secureDataExchangeProxyConnector.getFilesAvailableUrl(request.eori).map { downloadDatas =>
-      Ok(Json.toJson(downloadDatas))
+    secureDataExchangeProxyConnector.getFilesAvailableUrl(request.eori).map { downloadDataSet =>
+      Ok(Json.toJson(downloadDataSet))
     }
   }
 }
