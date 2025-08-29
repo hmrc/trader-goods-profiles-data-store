@@ -40,38 +40,27 @@ class DownloadFailureService @Inject() (
     extends Logging {
 
   def processStaleDownloads(): Future[Done] = {
-    val slaThreshold               = clock.instant().minus(24, ChronoUnit.HOURS)
+    val slaThreshold = clock.instant().minus(24, ChronoUnit.HOURS)
     implicit val hc: HeaderCarrier = HeaderCarrier()
-    downloadDataSummaryRepository.collection
-      .distinct[String](
-        "eori",
+
+    downloadDataSummaryRepository.collection.find(
         Filters.and(
           Filters.eq("status", DownloadDataStatus.FileInProgress.toString),
           Filters.lt("createdAt", slaThreshold)
         )
-      )
-      .toFuture()
-      .flatMap { eoris =>
-        if (eoris.isEmpty) {
-          logger.info("[DownloadFailureService] - No stale downloads found")
+      ).toFuture()
+      .flatMap { staleSummaries =>
+        if (staleSummaries.isEmpty) {
           Future.successful(Done)
         } else {
-          logger.info(s"[DownloadFailureService] - Processing stale downloads for ${eoris.size} EORIs")
+          val eoris = staleSummaries.map(_.eori).distinct
           Future
             .sequence(eoris.map { eori =>
-              downloadDataSummaryRepository.get(eori).flatMap { summaries =>
-                val staleSummaries = summaries
-                  .filter(s => s.status == DownloadDataStatus.FileInProgress && s.createdAt.isBefore(slaThreshold))
-                if (staleSummaries.isEmpty) {
-                  Future.successful(Done)
+              downloadDataSummaryRepository.markAsFailed(eori).flatMap { count =>
+                if (count > 0) {
+                  sendFailureEmailNotification(eori)
                 } else {
-                  downloadDataSummaryRepository.markAsFailed(eori).flatMap { count =>
-                    if (count > 0) {
-                      sendFailureEmailNotification(eori)
-                    } else {
-                      Future.successful(Done)
-                    }
-                  }
+                  Future.successful(Done)
                 }
               }
             })
@@ -79,7 +68,7 @@ class DownloadFailureService @Inject() (
         }
       }
       .recover { case e =>
-        logger.error(s"[DownloadFailureService] - Error processing stale downloads: ${e.getMessage}")
+        logger.error(s"[DownloadFailureService] - Error processing stale downloads: ${e.getMessage}", e)
         Done
       }
   }
