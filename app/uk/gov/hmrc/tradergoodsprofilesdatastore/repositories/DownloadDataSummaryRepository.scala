@@ -31,14 +31,16 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 import org.mongodb.scala.SingleObservableFuture
 import org.mongodb.scala.ObservableFuture
+import uk.gov.hmrc.mongo.play.json.Codecs.logger
 
-import java.time.Instant
+import java.time.{Clock, Instant}
 import java.time.temporal.ChronoUnit
 
 @Singleton
 class DownloadDataSummaryRepository @Inject() (
   mongoComponent: MongoComponent,
-  config: DataStoreAppConfig
+  config: DataStoreAppConfig,
+  clock: Clock
 )(implicit ec: ExecutionContext)
     extends PlayMongoRepository[DownloadDataSummary](
       collectionName = "downloadDataSummary",
@@ -132,45 +134,25 @@ class DownloadDataSummaryRepository @Inject() (
   }
 
   def markAsFailed(eori: String): Future[Long] = Mdc.preservingMdc {
-    val slaThreshold = Instant.now().minus(24, ChronoUnit.HOURS)
+    val slaThreshold = clock.instant().minus(24, ChronoUnit.HOURS)
     collection
-      .find(
-        Filters.and(
+      .updateMany(
+        filter = Filters.and(
           Filters.eq("eori", eori),
           Filters.eq("status", FileInProgress.toString),
           Filters.lt("createdAt", slaThreshold)
+        ),
+        update = Updates.combine(
+          Updates.set("status", FileFailedUnseen.toString),
+          Updates.set("updatedAt", clock.instant())
         )
       )
       .toFuture()
-      .flatMap { matchingSummaries =>
-        if (matchingSummaries.isEmpty) {
-          collection
-            .find(Filters.eq("eori", eori))
-            .toFuture()
-            .map { allSummaries =>
-              0L
-            }
-        } else {
-          collection
-            .updateMany(
-              filter = Filters.and(
-                Filters.eq("eori", eori),
-                Filters.eq("status", FileInProgress.toString),
-                Filters.lt("createdAt", slaThreshold)
-              ),
-              update = Updates.combine(
-                Updates.set("status", FileFailedUnseen.toString),
-                Updates.set("updatedAt", Instant.now())
-              )
-            )
-            .toFuture()
-            .map { result =>
-              val modifiedCount = result.getModifiedCount
-              modifiedCount
-            }
-        }
-      }
-      .recover { case e: Exception =>
+      .map(_.getModifiedCount)
+      .recover { case e =>
+        logger.error(
+          s"[DownloadDataSummaryRepository] - Error marking summaries as failed for EORI $eori: ${e.getMessage}"
+        )
         throw e
       }
   }

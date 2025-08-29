@@ -24,7 +24,7 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{RouterConnector, SecureDataExchangeProxyConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileInProgress, FileReadyUnseen}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileFailedUnseen, FileInProgress, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.DownloadDataNotification
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{ConversationIdNotFound, DownloadDataSummary, DownloadRequestNotFound, FileInfo}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummaryRepository
@@ -108,6 +108,34 @@ class DownloadDataSummaryController @Inject() (
                                  downloadDataSummary.summaryId,
                                  notification.eori,
                                  FileReadyUnseen,
+                                 downloadDataSummary.createdAt,
+                                 clock.instant.plus(retentionDaysAsInt, ChronoUnit.DAYS),
+                                 Some(FileInfo(notification.fileName, notification.fileSize, retentionDays))
+                               )
+        _                   <- downloadDataSummaryRepository.set(newSummary)
+        _                   <- handleEnqueueSubmission(newSummary)
+      } yield NoContent).recover {
+        case e: DownloadRequestNotFound =>
+          logger.warn(e.getMessage)
+          NotFound
+        case e: ConversationIdNotFound  =>
+          logger.warn(e.getMessage)
+          BadRequest
+      }
+    }
+
+  def submitFailureNotification(): Action[DownloadDataNotification] =
+    Action.async(parse.json[DownloadDataNotification]) { implicit request =>
+      val notification = request.body
+      (for {
+        conversationId      <- handleConversationId(notification.eori, request.headers)
+        retentionDays       <- buildRetentionDays(notification)
+        retentionDaysAsInt  <- handleToInt(retentionDays)
+        downloadDataSummary <- handleGetDownloadDataSummary(notification.eori, conversationId)
+        newSummary           = DownloadDataSummary(
+                                 downloadDataSummary.summaryId,
+                                 notification.eori,
+                                 FileFailedUnseen,
                                  downloadDataSummary.createdAt,
                                  clock.instant.plus(retentionDaysAsInt, ChronoUnit.DAYS),
                                  Some(FileInfo(notification.fileName, notification.fileSize, retentionDays))

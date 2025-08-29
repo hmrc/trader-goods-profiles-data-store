@@ -38,6 +38,14 @@ class DataStoreAppConfig @Inject() (configuration: Configuration) {
   val useXConversationIdHeader: Boolean            = configuration.get[Boolean]("features.use-x-conversation-id-header")
   val downloadDataSummaryReplaceIndexes: Boolean   = configuration.get[Boolean]("download-data-summary.replace-indexes")
 
+  val staleDownloadRetryTimeout: Duration          = configuration.get[Duration]("workers.stale-download-worker.retry-after")
+  val staleDownloadInitialDelay: FiniteDuration    =
+    configuration.get[FiniteDuration]("workers.stale-download-worker.initial-delay")
+  val staleDownloadInterval: FiniteDuration        =
+    configuration.get[FiniteDuration]("workers.stale-download-worker.interval")
+  val downloadToFailOlderThanHours: FiniteDuration =
+    configuration.get[FiniteDuration]("workers.stale-download-worker.older-than-hours")
+
   val pageSize: Int          = configuration.get[Int]("pagination-config.recursive-page-size")
   val startingPage: Int      = configuration.get[Int]("pagination-config.recursive-starting-page")
   val localPageSize: Int     = configuration.get[Int]("pagination-config.local-page-size")
