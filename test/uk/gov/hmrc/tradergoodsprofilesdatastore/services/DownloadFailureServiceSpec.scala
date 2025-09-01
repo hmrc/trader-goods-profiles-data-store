@@ -50,7 +50,6 @@ class DownloadFailureServiceSpec
     with MockitoSugar
     with OptionValues {
 
-  // we’ll still keep an implicit hc in scope; matchers version additionally matches it explicitly
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   private val now   = Instant.now()
@@ -109,10 +108,10 @@ class DownloadFailureServiceSpec
     }
 
     "mark stale downloads as failed and send email" in {
-      val s = mkSummary()
+      val summary = mkSummary()
 
       when(mockRepo.findStaleSummaries(any()))
-        .thenReturn(Future.successful(Seq(s)))
+        .thenReturn(Future.successful(Seq(summary)))
       when(mockRepo.markAsFailed(eqTo(eori)))
         .thenReturn(Future.successful(1L))
       when(mockCustoms.getEmail(eqTo(eori))(any()))
@@ -134,10 +133,10 @@ class DownloadFailureServiceSpec
     }
 
     "skip email if markAsFailed updates nothing" in {
-      val s = mkSummary()
+      val summary = mkSummary()
 
       when(mockRepo.findStaleSummaries(any()))
-        .thenReturn(Future.successful(Seq(s)))
+        .thenReturn(Future.successful(Seq(summary)))
       when(mockRepo.markAsFailed(eqTo(eori)))
         .thenReturn(Future.successful(0L))
 
@@ -149,10 +148,10 @@ class DownloadFailureServiceSpec
     }
 
     "recover gracefully if email cannot be found" in {
-      val s = mkSummary()
+      val summary = mkSummary()
 
       when(mockRepo.findStaleSummaries(any()))
-        .thenReturn(Future.successful(Seq(s)))
+        .thenReturn(Future.successful(Seq(summary)))
       when(mockRepo.markAsFailed(eqTo(eori)))
         .thenReturn(Future.successful(1L))
       when(mockCustoms.getEmail(eqTo(eori))(any()))
@@ -166,10 +165,10 @@ class DownloadFailureServiceSpec
     }
 
     "recover gracefully if sending email fails" in {
-      val s = mkSummary()
+      val summary = mkSummary()
 
       when(mockRepo.findStaleSummaries(any()))
-        .thenReturn(Future.successful(Seq(s)))
+        .thenReturn(Future.successful(Seq(summary)))
       when(mockRepo.markAsFailed(eqTo(eori)))
         .thenReturn(Future.successful(1L))
       when(mockCustoms.getEmail(eqTo(eori))(any()))
@@ -179,7 +178,7 @@ class DownloadFailureServiceSpec
           any()
         )
       )
-        .thenReturn(Future.failed(new RuntimeException("boom")))
+        .thenReturn(Future.failed(new RuntimeException("failure")))
 
       val result = service.processStaleDownloads().futureValue
 
