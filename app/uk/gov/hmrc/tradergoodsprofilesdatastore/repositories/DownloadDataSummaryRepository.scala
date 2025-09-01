@@ -24,7 +24,7 @@ import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.play.http.logging.Mdc
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileFailedSeen, FileFailedUnseen, FileInProgress, FileReadySeen, FileReadyUnseen}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataStatus, DownloadDataSummary}
 
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
@@ -156,4 +156,14 @@ class DownloadDataSummaryRepository @Inject() (
         throw e
       }
   }
+
+  def findStaleSummaries(slaThreshold: Instant): Future[Seq[DownloadDataSummary]] =
+    collection
+      .find(
+        Filters.and(
+          Filters.eq("status", DownloadDataStatus.FileInProgress.toString),
+          Filters.lt("createdAt", slaThreshold)
+        )
+      )
+      .toFuture()
 }

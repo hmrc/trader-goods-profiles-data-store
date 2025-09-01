@@ -40,20 +40,16 @@ class DownloadFailureService @Inject() (
     extends Logging {
 
   def processStaleDownloads(): Future[Done] = {
-    val slaThreshold = clock.instant().minus(24, ChronoUnit.HOURS)
+    val slaThreshold               = clock.instant().minus(24, ChronoUnit.HOURS)
     implicit val hc: HeaderCarrier = HeaderCarrier()
 
-    downloadDataSummaryRepository.collection.find(
-        Filters.and(
-          Filters.eq("status", DownloadDataStatus.FileInProgress.toString),
-          Filters.lt("createdAt", slaThreshold)
-        )
-      ).toFuture()
+    downloadDataSummaryRepository
+      .findStaleSummaries(slaThreshold)
       .flatMap { staleSummaries =>
         if (staleSummaries.isEmpty) {
           Future.successful(Done)
         } else {
-          val eoris = staleSummaries.map(_.eori).distinct
+          val eoris = staleSummaries.map(_.eori)
           Future
             .sequence(eoris.map { eori =>
               downloadDataSummaryRepository.markAsFailed(eori).flatMap { count =>
