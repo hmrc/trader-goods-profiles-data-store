@@ -24,7 +24,7 @@ import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps, UpstreamErrorResponse}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.email.{DownloadRecordEmailParameters, DownloadRecordEmailRequest}
+import uk.gov.hmrc.tradergoodsprofilesdatastore.models.email.{DownloadRecordEmailParameters, DownloadRecordEmailRequest, DownloadRecordFailureEmailParameters, DownloadRecordFailureEmailRequest}
 import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -43,6 +43,23 @@ class EmailConnector @Inject() (config: Configuration, httpClient: HttpClientV2)
     httpClient
       .post(sendEmailUrl)
       .withBody(Json.toJson(DownloadRecordEmailRequest(Seq(to), downloadRecordEmailParameters)))
+      .execute[HttpResponse]
+      .flatMap { response =>
+        response.status match {
+          case ACCEPTED => Future.successful(Done)
+          case _        => Future.failed(UpstreamErrorResponse(response.body, response.status))
+        }
+      }
+
+  def sendDownloadRecordFailureEmail(
+    to: String,
+    downloadRecordFailureEmailParameters: DownloadRecordFailureEmailParameters
+  )(implicit
+    hc: HeaderCarrier
+  ): Future[Done] =
+    httpClient
+      .post(sendEmailUrl)
+      .withBody(Json.toJson(DownloadRecordFailureEmailRequest(Seq(to), downloadRecordFailureEmailParameters)))
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
