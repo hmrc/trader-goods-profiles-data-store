@@ -1,4 +1,8 @@
+digital-service: TGP / Trader Goods Profile
+description: Backend data store for the UI
 repoVisibility: public_0C3F0CE3E6E6448FAD341E7BFA50FCD333E06A20CFF05FCACE61154DDBBADF71
 type: service
 service-type: backend
-tags: []
+test-repositories:
+  - trader-goods-profiles-ui-journey-tests
+  - trader-goods-profiles-ui-performance-tests
