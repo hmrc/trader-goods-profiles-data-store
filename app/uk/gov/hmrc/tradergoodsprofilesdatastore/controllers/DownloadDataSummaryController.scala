@@ -21,7 +21,6 @@ import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Headers}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{RouterConnector, SecureDataExchangeProxyConnector}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.IdentifierAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileFailedUnseen, FileInProgress, FileReadyUnseen}
@@ -42,7 +41,6 @@ class DownloadDataSummaryController @Inject() (
   cc: ControllerComponents,
   identify: IdentifierAction,
   clock: Clock,
-  config: DataStoreAppConfig,
   sdesService: SdesService
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
@@ -113,7 +111,7 @@ class DownloadDataSummaryController @Inject() (
                                  Some(FileInfo(notification.fileName, notification.fileSize, retentionDays))
                                )
         _                   <- downloadDataSummaryRepository.set(newSummary)
-        _                   <- handleEnqueueSubmission(newSummary)
+        _                   <- sdesService.enqueueSubmission(newSummary)
       } yield NoContent).recover {
         case e: DownloadRequestNotFound =>
           logger.warn(e.getMessage)
@@ -141,7 +139,7 @@ class DownloadDataSummaryController @Inject() (
                                  Some(FileInfo(notification.fileName, notification.fileSize, retentionDays))
                                )
         _                   <- downloadDataSummaryRepository.set(newSummary)
-        _                   <- handleEnqueueSubmission(newSummary)
+        _                   <- sdesService.enqueueSubmission(newSummary)
       } yield NoContent).recover {
         case e: DownloadRequestNotFound =>
           logger.warn(e.getMessage)
@@ -150,13 +148,6 @@ class DownloadDataSummaryController @Inject() (
           logger.warn(e.getMessage)
           BadRequest
       }
-    }
-
-  private def handleEnqueueSubmission(downloadDataSummary: DownloadDataSummary): Future[Done] =
-    if (config.sendNotificationEmail) {
-      sdesService.enqueueSubmission(downloadDataSummary)
-    } else {
-      Future.successful(Done)
     }
 
   def requestDownloadData: Action[AnyContent] = identify.async { implicit request =>
