@@ -26,6 +26,7 @@ import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpResponse, StringConte
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.Service
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{Email, EoriHistoryResponse}
 
+import java.net.URL
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,25 +35,8 @@ class CustomsDataStoreConnector @Inject() (config: Configuration, httpClient: Ht
 ) {
 
   private val baseUrlCustomsDataStore: Service = config.get[Service]("microservice.services.customs-data-store")
-  private val stubbedCustomsDataStore: Service = config.get[Service]("microservice.services.stubbed-customs-data-store")
-  private val stubVerifiedEmail: Boolean       = config.get[Boolean]("features.stub-verified-email")
-  private val isCDSMigrationEnabled: Boolean   = config.get[Boolean]("features.cds-migration")
-
-  private def customsDataStoreBaseUrl: String =
-    if (stubVerifiedEmail) stubbedCustomsDataStore else baseUrlCustomsDataStore
-
-  private def emailUrl(eori: String) =
-    if (isCDSMigrationEnabled) {
-      url"$customsDataStoreBaseUrl/customs-data-store/eori/verified-email-third-party"
-    } else {
-      url"$customsDataStoreBaseUrl/customs-data-store/eori/$eori/verified-email"
-    }
-
-  private def eoriHistoryUrl(eori: String) = if (isCDSMigrationEnabled) {
-    url"$baseUrlCustomsDataStore/customs-data-store/eori/eori-history"
-  } else {
-    url"$baseUrlCustomsDataStore/customs-data-store/eori/$eori/eori-history"
-  }
+  private val emailUrl: URL                    = url"$baseUrlCustomsDataStore/customs-data-store/eori/verified-email-third-party"
+  private val eoriHistoryUrl: URL              = url"$baseUrlCustomsDataStore/customs-data-store/eori/eori-history"
 
   def getEmailViaPost(
     eori: String
@@ -63,7 +47,7 @@ class CustomsDataStoreConnector @Inject() (config: Configuration, httpClient: Ht
     )
 
     httpClient
-      .post(emailUrl(eori))
+      .post(emailUrl)
       .withBody(json)
       .execute[HttpResponse]
       .flatMap { response =>
@@ -78,20 +62,7 @@ class CustomsDataStoreConnector @Inject() (config: Configuration, httpClient: Ht
   def getEmail(
     eori: String
   )(implicit hc: HeaderCarrier): Future[Option[Email]] =
-    if (isCDSMigrationEnabled) {
-      getEmailViaPost(eori)
-    } else {
-      httpClient
-        .get(emailUrl(eori))
-        .execute[HttpResponse]
-        .flatMap { response =>
-          response.status match {
-            case OK        => Future.successful(Some(response.json.as[Email]))
-            case NOT_FOUND => Future.successful(None)
-            case _         => Future.failed(UpstreamErrorResponse(response.body, response.status))
-          }
-        }
-    }
+    getEmailViaPost(eori)
 
   def getEoriHistory(
     eori: String,
@@ -103,9 +74,9 @@ class CustomsDataStoreConnector @Inject() (config: Configuration, httpClient: Ht
     }
 
     val http: RequestBuilder = bearerToken match {
-      case Some(token) if isCDSMigrationEnabled =>
-        httpClient.get(eoriHistoryUrl(eori)).setHeader(("Authorization", s"$token"))
-      case _                                    => httpClient.get(eoriHistoryUrl(eori))
+      case Some(token) =>
+        httpClient.get(eoriHistoryUrl).setHeader(("Authorization", s"$token"))
+      case _           => httpClient.get(eoriHistoryUrl)
     }
 
     http.execute[HttpResponse].flatMap { response =>

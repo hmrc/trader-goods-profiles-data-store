@@ -85,16 +85,9 @@ class DownloadDataSummaryRepository @Inject() (
   }
 
   def get(eori: String, summaryId: String): Future[Option[DownloadDataSummary]] = Mdc.preservingMdc {
-    if (config.useXConversationIdHeader) {
-      collection
-        .find[DownloadDataSummary](byEoriAndSummaryId(eori, summaryId))
-        .headOption()
-    } else {
-      collection
-        .find[DownloadDataSummary](byEoriAndFileInProgress(eori))
-        .sort(byOldest)
-        .headOption()
-    }
+    collection
+      .find[DownloadDataSummary](byEoriAndSummaryId(eori, summaryId))
+      .headOption()
   }
 
   def updateSeen(eori: String): Future[Long] = Mdc.preservingMdc {

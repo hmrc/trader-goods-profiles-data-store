@@ -25,8 +25,6 @@ import scala.concurrent.duration.FiniteDuration
 @Singleton
 class DataStoreAppConfig @Inject() (configuration: Configuration) {
   val tgpEnrolmentIdentifier: EnrolmentConfig      = configuration.get[EnrolmentConfig]("enrolment-config")
-  val checkForHistoricProfile: Boolean             = configuration.get[Boolean]("features.check-for-historic-profile")
-  val sendNotificationEmail: Boolean               = configuration.get[Boolean]("features.send-notification-email")
   val clearCacheWorkerEnabled: Boolean             = configuration.get[Boolean]("workers.clear-cache-worker.enabled")
   val clearCacheWorkerInterval: FiniteDuration     =
     configuration.get[FiniteDuration]("workers.clear-cache-worker.interval")
@@ -35,7 +33,6 @@ class DataStoreAppConfig @Inject() (configuration: Configuration) {
   val dataToClearOlderThanDays: FiniteDuration     =
     configuration.get[FiniteDuration]("workers.clear-cache-worker.older-than-days")
   val sdesSubmissionRetryTimeout: Duration         = configuration.get[Duration]("sdes.submission.retry-after")
-  val useXConversationIdHeader: Boolean            = configuration.get[Boolean]("features.use-x-conversation-id-header")
   val downloadDataSummaryReplaceIndexes: Boolean   = configuration.get[Boolean]("download-data-summary.replace-indexes")
 
   val staleDownloadRetryTimeout: Duration          = configuration.get[Duration]("workers.stale-download-worker.retry-after")

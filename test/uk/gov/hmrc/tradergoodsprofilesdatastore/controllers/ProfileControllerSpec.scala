@@ -88,10 +88,9 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
 
   s"PUT $setUrl" - {
 
-    "when the checkForHistoricProfile flag is set to true" - {
+    "when checking historic profiles" - {
 
       "call update profile when historic profile exists, update repository and return 200 when valid data is posted" in {
-        when(dataStoreAppConfig.checkForHistoricProfile).thenReturn(true)
         when(mockProfileRepository.set(any(), any())).thenReturn(Future.successful(true))
         when(mockRouterConnector.hasHistoricProfile(any())(any())).thenReturn(Future.successful(true))
         when(mockRouterConnector.updateTraderProfile(any(), any())(any())).thenReturn(Future.successful(Done))
@@ -114,7 +113,6 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
       }
 
       "call create profile when historic profile does not exist, update repository and return 200 when valid data is posted" in {
-        when(dataStoreAppConfig.checkForHistoricProfile).thenReturn(true)
         when(mockProfileRepository.set(any(), any())).thenReturn(Future.successful(true))
         when(mockRouterConnector.hasHistoricProfile(any())(any())).thenReturn(Future.successful(false))
         when(mockRouterConnector.createTraderProfile(any(), any())(any())).thenReturn(Future.successful(Done))
@@ -133,29 +131,6 @@ class ProfileControllerSpec extends SpecBase with MockitoSugar with BeforeAndAft
           verify(mockProfileRepository, times(1)).set(any(), any())
           verify(mockRouterConnector, times(1)).hasHistoricProfile(any())(any())
           verify(mockRouterConnector, times(1)).createTraderProfile(any(), any())(any())
-        }
-      }
-    }
-
-    "when the checkForHistoricProfile flag is set to false" - {
-      "call update profile, update repository and return 200 when valid data is posted" in {
-        when(dataStoreAppConfig.checkForHistoricProfile).thenReturn(false)
-        when(mockProfileRepository.set(any(), any())).thenReturn(Future.successful(true))
-        when(mockRouterConnector.updateTraderProfile(any(), any())(any())).thenReturn(Future.successful(Done))
-        val application = applicationBuilder()
-          .overrides(
-            inject.bind[ProfileRepository].toInstance(mockProfileRepository),
-            inject.bind[RouterConnector].toInstance(mockRouterConnector),
-            inject.bind[DataStoreAppConfig].toInstance(dataStoreAppConfig)
-          )
-          .build()
-
-        running(application) {
-          val result = route(application, validFakePutRequest).value
-          status(result) mustBe Status.OK
-
-          verify(mockProfileRepository, times(1)).set(any(), any())
-          verify(mockRouterConnector, times(1)).updateTraderProfile(any(), any())(any())
         }
       }
     }

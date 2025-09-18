@@ -43,12 +43,10 @@ class ProfileController @Inject() (
 
   def setProfile: Action[ProfileRequest] = identify.async(parse.json[ProfileRequest]) { implicit request =>
     val updateOrCreateProfile =
-      if (config.checkForHistoricProfile)
-        routerConnector.hasHistoricProfile(request.eori).flatMap { hasHistoric =>
-          if (hasHistoric) routerConnector.updateTraderProfile(request.body, request.eori)
-          else routerConnector.createTraderProfile(request.body, request.eori)
-        }
-      else routerConnector.updateTraderProfile(request.body, request.eori)
+      routerConnector.hasHistoricProfile(request.eori).flatMap { hasHistoric =>
+        if (hasHistoric) routerConnector.updateTraderProfile(request.body, request.eori)
+        else routerConnector.createTraderProfile(request.body, request.eori)
+      }
 
     for {
       _ <- updateOrCreateProfile

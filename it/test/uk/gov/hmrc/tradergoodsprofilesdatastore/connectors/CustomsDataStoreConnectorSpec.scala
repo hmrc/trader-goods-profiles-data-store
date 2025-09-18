@@ -41,18 +41,15 @@ class CustomsDataStoreConnectorSpec
     with IntegrationPatience
     with BeforeAndAfterEach {
 
-  private def app(cdsMigration: Boolean = false): Application =
+  private def app: Application =
     new GuiceApplicationBuilder()
       .configure("microservice.services.customs-data-store.port" -> wireMockPort)
-      .configure("features.stub-verified-email" -> false)
-      .configure("features.cds-migration" -> cdsMigration)
       .overrides(
         bind[StoreLatestAction].to[FakeStoreLatestAction]
       )
       .build()
 
-  private lazy val connector = app(cdsMigration = false).injector.instanceOf[CustomsDataStoreConnector]
-  private lazy val connectorWithMigration = app(cdsMigration = true).injector.instanceOf[CustomsDataStoreConnector]
+  private lazy val connectorWithMigration = app.injector.instanceOf[CustomsDataStoreConnector]
 
   implicit private lazy val hc: HeaderCarrier = HeaderCarrier()
 
@@ -96,44 +93,6 @@ class CustomsDataStoreConnectorSpec
     }
   }
 
-
-  ".getEmail" - {
-
-    "must get email" in {
-
-      val address   = "email@address.co.uk"
-      val timestamp = Instant.now
-
-      val email = Email(address, timestamp)
-
-      wireMockServer.stubFor(
-        get(urlEqualTo(s"/customs-data-store/eori/$testEori/verified-email"))
-          .willReturn(ok().withBody(Json.toJson(email).toString()))
-      )
-
-      connector.getEmail(testEori).futureValue mustBe Some(email)
-    }
-
-    "must return None if not found" in {
-
-      wireMockServer.stubFor(
-        get(urlEqualTo(s"/customs-data-store/eori/$testEori/verified-email"))
-          .willReturn(notFound())
-      )
-
-      connector.getEmail(testEori).futureValue mustBe None
-    }
-
-    "must return a failed future when the server returns an error" in {
-
-      wireMockServer.stubFor(
-        get(urlEqualTo(s"/customs-data-store/eori/$testEori/verified-email"))
-          .willReturn(serverError())
-      )
-
-      connector.getEmail(testEori).failed.futureValue
-    }
-  }
 
   ".getEoriHistory" - {
 
@@ -202,71 +161,6 @@ class CustomsDataStoreConnectorSpec
           1,
           getRequestedFor(urlEqualTo(s"/customs-data-store/eori/eori-history"))
             .withHeader("Authorization", equalTo(s"${authToken.value}"))
-        )
-      }
-    }
-
-    "when authorisation token is None" - {
-
-      "must return eori history" in {
-
-        val mockEoriHistoryResponse = EoriHistoryResponse(
-          Seq(
-            EoriHistoricItem("eori1", LocalDate.parse("2024-02-20"), Some(LocalDate.parse("2024-01-20"))),
-            EoriHistoricItem("eori1", LocalDate.parse("2024-03-20"), Some(LocalDate.parse("2024-01-20"))),
-            EoriHistoricItem("eori1", LocalDate.parse("2024-01-20"), Some(LocalDate.parse("2024-01-20")))
-          )
-        )
-        wireMockServer.stubFor(
-          get(urlEqualTo(s"/customs-data-store/eori/$testEori/eori-history"))
-            .willReturn(ok().withBody(Json.toJson(mockEoriHistoryResponse).toString()))
-        )
-
-        val expectedResponse = EoriHistoryResponse(
-          Seq(
-            EoriHistoricItem("eori1", LocalDate.parse("2024-03-20"), Some(LocalDate.parse("2024-01-20"))),
-            EoriHistoricItem("eori1", LocalDate.parse("2024-02-20"), Some(LocalDate.parse("2024-01-20"))),
-            EoriHistoricItem("eori1", LocalDate.parse("2024-01-20"), Some(LocalDate.parse("2024-01-20")))
-          )
-        )
-
-        connector.getEoriHistory(testEori, None).futureValue mustBe Some(expectedResponse)
-
-        wireMockServer.verify(
-          1,
-          getRequestedFor(urlEqualTo(s"/customs-data-store/eori/$testEori/eori-history"))
-            .withoutHeader("Authorization")
-        )
-      }
-
-      "must return None if not found" in {
-
-        wireMockServer.stubFor(
-          get(urlEqualTo(s"/customs-data-store/eori/$testEori/eori-history"))
-            .willReturn(notFound())
-        )
-
-        connector.getEoriHistory(testEori, None).futureValue mustBe None
-
-        wireMockServer.verify(
-          1,
-          getRequestedFor(urlEqualTo(s"/customs-data-store/eori/$testEori/eori-history"))
-            .withoutHeader("Authorization")
-        )
-      }
-
-      "must return a failed future when the server returns an error" in {
-        wireMockServer.stubFor(
-          get(urlEqualTo(s"/customs-data-store/eori/$testEori/eori-history"))
-            .willReturn(serverError())
-        )
-
-        connector.getEoriHistory(testEori, None).failed.futureValue
-
-        wireMockServer.verify(
-          1,
-          getRequestedFor(urlEqualTo(s"/customs-data-store/eori/$testEori/eori-history"))
-            .withoutHeader("Authorization")
         )
       }
     }
