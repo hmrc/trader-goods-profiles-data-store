@@ -34,18 +34,13 @@ class CustomsDataStoreConnector @Inject() (config: Configuration, httpClient: Ht
 ) {
 
   private val baseUrlCustomsDataStore: Service = config.get[Service]("microservice.services.customs-data-store")
-  private val stubbedCustomsDataStore: Service = config.get[Service]("microservice.services.stubbed-customs-data-store")
-  private val stubVerifiedEmail: Boolean       = config.get[Boolean]("features.stub-verified-email")
   private val isCDSMigrationEnabled: Boolean   = config.get[Boolean]("features.cds-migration")
-
-  private def customsDataStoreBaseUrl: String =
-    if (stubVerifiedEmail) stubbedCustomsDataStore else baseUrlCustomsDataStore
 
   private def emailUrl(eori: String) =
     if (isCDSMigrationEnabled) {
-      url"$customsDataStoreBaseUrl/customs-data-store/eori/verified-email-third-party"
+      url"$baseUrlCustomsDataStore/customs-data-store/eori/verified-email-third-party"
     } else {
-      url"$customsDataStoreBaseUrl/customs-data-store/eori/$eori/verified-email"
+      url"$baseUrlCustomsDataStore/customs-data-store/eori/$eori/verified-email"
     }
 
   private def eoriHistoryUrl(eori: String) = if (isCDSMigrationEnabled) {

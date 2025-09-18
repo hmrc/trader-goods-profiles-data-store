@@ -44,7 +44,6 @@ class CustomsDataStoreConnectorSpec
   private def app(cdsMigration: Boolean = false): Application =
     new GuiceApplicationBuilder()
       .configure("microservice.services.customs-data-store.port" -> wireMockPort)
-      .configure("features.stub-verified-email" -> false)
       .configure("features.cds-migration" -> cdsMigration)
       .overrides(
         bind[StoreLatestAction].to[FakeStoreLatestAction]
