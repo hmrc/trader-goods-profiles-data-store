@@ -123,73 +123,20 @@ class DownloadDataSummaryRepositorySpec
 
   ".get one" - {
 
-    "when use-x-conversation-id-header is true" - {
-
       "when there is a downloadDataSummary for this eori and summary id it must get it" in {
-
-        val mockDataStoreAppConfig = mock[DataStoreAppConfig]
-        when(mockDataStoreAppConfig.useXConversationIdHeader) thenReturn true
-
-        insert(sampleDownloadDataSummary).futureValue
-        insert(sampleDownloadDataSummary.copy(summaryId = java.util.UUID.randomUUID.toString)).futureValue
-        repository.get(sampleDownloadDataSummary.eori, sampleDownloadDataSummary.summaryId).futureValue mustEqual Some(
-          sampleDownloadDataSummary
-        )
-      }
-
-      "when there is no downloadDataSummary for this eori and summaryId it must return None" in {
-
-        val mockDataStoreAppConfig = mock[DataStoreAppConfig]
-        when(mockDataStoreAppConfig.useXConversationIdHeader) thenReturn true
-
-        repository.get(sampleDownloadDataSummary.eori, sampleDownloadDataSummary.summaryId).futureValue mustEqual None
-      }
+        
+      insert(sampleDownloadDataSummary).futureValue
+      insert(sampleDownloadDataSummary.copy(summaryId = java.util.UUID.randomUUID.toString)).futureValue
+      repository.get(sampleDownloadDataSummary.eori, sampleDownloadDataSummary.summaryId).futureValue mustEqual Some(
+        sampleDownloadDataSummary
+      )
     }
 
-    "when use-x-conversation-id-header is false" - {
+    "when there is no downloadDataSummary for this eori and summaryId it must return None" in {
 
-      "when there are downloadDataSummaries for this eori in Progress it must return the oldest" in {
-
-        val mockDataStoreAppConfig = mock[DataStoreAppConfig]
-        when(mockDataStoreAppConfig.useXConversationIdHeader) thenReturn false
-
-        val oldestInProgressUuid   = java.util.UUID.randomUUID.toString
-        val oldestUuid             = java.util.UUID.randomUUID.toString
-        val youngestInProgressUuid = java.util.UUID.randomUUID.toString
-
-        insert(
-          sampleDownloadDataSummary
-            .copy(summaryId = oldestUuid, status = FileReadySeen, createdAt = Instant.now().minus(30, ChronoUnit.DAYS))
-        ).futureValue
-        insert(
-          sampleDownloadDataSummary.copy(
-            summaryId = oldestInProgressUuid,
-            status = FileInProgress,
-            createdAt = Instant.now().minus(20, ChronoUnit.DAYS)
-          )
-        ).futureValue
-        insert(
-          sampleDownloadDataSummary.copy(
-            summaryId = youngestInProgressUuid,
-            status = FileInProgress,
-            createdAt = Instant.now().minus(10, ChronoUnit.DAYS)
-          )
-        ).futureValue
-        repository
-          .get(sampleDownloadDataSummary.eori, oldestInProgressUuid)
-          .futureValue
-          .get
-          .summaryId mustEqual oldestInProgressUuid
-      }
-
-      "when there is no downloadDataSummary for this eori it must return None" in {
-
-        val mockDataStoreAppConfig = mock[DataStoreAppConfig]
-        when(mockDataStoreAppConfig.useXConversationIdHeader) thenReturn false
-
-        repository.get(sampleDownloadDataSummary.eori, sampleDownloadDataSummary.summaryId).futureValue mustEqual None
-      }
+      repository.get(sampleDownloadDataSummary.eori, sampleDownloadDataSummary.summaryId).futureValue mustEqual None
     }
+
 
     mustPreserveMdc(repository.get(sampleDownloadDataSummary.eori, sampleDownloadDataSummary.summaryId))
   }
