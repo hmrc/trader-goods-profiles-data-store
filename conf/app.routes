@@ -9,8 +9,7 @@ GET           /traders/records                                                  
 POST          /traders/records                                                    uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.CreateRecordController.createRecord
 DELETE        /traders/records/:recordId                                          uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.DeleteRecordController.deleteRecord(recordId: String)
 
-GET           /traders/:eori/records/filter                                       uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.FilterRecordsController.filterLocalRecords(eori: String, searchTerm: Option[String], exactMatch: Option[Boolean], field: Option[String], page: Option[Int], size: Option[Int])
-GET           /traders/records/filter                                             uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.FilterRecordsController.filterIteration(searchTerm: Option[String], countryOfOrigin: Option[String], IMMIReady: Option[Boolean], notReadyForIMMI: Option[Boolean], actionNeeded: Option[Boolean], pageOpt: Option[Int], sizeOpt: Option[Int])
+GET           /traders/records/filter                                             uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.FilterRecordsController.filterLocalRecords(searchTerm: Option[String], countryOfOrigin: Option[String], IMMIReady: Option[Boolean], notReadyForIMMI: Option[Boolean], actionNeeded: Option[Boolean], pageOpt: Option[Int], sizeOpt: Option[Int])
 GET           /traders/records/is-trader-reference-unique                         uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.FilterRecordsController.isTraderReferenceUnique(traderReference: String)
 
 GET           /traders/records-summary                                            uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.RecordsSummaryController.recordsSummary

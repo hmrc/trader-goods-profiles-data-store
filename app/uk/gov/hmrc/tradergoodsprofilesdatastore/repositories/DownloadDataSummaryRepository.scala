@@ -21,7 +21,7 @@ import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.*
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
-import uk.gov.hmrc.play.http.logging.Mdc
+import uk.gov.hmrc.mdc.Mdc
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileFailedSeen, FileFailedUnseen, FileInProgress, FileReadySeen, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataStatus, DownloadDataSummary}
@@ -29,8 +29,6 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.{DownloadDataStatus, Down
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
-import org.mongodb.scala.SingleObservableFuture
-import org.mongodb.scala.ObservableFuture
 import uk.gov.hmrc.mongo.play.json.Codecs.logger
 
 import java.time.{Clock, Instant}
@@ -66,11 +64,6 @@ class DownloadDataSummaryRepository @Inject() (
 
   private def byEoriAndSummaryId(eori: String, summaryId: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.and(Filters.equal("summaryId", summaryId)))
-
-  private def byOldest: Bson = Sorts.ascending("createdAt")
-
-  private def byEoriAndFileInProgress(eori: String): Bson =
-    Filters.and(Filters.equal("eori", eori), Filters.equal("status", FileInProgress.toString))
 
   private def byEoriAndFileReadyUnseen(eori: String): Bson =
     Filters.and(Filters.equal("eori", eori), Filters.equal("status", FileReadyUnseen.toString))

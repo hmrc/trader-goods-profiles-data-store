@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.tradergoodsprofilesdatastore.repositories
 
-import org.mockito.Mockito.when
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Filters
 import org.scalactic.source.Position
@@ -33,7 +32,6 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 import uk.gov.hmrc.tradergoodsprofilesdatastore.actions.FakeStoreLatestAction
-import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.controllers.actions.StoreLatestAction
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus.{FileFailedSeen, FileFailedUnseen, FileInProgress, FileReadySeen, FileReadyUnseen}
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataSummary
@@ -125,20 +123,20 @@ class DownloadDataSummaryRepositorySpec
 
       "when there is a downloadDataSummary for this eori and summary id it must get it" in {
         
-      insert(sampleDownloadDataSummary).futureValue
-      insert(sampleDownloadDataSummary.copy(summaryId = java.util.UUID.randomUUID.toString)).futureValue
-      repository.get(sampleDownloadDataSummary.eori, sampleDownloadDataSummary.summaryId).futureValue mustEqual Some(
-        sampleDownloadDataSummary
-      )
-    }
+        insert(sampleDownloadDataSummary).futureValue
+        insert(sampleDownloadDataSummary.copy(summaryId = java.util.UUID.randomUUID.toString)).futureValue
+        repository.get(sampleDownloadDataSummary.eori, sampleDownloadDataSummary.summaryId).futureValue mustEqual Some(
+          sampleDownloadDataSummary
+        )
+      }
 
-    "when there is no downloadDataSummary for this eori and summaryId it must return None" in {
+      "when there is no downloadDataSummary for this eori and summaryId it must return None" in {
 
-      repository.get(sampleDownloadDataSummary.eori, sampleDownloadDataSummary.summaryId).futureValue mustEqual None
-    }
+        repository.get(sampleDownloadDataSummary.eori, sampleDownloadDataSummary.summaryId).futureValue mustEqual None
+      }
+  
 
-
-    mustPreserveMdc(repository.get(sampleDownloadDataSummary.eori, sampleDownloadDataSummary.summaryId))
+      mustPreserveMdc(repository.get(sampleDownloadDataSummary.eori, sampleDownloadDataSummary.summaryId))
   }
 
   ".update" - {

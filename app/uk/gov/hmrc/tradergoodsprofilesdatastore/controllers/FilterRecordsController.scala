@@ -26,7 +26,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsRespo
 
 import java.net.URLDecoder
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext}
 
 class FilterRecordsController @Inject() (
   recordsRepository: RecordsRepository,
@@ -38,37 +38,6 @@ class FilterRecordsController @Inject() (
     extends BackendController(cc) {
 
   def filterLocalRecords(
-    eori: String,
-    searchTerm: Option[String],
-    exactMatch: Option[Boolean],
-    field: Option[String],
-    pageOpt: Option[Int],
-    sizeOpt: Option[Int]
-  ): Action[AnyContent] =
-    (identify andThen storeLatest).async {
-      val validFields  = Set("traderRef", "goodsDescription", "comcode")
-      val isExactMatch = exactMatch.getOrElse(true)
-
-      field match {
-        case Some(value) if !validFields.contains(value) =>
-          Future.successful(BadRequest("Invalid field parameter"))
-        case _                                           =>
-          for {
-            filteredRecords <- recordsRepository.filterRecords(eori, searchTerm, field, isExactMatch)
-          } yield {
-            val size             = sizeOpt.getOrElse(config.localPageSize)
-            val page             = pageOpt.getOrElse(config.localStartingPage)
-            val skip             = (page - 1) * size
-            val paginatedRecords = filteredRecords.slice(skip, skip + size)
-
-            val pagination         = Pagination.buildPagination(Some(size), Some(page), filteredRecords.size.toLong, config)
-            val getRecordsResponse = GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination = pagination)
-            Ok(Json.toJson(getRecordsResponse))
-          }
-      }
-    }
-
-  def filterIteration( // TODO: Rename this to filterLocalRecords when frontend changes are implemented and delete the old logic relating to old filtering (TGP-3003)
     searchTerm: Option[String],
     countryOfOrigin: Option[String],
     IMMIReady: Option[Boolean],

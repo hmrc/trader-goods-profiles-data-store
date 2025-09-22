@@ -19,11 +19,8 @@ package uk.gov.hmrc.tradergoodsprofilesdatastore.services
 import org.apache.pekko.Done
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.tradergoodsprofilesdatastore.connectors.{CustomsDataStoreConnector, EmailConnector}
-import uk.gov.hmrc.tradergoodsprofilesdatastore.models.DownloadDataStatus
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.email.DownloadRecordFailureEmailParameters
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.DownloadDataSummaryRepository
-import org.mongodb.scala.model.Filters
-import org.mongodb.scala.ObservableFuture
 import play.api.Logging
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}

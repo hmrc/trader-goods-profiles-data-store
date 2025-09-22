@@ -17,7 +17,7 @@
 package uk.gov.hmrc.tradergoodsprofilesdatastore.controllers
 
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito.{atLeastOnce, never, verify, when}
+import org.mockito.Mockito.{atLeastOnce, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
@@ -71,194 +71,6 @@ class FilterRecordsControllerSpec
   "filterLocalRecords" - {
 
     "return 200 and the paginated records from the data store with size 10 and page 1 and 25 records in db" in {
-      val recordsSize = 25
-      val page        = 1
-      val size        = 10
-      val field       = "traderRef"
-      val searchTerm  = "BAN001002"
-      val requestEori = "GB123456789099"
-      val getUrl      = routes.FilterRecordsController
-        .filterLocalRecords(requestEori, Some(searchTerm), Some(false), Some(field), Some(page), Some(size))
-        .url
-
-      val validFakeGetRequest = FakeRequest("GET", getUrl)
-      val records             = getTestRecords(requestEori, recordsSize)
-      val paginatedRecords    = records.slice(0, 10)
-
-      val pagination = Pagination(recordsSize, page, 3, Some(page + 1), None)
-
-      when(mockRecordsRepository.filterRecords(any(), any(), any(), any())).thenReturn(Future.successful(records))
-
-      val application = applicationBuilder()
-        .overrides(
-          bind[RouterConnector].toInstance(mockRouterConnector),
-          bind[RecordsRepository].toInstance(mockRecordsRepository)
-        )
-        .build()
-
-      running(application) {
-        val result = route(application, validFakeGetRequest).value
-        status(result) mustBe Status.OK
-        contentAsString(result) mustBe Json
-          .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
-          .toString
-      }
-      verify(mockRecordsRepository, atLeastOnce())
-        .filterRecords(eqTo(requestEori), eqTo(Some(searchTerm)), eqTo(Some(field)), eqTo(false))
-
-    }
-
-    "return 200 and the paginated records from the data store with size 10 and page 1 and 5 records in db" in {
-      val recordsSize = 5
-      val page        = 1
-      val size        = 10
-      val field       = "traderRef"
-      val searchTerm  = "BAN001002"
-      val requestEori = "GB123456789099"
-      val getUrl      = routes.FilterRecordsController
-        .filterLocalRecords(requestEori, Some(searchTerm), Some(false), Some(field), Some(page), Some(size))
-        .url
-
-      val validFakeGetRequest = FakeRequest("GET", getUrl)
-      val records             = getTestRecords(requestEori, recordsSize)
-      val paginatedRecords    = records.slice(0, 5)
-
-      val pagination = Pagination(recordsSize, page, 1, None, None)
-
-      when(mockRecordsRepository.filterRecords(any(), any(), any(), any())).thenReturn(Future.successful(records))
-
-      val application = applicationBuilder()
-        .overrides(
-          bind[RouterConnector].toInstance(mockRouterConnector),
-          bind[RecordsRepository].toInstance(mockRecordsRepository)
-        )
-        .build()
-
-      running(application) {
-        val result = route(application, validFakeGetRequest).value
-        status(result) mustBe Status.OK
-        contentAsString(result) mustBe Json
-          .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
-          .toString
-
-        verify(mockRecordsRepository, atLeastOnce())
-          .filterRecords(eqTo(requestEori), eqTo(Some(searchTerm)), eqTo(Some(field)), eqTo(false))
-
-      }
-    }
-
-    "return 200 and the paginated records from the data store with size 10 and page 1 and 10 records in db" in {
-      val recordsSize = 10
-      val page        = 1
-      val size        = 10
-      val field       = "traderRef"
-      val searchTerm  = "BAN001002"
-      val requestEori = "GB123456789099"
-      val getUrl      = routes.FilterRecordsController
-        .filterLocalRecords(requestEori, Some(searchTerm), Some(false), Some(field), Some(page), Some(size))
-        .url
-
-      val validFakeGetRequest = FakeRequest("GET", getUrl)
-      val records             = getTestRecords(requestEori, recordsSize)
-      val paginatedRecords    = records.slice(0, 10)
-
-      val pagination = Pagination(recordsSize, page, 1, None, None)
-
-      when(mockRecordsRepository.filterRecords(any(), any(), any(), any())).thenReturn(Future.successful(records))
-
-      val application = applicationBuilder()
-        .overrides(
-          bind[RouterConnector].toInstance(mockRouterConnector),
-          bind[RecordsRepository].toInstance(mockRecordsRepository)
-        )
-        .build()
-
-      running(application) {
-        val result = route(application, validFakeGetRequest).value
-        status(result) mustBe Status.OK
-        contentAsString(result) mustBe Json
-          .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
-          .toString
-        verify(mockRecordsRepository, atLeastOnce()).filterRecords(any(), any(), any(), any())
-      }
-    }
-
-    "return 200 and the paginated records from the data store with size 10 and page 2 and 25 records in db" in {
-      val recordsSize = 25
-      val page        = 2
-      val size        = 10
-      val field       = "traderRef"
-      val searchTerm  = "BAN001002"
-      val requestEori = "GB123456789099"
-      val getUrl      = routes.FilterRecordsController
-        .filterLocalRecords(requestEori, Some(searchTerm), Some(false), Some(field), Some(page), Some(size))
-        .url
-
-      val validFakeGetRequest = FakeRequest("GET", getUrl)
-      val records             = getTestRecords(requestEori, recordsSize)
-      val paginatedRecords    = records.slice(10, 20)
-
-      val pagination = Pagination(recordsSize, page, 3, Some(page + 1), Some(page - 1))
-
-      when(mockRecordsRepository.filterRecords(any(), any(), any(), any())).thenReturn(Future.successful(records))
-
-      val application = applicationBuilder()
-        .overrides(
-          bind[RouterConnector].toInstance(mockRouterConnector),
-          bind[RecordsRepository].toInstance(mockRecordsRepository)
-        )
-        .build()
-
-      running(application) {
-        val result = route(application, validFakeGetRequest).value
-        status(result) mustBe Status.OK
-        contentAsString(result) mustBe Json
-          .toJson(GetRecordsResponse(goodsItemRecords = paginatedRecords, pagination))
-          .toString
-
-        verify(mockRecordsRepository, atLeastOnce())
-          .filterRecords(eqTo(requestEori), eqTo(Some(searchTerm)), eqTo(Some(field)), eqTo(false))
-
-      }
-    }
-
-    "return 400 when the field is not as expected" in {
-      val page        = 1
-      val size        = 10
-      val field       = "trader"
-      val searchTerm  = "BAN001002"
-      val requestEori = "GB123456789099"
-      val getUrl      = routes.FilterRecordsController
-        .filterLocalRecords(requestEori, Some(searchTerm), Some(true), Some(field), Some(page), Some(size))
-        .url
-
-      val validFakeGetRequest = FakeRequest("GET", getUrl)
-
-      val records = getTestRecords(requestEori, 25)
-
-      when(mockRecordsRepository.filterRecords(any(), any(), any(), any())).thenReturn(Future.successful(records))
-
-      val application = applicationBuilder()
-        .overrides(
-          bind[RouterConnector].toInstance(mockRouterConnector),
-          bind[RecordsRepository].toInstance(mockRecordsRepository)
-        )
-        .build()
-
-      running(application) {
-        val result = route(application, validFakeGetRequest).value
-        status(result) mustBe Status.BAD_REQUEST
-
-        verify(mockRecordsRepository, never())
-          .filterRecords(eqTo(requestEori), eqTo(Some(searchTerm)), eqTo(Some(field)), eqTo(true))
-
-      }
-    }
-  }
-
-  "filterIteration" - {
-
-    "return 200 and the paginated records from the data store with size 10 and page 1 and 25 records in db" in {
       val recordsSize     = 25
       val page            = 1
       val size            = 10
@@ -267,7 +79,7 @@ class FilterRecordsControllerSpec
       val IMMIReady       = Some(true)
       val requestEori     = "eori"
       val getUrl          = routes.FilterRecordsController
-        .filterIteration(searchTerm, countryOfOrigin, IMMIReady, None, None, Some(page), Some(size))
+        .filterLocalRecords(searchTerm, countryOfOrigin, IMMIReady, None, None, Some(page), Some(size))
         .url
 
       val validFakeGetRequest = FakeRequest("GET", getUrl)
@@ -315,7 +127,7 @@ class FilterRecordsControllerSpec
       val IMMIReady       = Some(true)
       val requestEori     = "eori"
       val getUrl          = routes.FilterRecordsController
-        .filterIteration(searchTerm, countryOfOrigin, IMMIReady, None, None, Some(page), Some(size))
+        .filterLocalRecords(searchTerm, countryOfOrigin, IMMIReady, None, None, Some(page), Some(size))
         .url
 
       val validFakeGetRequest = FakeRequest("GET", getUrl)
@@ -363,7 +175,7 @@ class FilterRecordsControllerSpec
       val IMMIReady       = Some(true)
       val requestEori     = "eori"
       val getUrl          = routes.FilterRecordsController
-        .filterIteration(searchTerm, countryOfOrigin, IMMIReady, None, None, Some(page), Some(size))
+        .filterLocalRecords(searchTerm, countryOfOrigin, IMMIReady, None, None, Some(page), Some(size))
         .url
 
       val validFakeGetRequest = FakeRequest("GET", getUrl)
