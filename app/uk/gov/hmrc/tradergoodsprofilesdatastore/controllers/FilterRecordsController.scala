@@ -26,7 +26,7 @@ import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.{GetRecordsRespo
 
 import java.net.URLDecoder
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext}
 
 class FilterRecordsController @Inject() (
   recordsRepository: RecordsRepository,

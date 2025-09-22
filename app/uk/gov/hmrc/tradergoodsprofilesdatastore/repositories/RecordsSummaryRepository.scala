@@ -21,12 +21,10 @@ import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
-import uk.gov.hmrc.play.http.logging.Mdc
+import uk.gov.hmrc.mdc.Mdc
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.RecordsSummary.Update
 import uk.gov.hmrc.tradergoodsprofilesdatastore.repositories.RecordsSummaryRepository.NoRecordFound
-import org.mongodb.scala.SingleObservableFuture
-import org.mongodb.scala.ObservableFuture
 import java.time.Instant
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
