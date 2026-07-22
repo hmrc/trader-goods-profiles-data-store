@@ -220,7 +220,7 @@ class RecordsRepositorySpec
 
   override def fakeApplication(): Application = GuiceApplicationBuilder()
     .overrides(
-      bind[MongoComponent].to(mongoComponent),
+      bind[MongoComponent].toInstance(mongoComponent),
       bind[StoreLatestAction].to[FakeStoreLatestAction]
     )
     .build()
