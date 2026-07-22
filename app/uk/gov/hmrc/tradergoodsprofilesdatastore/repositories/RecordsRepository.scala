@@ -21,7 +21,6 @@ import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.*
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
-import uk.gov.hmrc.mongo.transaction.{TransactionConfiguration, Transactions}
 import uk.gov.hmrc.mdc.Mdc
 import uk.gov.hmrc.tradergoodsprofilesdatastore.config.DataStoreAppConfig
 import uk.gov.hmrc.tradergoodsprofilesdatastore.models.response.GoodsItemRecord
@@ -35,7 +34,7 @@ import scala.util.matching.Regex
 
 @Singleton
 class RecordsRepository @Inject() (
-  override val mongoComponent: MongoComponent
+  mongoComponent: MongoComponent
 )(implicit ec: ExecutionContext, config: DataStoreAppConfig)
     extends PlayMongoRepository[GoodsItemRecord](
       collectionName = "goodsItemRecords",
@@ -57,13 +56,9 @@ class RecordsRepository @Inject() (
           )
         )
       )
-    )
-    with Transactions {
+    ) {
 
   override lazy val requiresTtlIndex: Boolean = false
-
-  private implicit val tc: TransactionConfiguration =
-    TransactionConfiguration.strict
 
   private def byEori(eori: String): Bson = Filters.equal("eori", eori)
 
@@ -102,21 +97,18 @@ class RecordsRepository @Inject() (
   def updateRecords(eori: String, records: Seq[GoodsItemRecord]): Future[Done] = Mdc.preservingMdc {
     val (activeRecords, inactiveRecords) = records.partition(_.active)
     val inactiveRecordIds                = inactiveRecords.map(_.recordId)
-    withSessionAndTransaction { session =>
-      collection
-        .bulkWrite(
-          session,
-          activeRecords.map { record =>
-            ReplaceOneModel(
-              filter = byEoriAndRecordId(eori, record.recordId),
-              replacement = record,
-              replaceOptions = ReplaceOptions().upsert(true)
-            )
-          } :+ DeleteManyModel(byEoriAndRecordIds(eori, inactiveRecordIds))
-        )
-        .toFuture()
-        .map(_ => Done)
-    }
+    collection
+      .bulkWrite(
+        activeRecords.map { record =>
+          ReplaceOneModel(
+            filter = byEoriAndRecordId(eori, record.recordId),
+            replacement = record,
+            replaceOptions = ReplaceOptions().upsert(true)
+          )
+        } :+ DeleteManyModel(byEoriAndRecordIds(eori, inactiveRecordIds))
+      )
+      .toFuture()
+      .map(_ => Done)
   }
 
   def getMany(eori: String, pageOpt: Option[Int], sizeOpt: Option[Int]): Future[Seq[GoodsItemRecord]] =
