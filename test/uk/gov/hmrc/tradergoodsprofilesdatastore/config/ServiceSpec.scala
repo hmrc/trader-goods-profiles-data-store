@@ -32,7 +32,7 @@ class ServiceSpec extends AnyFreeSpec with Matchers {
     }
 
     "must convert implicitly to a string" in {
-      val service = Service("localhost", "8080", "http")
+      val service          = Service("localhost", "8080", "http")
       val asString: String = service
 
       asString mustBe "http://localhost:8080"
