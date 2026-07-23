@@ -35,41 +35,41 @@ import scala.util.matching.Regex
 
 @Singleton
 class RecordsRepository @Inject() (
-                                    override val mongoComponent: MongoComponent
-                                  )(implicit ec: ExecutionContext, config: DataStoreAppConfig)
-  extends PlayMongoRepository[GoodsItemRecord](
-    collectionName = "goodsItemRecords",
-    mongoComponent = mongoComponent,
-    domainFormat = GoodsItemRecord.goodsItemRecordsMongoFormat,
-    indexes = Seq(
-      IndexModel(
-        Indexes.compoundIndex(
-          Indexes.ascending("eori"),
-          Indexes.ascending("_id")
+  override val mongoComponent: MongoComponent
+)(implicit ec: ExecutionContext, config: DataStoreAppConfig)
+    extends PlayMongoRepository[GoodsItemRecord](
+      collectionName = "goodsItemRecords",
+      mongoComponent = mongoComponent,
+      domainFormat = GoodsItemRecord.goodsItemRecordsMongoFormat,
+      indexes = Seq(
+        IndexModel(
+          Indexes.compoundIndex(
+            Indexes.ascending("eori"),
+            Indexes.ascending("_id")
+          ),
+          IndexOptions()
+            .name("eori_recordId_idx")
         ),
-        IndexOptions()
-          .name("eori_recordId_idx")
-      ),
-      IndexModel(
-        Indexes.ascending("traderRef"),
-        IndexOptions().collation(
-          caseInsensitiveCollation
-        )
-      ),
-      IndexModel(
-        Indexes.compoundIndex(
-          Indexes.ascending("eori"),
+        IndexModel(
           Indexes.ascending("traderRef"),
-          Indexes.descending("updatedDateTime")
-        ),
-        IndexOptions()
-          .name("eori_traderRef_updatedDateTime_idx")
-          .collation(
+          IndexOptions().collation(
             caseInsensitiveCollation
           )
+        ),
+        IndexModel(
+          Indexes.compoundIndex(
+            Indexes.ascending("eori"),
+            Indexes.ascending("traderRef"),
+            Indexes.descending("updatedDateTime")
+          ),
+          IndexOptions()
+            .name("eori_traderRef_updatedDateTime_idx")
+            .collation(
+              caseInsensitiveCollation
+            )
+        )
       )
     )
-  )
     with Transactions {
 
   override lazy val requiresTtlIndex: Boolean = false
@@ -158,11 +158,11 @@ class RecordsRepository @Inject() (
   }
 
   def filterRecords(
-                     eori: String,
-                     searchTerm: Option[String],
-                     field: Option[String],
-                     exactMatch: Boolean
-                   ): Future[Seq[GoodsItemRecord]] = Mdc.preservingMdc {
+    eori: String,
+    searchTerm: Option[String],
+    field: Option[String],
+    exactMatch: Boolean
+  ): Future[Seq[GoodsItemRecord]] = Mdc.preservingMdc {
     searchTerm match {
       case Some(value) =>
         field match {
@@ -225,10 +225,10 @@ class RecordsRepository @Inject() (
     }
 
   def declarableFilter(
-                        IMMIReady: Option[Boolean],
-                        notReadyForIMMI: Option[Boolean],
-                        actionNeeded: Option[Boolean]
-                      ): Bson = {
+    IMMIReady: Option[Boolean],
+    notReadyForIMMI: Option[Boolean],
+    actionNeeded: Option[Boolean]
+  ): Bson = {
     val conditions = List(
       if (IMMIReady.contains(true)) Some(Filters.equal("declarable", "IMMI Ready")) else None,
       if (notReadyForIMMI.contains(true)) Some(Filters.equal("declarable", "Not ready for IMMI")) else None,
@@ -243,13 +243,13 @@ class RecordsRepository @Inject() (
   }
 
   def filterRecordsIteration(
-                              eori: String,
-                              searchTerm: Option[String],
-                              countryOfOrigin: Option[String],
-                              IMMIReady: Option[Boolean],
-                              notReadyForIMMI: Option[Boolean],
-                              actionNeeded: Option[Boolean]
-                            ): Future[Seq[GoodsItemRecord]] = Mdc.preservingMdc {
+    eori: String,
+    searchTerm: Option[String],
+    countryOfOrigin: Option[String],
+    IMMIReady: Option[Boolean],
+    notReadyForIMMI: Option[Boolean],
+    actionNeeded: Option[Boolean]
+  ): Future[Seq[GoodsItemRecord]] = Mdc.preservingMdc {
     collection
       .find[GoodsItemRecord](
         Filters.and(
