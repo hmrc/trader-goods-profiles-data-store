@@ -55,6 +55,18 @@ class RecordsRepository @Inject() (
           IndexOptions().collation(
             caseInsensitiveCollation
           )
+        ),
+        IndexModel(
+          Indexes.compoundIndex(
+            Indexes.ascending("eori"),
+            Indexes.ascending("traderRef"),
+            Indexes.descending("updatedDateTime")
+          ),
+          IndexOptions()
+            .name("eori_traderRef_updatedDateTime_idx")
+            .collation(
+              caseInsensitiveCollation
+            )
         )
       )
     )
