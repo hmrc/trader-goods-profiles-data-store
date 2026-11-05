@@ -61,7 +61,7 @@ class DownloadFailureService @Inject() (
         }
       }
       .recover { case e =>
-        logger.error(s"[DownloadFailureService] - Error processing stale downloads: ${e.getMessage}", e)
+        logger.error(s"Failed to process stale downloads: ${e.getMessage}", e)
         Done
       }
   }
@@ -76,11 +76,11 @@ class DownloadFailureService @Inject() (
             DownloadRecordFailureEmailParameters()
           )
         case None        =>
-          logger.warn(s"[DownloadFailureService] - Unable to find email for EORI: $eori")
+          logger.warn(s"Unable to find email for EORI: $eori")
           Future.failed(new RuntimeException(s"Unable to find email for EORI: $eori"))
       }
       .recover { case e =>
-        logger.warn(s"[DownloadFailureService] - Failed to send failure email for EORI $eori: ${e.getMessage}")
+        logger.warn(s"Failed to send failure email for EORI $eori: ${e.getMessage}")
         Done
       }
 }

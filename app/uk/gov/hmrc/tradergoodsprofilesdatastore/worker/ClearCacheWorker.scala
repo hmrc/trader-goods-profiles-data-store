@@ -46,21 +46,21 @@ class ClearCacheWorker @Inject() (
 
   if (enabled) {
 
-    logger.info("[ClearCacheWorker] - Starting ClearCacheWorker")
+    logger.info("Starting ClearCacheWorker")
     val cancel = scheduler.scheduleWithFixedDelay(initialDelay, interval) { () =>
       clearCacheService
         .clearCache(Instant.now().minus(dataToClearOlderThanDays.toDays, ChronoUnit.DAYS))
         .onComplete {
-          case Success(_) => logger.info("[ClearCacheWorker] - Completed ClearCacheWorker")
-          case Failure(e) => logger.error("[ClearCacheWorker] - Error while clearing cache", e)
+          case Success(_) => logger.info("Completed ClearCacheWorker")
+          case Failure(e) => logger.error("Error while clearing cache", e)
         }
     }
 
     lifecycle.addStopHook { () =>
-      logger.info("[ClearCacheWorker] - Stopped ClearCacheWorker")
+      logger.info("Stopped ClearCacheWorker")
       Future.successful(cancel.cancel())
     }
   } else {
-    logger.info("[ClearCacheWorker] - ClearCacheWorker disabled")
+    logger.info("ClearCacheWorker disabled")
   }
 }

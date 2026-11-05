@@ -42,19 +42,19 @@ class StaleDownloadWorker @Inject() (
   private val scheduler = actorSystem.scheduler
 
   if (enabled) {
-    logger.info("[StaleDownloadWorker] - Starting StaleDownloadWorker")
+    logger.info("Starting StaleDownloadWorker")
     val cancellable = scheduler.scheduleWithFixedDelay(initialDelay, interval) { () =>
-      logger.info("[StaleDownloadWorker] - Checking stale downloads")
+      logger.info("Checking stale downloads")
       downloadFailureService.processStaleDownloads().onComplete {
-        case Success(_) => logger.info("[StaleDownloadWorker] - Completed processing stale downloads")
-        case Failure(e) => logger.error("[StaleDownloadWorker] - Error processing stale downloads", e)
+        case Success(_) => logger.info("Completed processing stale downloads")
+        case Failure(e) => logger.error("Stale download worker run failed unexpectedly", e)
       }
     }
     applicationLifecycle.addStopHook { () =>
-      logger.info("[StaleDownloadWorker] - Stopping StaleDownloadWorker")
+      logger.info("Stopping StaleDownloadWorker")
       Future.successful(cancellable.cancel())
     }
   } else {
-    logger.info("[StaleDownloadWorker] - StaleDownloadWorker disabled")
+    logger.info("StaleDownloadWorker disabled")
   }
 }

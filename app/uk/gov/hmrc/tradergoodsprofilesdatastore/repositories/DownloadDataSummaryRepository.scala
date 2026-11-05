@@ -137,7 +137,7 @@ class DownloadDataSummaryRepository @Inject() (
       .map(_.getModifiedCount)
       .recover { case e =>
         logger.error(
-          s"[DownloadDataSummaryRepository] - Error marking summaries as failed for EORI $eori: ${e.getMessage}"
+          s"Error marking summaries as failed for EORI $eori: ${e.getMessage}"
         )
         throw e
       }

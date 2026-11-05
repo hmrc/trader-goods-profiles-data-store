@@ -46,10 +46,10 @@ class ClearCacheService @Inject() (
             } yield {
               logger
                 .info(
-                  s"[ClearCacheService] - successfully deleted $recordsDeleteCount records for eori '${recordSummary.eori}''"
+                  s"successfully deleted $recordsDeleteCount records for eori '${recordSummary.eori}''"
                 )
               logger.info(
-                s"[ClearCacheService] - successfully deleted $recordsSummaryDeleteCount summary records for eori '${recordSummary.eori}''"
+                s"successfully deleted $recordsSummaryDeleteCount summary records for eori '${recordSummary.eori}''"
               )
             }
           }
