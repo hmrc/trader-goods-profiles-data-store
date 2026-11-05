@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,10 +46,10 @@ class ClearCacheService @Inject() (
             } yield {
               logger
                 .info(
-                  s"[ClearCacheService] - successfully deleted $recordsDeleteCount records for eori '${recordSummary.eori}''"
+                  s"Successfully deleted $recordsDeleteCount records for eori '${recordSummary.eori}''"
                 )
               logger.info(
-                s"[ClearCacheService] - successfully deleted $recordsSummaryDeleteCount summary records for eori '${recordSummary.eori}''"
+                s"Successfully deleted $recordsSummaryDeleteCount summary records for eori '${recordSummary.eori}''"
               )
             }
           }

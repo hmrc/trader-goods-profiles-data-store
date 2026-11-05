@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ class DownloadDataSummaryRepository @Inject() (
       .map(_.getModifiedCount)
       .recover { case e =>
         logger.error(
-          s"[DownloadDataSummaryRepository] - Error marking summaries as failed for EORI $eori: ${e.getMessage}"
+          s"Error marking summaries as failed for EORI $eori: ${e.getMessage}"
         )
         throw e
       }
