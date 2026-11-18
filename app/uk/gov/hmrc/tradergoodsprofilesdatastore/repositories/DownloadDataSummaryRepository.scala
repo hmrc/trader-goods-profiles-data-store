@@ -55,6 +55,14 @@ class DownloadDataSummaryRepository @Inject() (
           Indexes.ascending("eori"),
           IndexOptions()
             .name("eori_idx")
+        ),
+        IndexModel(
+          Indexes.compoundIndex(
+            Indexes.ascending("status"),
+            Indexes.ascending("createdAt")
+          ),
+          IndexOptions()
+            .name("status_createdAt_idx")
         )
       ),
       replaceIndexes = config.downloadDataSummaryReplaceIndexes

@@ -212,6 +212,53 @@ class DownloadDataSummaryRepositorySpec
     mustPreserveMdc(repository.updateSeen("eori"))
   }
 
+  ".findStaleSummaries" - {
+
+    "must return downloadDataSummaries with status FileInProgress older than the threshold" in {
+
+      val staleSummary: DownloadDataSummary = DownloadDataSummary(
+        summaryId = java.util.UUID.randomUUID().toString,
+        eori = testEori,
+        status = FileInProgress,
+        createdAt = now.minus(48, ChronoUnit.HOURS),
+        expiresAt = now,
+        fileInfo = None
+      )
+
+      val recentSummary: DownloadDataSummary = DownloadDataSummary(
+        summaryId = java.util.UUID.randomUUID().toString,
+        eori = testEori,
+        status = FileInProgress,
+        createdAt = now,
+        expiresAt = now,
+        fileInfo = None
+      )
+
+      val staleButNotInProgressSummary: DownloadDataSummary = DownloadDataSummary(
+        summaryId = java.util.UUID.randomUUID().toString,
+        eori = testEori,
+        status = FileReadyUnseen,
+        createdAt = now.minus(48, ChronoUnit.HOURS),
+        expiresAt = now,
+        fileInfo = None
+      )
+
+      insert(staleSummary).futureValue
+      insert(recentSummary).futureValue
+      insert(staleButNotInProgressSummary).futureValue
+
+      val slaThreshold = now.minus(24, ChronoUnit.HOURS)
+
+      val result = repository.findStaleSummaries(slaThreshold).futureValue
+
+      result.map(_.summaryId) mustEqual Seq(staleSummary.summaryId)
+    }
+
+    "must return an empty list when there are no stale downloadDataSummaries" in {
+      repository.findStaleSummaries(now.minus(24, ChronoUnit.HOURS)).futureValue mustEqual Seq.empty
+    }
+  }
+
   private def mustPreserveMdc[A](f: => Future[A])(implicit pos: Position): Unit =
     "must preserve MDC" in {
 
